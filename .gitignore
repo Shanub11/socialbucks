@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# NestJS / general build output
+dist/
+build/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# turbo
+.turbo/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
