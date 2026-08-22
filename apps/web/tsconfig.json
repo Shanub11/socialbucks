@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@repo/database": ["../../packages/database/src/index.ts"]
     }
   },
   "include": [

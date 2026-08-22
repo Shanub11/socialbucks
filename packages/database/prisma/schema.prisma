@@ -1,0 +1,177 @@
+// TARGET PATH: packages/database/prisma/schema.prisma
+// (replaces Codex's User-only version — this restores Organization,
+// Creator, Campaign, and CampaignCreatorSlot, updated to Prisma 7's
+// format: no url/directUrl here, those live in prisma.config.ts only.)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Identity ----------
+
+model User {
+  id        String    @id @default(cuid())
+  clerkId   String    @unique
+  email     String
+  firstName String?
+  lastName  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships OrganizationMember[]
+  creator     Creator?
+
+  @@index([clerkId])
+}
+
+// ---------- Brands ----------
+
+model Organization {
+  id         String    @id @default(cuid())
+  name       String
+  clerkOrgId String?   @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  members   OrganizationMember[]
+  campaigns Campaign[]
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole @default(MEMBER)
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+// ---------- Creators ----------
+
+enum InstagramAccountType {
+  PERSONAL
+  BUSINESS
+  CREATOR
+}
+
+model Creator {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  instagramUserId      String?               @unique
+  instagramUsername    String?
+  instagramAccountType InstagramAccountType?
+  instagramConnectedAt DateTime?
+
+  instagramTokenCiphertext String?
+  instagramTokenExpiresAt  DateTime?
+
+  trustScore Int @default(0)
+
+  user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slots CampaignCreatorSlot[]
+
+  @@index([instagramUserId])
+}
+
+// ---------- Campaigns ----------
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  organizationId String
+  title          String
+  description    String?
+  status         CampaignStatus @default(DRAFT)
+
+  totalBudget Decimal @db.Decimal(12, 2)
+  currency    String  @default("USD")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  slots        CampaignCreatorSlot[]
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+// ---------- Per-creator escrow / submission / approval state ----------
+
+enum SlotStatus {
+  INVITED
+  ACCEPTED
+  CONTENT_SUBMITTED
+  CONTENT_APPROVED
+  IN_PROGRESS
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum MilestoneTier {
+  BASELINE // 20%
+  TIER_40
+  TIER_70
+  TIER_100
+}
+
+model CampaignCreatorSlot {
+  id         String     @id @default(cuid())
+  campaignId String
+  creatorId  String
+  status     SlotStatus @default(INVITED)
+
+  escrowAmount Decimal        @db.Decimal(12, 2)
+  currentTier  MilestoneTier?
+  paidToDate   Decimal        @default(0) @db.Decimal(12, 2)
+
+  contentUrl  String?
+  submittedAt DateTime?
+  approvedAt  DateTime?
+
+  currentViewCount Int?
+  lastViewCheckAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  creator  Creator  @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+}
