@@ -9,7 +9,54 @@
 * 🟢 You can import this file directly.
 */
 
+export const OrganizationRole = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER'
+} as const
+
+export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const InstagramAccountType = {
+  PERSONAL: 'PERSONAL',
+  BUSINESS: 'BUSINESS',
+  CREATOR: 'CREATOR'
+} as const
+
+export type InstagramAccountType = (typeof InstagramAccountType)[keyof typeof InstagramAccountType]
+
+
+export const CampaignStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  PAUSED: 'PAUSED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type CampaignStatus = (typeof CampaignStatus)[keyof typeof CampaignStatus]
+
+
+export const SlotStatus = {
+  INVITED: 'INVITED',
+  ACCEPTED: 'ACCEPTED',
+  CONTENT_SUBMITTED: 'CONTENT_SUBMITTED',
+  CONTENT_APPROVED: 'CONTENT_APPROVED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  DISPUTED: 'DISPUTED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type SlotStatus = (typeof SlotStatus)[keyof typeof SlotStatus]
+
+
+export const MilestoneTier = {
+  BASELINE: 'BASELINE',
+  TIER_40: 'TIER_40',
+  TIER_70: 'TIER_70',
+  TIER_100: 'TIER_100'
+} as const
+
+export type MilestoneTier = (typeof MilestoneTier)[keyof typeof MilestoneTier]

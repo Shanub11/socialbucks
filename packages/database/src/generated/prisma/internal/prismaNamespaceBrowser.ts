@@ -51,7 +51,12 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  User: 'User'
+  User: 'User',
+  Organization: 'Organization',
+  OrganizationMember: 'OrganizationMember',
+  Creator: 'Creator',
+  Campaign: 'Campaign',
+  CampaignCreatorSlot: 'CampaignCreatorSlot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -76,12 +81,90 @@ export const UserScalarFieldEnum = {
   email: 'email',
   firstName: 'firstName',
   lastName: 'lastName',
-  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const OrganizationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  clerkOrgId: 'clerkOrgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+export const OrganizationMemberScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  role: 'role',
+  createdAt: 'createdAt'
+} as const
+
+export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
+
+
+export const CreatorScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt',
+  instagramUserId: 'instagramUserId',
+  instagramUsername: 'instagramUsername',
+  instagramAccountType: 'instagramAccountType',
+  instagramConnectedAt: 'instagramConnectedAt',
+  instagramTokenCiphertext: 'instagramTokenCiphertext',
+  instagramTokenExpiresAt: 'instagramTokenExpiresAt',
+  trustScore: 'trustScore'
+} as const
+
+export type CreatorScalarFieldEnum = (typeof CreatorScalarFieldEnum)[keyof typeof CreatorScalarFieldEnum]
+
+
+export const CampaignScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  title: 'title',
+  description: 'description',
+  status: 'status',
+  totalBudget: 'totalBudget',
+  currency: 'currency',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type CampaignScalarFieldEnum = (typeof CampaignScalarFieldEnum)[keyof typeof CampaignScalarFieldEnum]
+
+
+export const CampaignCreatorSlotScalarFieldEnum = {
+  id: 'id',
+  campaignId: 'campaignId',
+  creatorId: 'creatorId',
+  status: 'status',
+  escrowAmount: 'escrowAmount',
+  currentTier: 'currentTier',
+  paidToDate: 'paidToDate',
+  contentUrl: 'contentUrl',
+  submittedAt: 'submittedAt',
+  approvedAt: 'approvedAt',
+  currentViewCount: 'currentViewCount',
+  lastViewCheckAt: 'lastViewCheckAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type CampaignCreatorSlotScalarFieldEnum = (typeof CampaignCreatorSlotScalarFieldEnum)[keyof typeof CampaignCreatorSlotScalarFieldEnum]
 
 
 export const SortOrder = {

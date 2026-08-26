@@ -397,7 +397,12 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  User: 'User'
+  User: 'User',
+  Organization: 'Organization',
+  OrganizationMember: 'OrganizationMember',
+  Creator: 'Creator',
+  Campaign: 'Campaign',
+  CampaignCreatorSlot: 'CampaignCreatorSlot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -413,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user"
+    modelProps: "user" | "organization" | "organizationMember" | "creator" | "campaign" | "campaignCreatorSlot"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -491,6 +496,376 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Organization: {
+      payload: Prisma.$OrganizationPayload<ExtArgs>
+      fields: Prisma.OrganizationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrganizationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrganizationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>
+        }
+        findFirst: {
+          args: Prisma.OrganizationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrganizationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>
+        }
+        findMany: {
+          args: Prisma.OrganizationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>[]
+        }
+        create: {
+          args: Prisma.OrganizationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>
+        }
+        createMany: {
+          args: Prisma.OrganizationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrganizationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>[]
+        }
+        delete: {
+          args: Prisma.OrganizationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>
+        }
+        update: {
+          args: Prisma.OrganizationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrganizationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrganizationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrganizationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrganizationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationPayload>
+        }
+        aggregate: {
+          args: Prisma.OrganizationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrganization>
+        }
+        groupBy: {
+          args: Prisma.OrganizationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrganizationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationCountAggregateOutputType> | number
+        }
+      }
+    }
+    OrganizationMember: {
+      payload: Prisma.$OrganizationMemberPayload<ExtArgs>
+      fields: Prisma.OrganizationMemberFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrganizationMemberFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrganizationMemberFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>
+        }
+        findFirst: {
+          args: Prisma.OrganizationMemberFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrganizationMemberFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>
+        }
+        findMany: {
+          args: Prisma.OrganizationMemberFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>[]
+        }
+        create: {
+          args: Prisma.OrganizationMemberCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>
+        }
+        createMany: {
+          args: Prisma.OrganizationMemberCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrganizationMemberCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>[]
+        }
+        delete: {
+          args: Prisma.OrganizationMemberDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>
+        }
+        update: {
+          args: Prisma.OrganizationMemberUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrganizationMemberDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrganizationMemberUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrganizationMemberUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrganizationMemberUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationMemberPayload>
+        }
+        aggregate: {
+          args: Prisma.OrganizationMemberAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrganizationMember>
+        }
+        groupBy: {
+          args: Prisma.OrganizationMemberGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationMemberGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrganizationMemberCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    Creator: {
+      payload: Prisma.$CreatorPayload<ExtArgs>
+      fields: Prisma.CreatorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreatorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreatorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>
+        }
+        findFirst: {
+          args: Prisma.CreatorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreatorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>
+        }
+        findMany: {
+          args: Prisma.CreatorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>[]
+        }
+        create: {
+          args: Prisma.CreatorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>
+        }
+        createMany: {
+          args: Prisma.CreatorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CreatorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>[]
+        }
+        delete: {
+          args: Prisma.CreatorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>
+        }
+        update: {
+          args: Prisma.CreatorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreatorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreatorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CreatorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>[]
+        }
+        upsert: {
+          args: Prisma.CreatorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorPayload>
+        }
+        aggregate: {
+          args: Prisma.CreatorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreator>
+        }
+        groupBy: {
+          args: Prisma.CreatorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreatorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreatorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreatorCountAggregateOutputType> | number
+        }
+      }
+    }
+    Campaign: {
+      payload: Prisma.$CampaignPayload<ExtArgs>
+      fields: Prisma.CampaignFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CampaignFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CampaignFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>
+        }
+        findFirst: {
+          args: Prisma.CampaignFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CampaignFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>
+        }
+        findMany: {
+          args: Prisma.CampaignFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>[]
+        }
+        create: {
+          args: Prisma.CampaignCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>
+        }
+        createMany: {
+          args: Prisma.CampaignCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CampaignCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>[]
+        }
+        delete: {
+          args: Prisma.CampaignDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>
+        }
+        update: {
+          args: Prisma.CampaignUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>
+        }
+        deleteMany: {
+          args: Prisma.CampaignDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CampaignUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CampaignUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>[]
+        }
+        upsert: {
+          args: Prisma.CampaignUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignPayload>
+        }
+        aggregate: {
+          args: Prisma.CampaignAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCampaign>
+        }
+        groupBy: {
+          args: Prisma.CampaignGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CampaignGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CampaignCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CampaignCountAggregateOutputType> | number
+        }
+      }
+    }
+    CampaignCreatorSlot: {
+      payload: Prisma.$CampaignCreatorSlotPayload<ExtArgs>
+      fields: Prisma.CampaignCreatorSlotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CampaignCreatorSlotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CampaignCreatorSlotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>
+        }
+        findFirst: {
+          args: Prisma.CampaignCreatorSlotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CampaignCreatorSlotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>
+        }
+        findMany: {
+          args: Prisma.CampaignCreatorSlotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>[]
+        }
+        create: {
+          args: Prisma.CampaignCreatorSlotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>
+        }
+        createMany: {
+          args: Prisma.CampaignCreatorSlotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CampaignCreatorSlotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>[]
+        }
+        delete: {
+          args: Prisma.CampaignCreatorSlotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>
+        }
+        update: {
+          args: Prisma.CampaignCreatorSlotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>
+        }
+        deleteMany: {
+          args: Prisma.CampaignCreatorSlotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CampaignCreatorSlotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CampaignCreatorSlotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>[]
+        }
+        upsert: {
+          args: Prisma.CampaignCreatorSlotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CampaignCreatorSlotPayload>
+        }
+        aggregate: {
+          args: Prisma.CampaignCreatorSlotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCampaignCreatorSlot>
+        }
+        groupBy: {
+          args: Prisma.CampaignCreatorSlotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CampaignCreatorSlotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CampaignCreatorSlotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CampaignCreatorSlotCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -536,12 +911,90 @@ export const UserScalarFieldEnum = {
   email: 'email',
   firstName: 'firstName',
   lastName: 'lastName',
-  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const OrganizationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  clerkOrgId: 'clerkOrgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+export const OrganizationMemberScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  role: 'role',
+  createdAt: 'createdAt'
+} as const
+
+export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
+
+
+export const CreatorScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt',
+  instagramUserId: 'instagramUserId',
+  instagramUsername: 'instagramUsername',
+  instagramAccountType: 'instagramAccountType',
+  instagramConnectedAt: 'instagramConnectedAt',
+  instagramTokenCiphertext: 'instagramTokenCiphertext',
+  instagramTokenExpiresAt: 'instagramTokenExpiresAt',
+  trustScore: 'trustScore'
+} as const
+
+export type CreatorScalarFieldEnum = (typeof CreatorScalarFieldEnum)[keyof typeof CreatorScalarFieldEnum]
+
+
+export const CampaignScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  title: 'title',
+  description: 'description',
+  status: 'status',
+  totalBudget: 'totalBudget',
+  currency: 'currency',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type CampaignScalarFieldEnum = (typeof CampaignScalarFieldEnum)[keyof typeof CampaignScalarFieldEnum]
+
+
+export const CampaignCreatorSlotScalarFieldEnum = {
+  id: 'id',
+  campaignId: 'campaignId',
+  creatorId: 'creatorId',
+  status: 'status',
+  escrowAmount: 'escrowAmount',
+  currentTier: 'currentTier',
+  paidToDate: 'paidToDate',
+  contentUrl: 'contentUrl',
+  submittedAt: 'submittedAt',
+  approvedAt: 'approvedAt',
+  currentViewCount: 'currentViewCount',
+  lastViewCheckAt: 'lastViewCheckAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type CampaignCreatorSlotScalarFieldEnum = (typeof CampaignCreatorSlotScalarFieldEnum)[keyof typeof CampaignCreatorSlotScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -603,6 +1056,34 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'OrganizationRole'
+ */
+export type EnumOrganizationRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationRole'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationRole[]'
+ */
+export type ListEnumOrganizationRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationRole[]'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramAccountType'
+ */
+export type EnumInstagramAccountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramAccountType'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramAccountType[]'
+ */
+export type ListEnumInstagramAccountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramAccountType[]'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -613,6 +1094,76 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CampaignStatus'
+ */
+export type EnumCampaignStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CampaignStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'CampaignStatus[]'
+ */
+export type ListEnumCampaignStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CampaignStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal'
+ */
+export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal[]'
+ */
+export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+/**
+ * Reference to a field of type 'SlotStatus'
+ */
+export type EnumSlotStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SlotStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'SlotStatus[]'
+ */
+export type ListEnumSlotStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SlotStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'MilestoneTier'
+ */
+export type EnumMilestoneTierFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MilestoneTier'>
+    
+
+
+/**
+ * Reference to a field of type 'MilestoneTier[]'
+ */
+export type ListEnumMilestoneTierFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MilestoneTier[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -767,6 +1318,11 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  organization?: Prisma.OrganizationOmit
+  organizationMember?: Prisma.OrganizationMemberOmit
+  creator?: Prisma.CreatorOmit
+  campaign?: Prisma.CampaignOmit
+  campaignCreatorSlot?: Prisma.CampaignCreatorSlotOmit
 }
 
 /* Types for Logging */

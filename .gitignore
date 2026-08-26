@@ -31,3 +31,7 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules
+
+#memory
+graphify-out
+progress.md
