@@ -274,6 +274,7 @@ export type CreatorWhereInput = {
   trustScore?: Prisma.IntFilter<"Creator"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   slots?: Prisma.CampaignCreatorSlotListRelationFilter
+  socialAccounts?: Prisma.SocialAccountListRelationFilter
 }
 
 export type CreatorOrderByWithRelationInput = {
@@ -291,6 +292,7 @@ export type CreatorOrderByWithRelationInput = {
   trustScore?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   slots?: Prisma.CampaignCreatorSlotOrderByRelationAggregateInput
+  socialAccounts?: Prisma.SocialAccountOrderByRelationAggregateInput
 }
 
 export type CreatorWhereUniqueInput = Prisma.AtLeast<{
@@ -311,6 +313,7 @@ export type CreatorWhereUniqueInput = Prisma.AtLeast<{
   trustScore?: Prisma.IntFilter<"Creator"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   slots?: Prisma.CampaignCreatorSlotListRelationFilter
+  socialAccounts?: Prisma.SocialAccountListRelationFilter
 }, "id" | "userId" | "instagramUserId">
 
 export type CreatorOrderByWithAggregationInput = {
@@ -365,6 +368,7 @@ export type CreatorCreateInput = {
   trustScore?: number
   user: Prisma.UserCreateNestedOneWithoutCreatorInput
   slots?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutCreatorInput
+  socialAccounts?: Prisma.SocialAccountCreateNestedManyWithoutCreatorInput
 }
 
 export type CreatorUncheckedCreateInput = {
@@ -381,6 +385,7 @@ export type CreatorUncheckedCreateInput = {
   instagramTokenExpiresAt?: Date | string | null
   trustScore?: number
   slots?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutCreatorInput
+  socialAccounts?: Prisma.SocialAccountUncheckedCreateNestedManyWithoutCreatorInput
 }
 
 export type CreatorUpdateInput = {
@@ -397,6 +402,7 @@ export type CreatorUpdateInput = {
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutCreatorNestedInput
   slots?: Prisma.CampaignCreatorSlotUpdateManyWithoutCreatorNestedInput
+  socialAccounts?: Prisma.SocialAccountUpdateManyWithoutCreatorNestedInput
 }
 
 export type CreatorUncheckedUpdateInput = {
@@ -413,6 +419,7 @@ export type CreatorUncheckedUpdateInput = {
   instagramTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   slots?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorNestedInput
+  socialAccounts?: Prisma.SocialAccountUncheckedUpdateManyWithoutCreatorNestedInput
 }
 
 export type CreatorCreateManyInput = {
@@ -566,6 +573,20 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type CreatorCreateNestedOneWithoutSocialAccountsInput = {
+  create?: Prisma.XOR<Prisma.CreatorCreateWithoutSocialAccountsInput, Prisma.CreatorUncheckedCreateWithoutSocialAccountsInput>
+  connectOrCreate?: Prisma.CreatorCreateOrConnectWithoutSocialAccountsInput
+  connect?: Prisma.CreatorWhereUniqueInput
+}
+
+export type CreatorUpdateOneRequiredWithoutSocialAccountsNestedInput = {
+  create?: Prisma.XOR<Prisma.CreatorCreateWithoutSocialAccountsInput, Prisma.CreatorUncheckedCreateWithoutSocialAccountsInput>
+  connectOrCreate?: Prisma.CreatorCreateOrConnectWithoutSocialAccountsInput
+  upsert?: Prisma.CreatorUpsertWithoutSocialAccountsInput
+  connect?: Prisma.CreatorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CreatorUpdateToOneWithWhereWithoutSocialAccountsInput, Prisma.CreatorUpdateWithoutSocialAccountsInput>, Prisma.CreatorUncheckedUpdateWithoutSocialAccountsInput>
+}
+
 export type CreatorCreateNestedOneWithoutSlotsInput = {
   create?: Prisma.XOR<Prisma.CreatorCreateWithoutSlotsInput, Prisma.CreatorUncheckedCreateWithoutSlotsInput>
   connectOrCreate?: Prisma.CreatorCreateOrConnectWithoutSlotsInput
@@ -593,6 +614,7 @@ export type CreatorCreateWithoutUserInput = {
   instagramTokenExpiresAt?: Date | string | null
   trustScore?: number
   slots?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutCreatorInput
+  socialAccounts?: Prisma.SocialAccountCreateNestedManyWithoutCreatorInput
 }
 
 export type CreatorUncheckedCreateWithoutUserInput = {
@@ -608,6 +630,7 @@ export type CreatorUncheckedCreateWithoutUserInput = {
   instagramTokenExpiresAt?: Date | string | null
   trustScore?: number
   slots?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutCreatorInput
+  socialAccounts?: Prisma.SocialAccountUncheckedCreateNestedManyWithoutCreatorInput
 }
 
 export type CreatorCreateOrConnectWithoutUserInput = {
@@ -639,10 +662,92 @@ export type CreatorUpdateWithoutUserInput = {
   instagramTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   slots?: Prisma.CampaignCreatorSlotUpdateManyWithoutCreatorNestedInput
+  socialAccounts?: Prisma.SocialAccountUpdateManyWithoutCreatorNestedInput
 }
 
 export type CreatorUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  instagramUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramAccountType?: Prisma.NullableEnumInstagramAccountTypeFieldUpdateOperationsInput | $Enums.InstagramAccountType | null
+  instagramConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  instagramTokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  trustScore?: Prisma.IntFieldUpdateOperationsInput | number
+  slots?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorNestedInput
+  socialAccounts?: Prisma.SocialAccountUncheckedUpdateManyWithoutCreatorNestedInput
+}
+
+export type CreatorCreateWithoutSocialAccountsInput = {
+  id?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  instagramUserId?: string | null
+  instagramUsername?: string | null
+  instagramAccountType?: $Enums.InstagramAccountType | null
+  instagramConnectedAt?: Date | string | null
+  instagramTokenCiphertext?: string | null
+  instagramTokenExpiresAt?: Date | string | null
+  trustScore?: number
+  user: Prisma.UserCreateNestedOneWithoutCreatorInput
+  slots?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutCreatorInput
+}
+
+export type CreatorUncheckedCreateWithoutSocialAccountsInput = {
+  id?: string
+  userId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  instagramUserId?: string | null
+  instagramUsername?: string | null
+  instagramAccountType?: $Enums.InstagramAccountType | null
+  instagramConnectedAt?: Date | string | null
+  instagramTokenCiphertext?: string | null
+  instagramTokenExpiresAt?: Date | string | null
+  trustScore?: number
+  slots?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutCreatorInput
+}
+
+export type CreatorCreateOrConnectWithoutSocialAccountsInput = {
+  where: Prisma.CreatorWhereUniqueInput
+  create: Prisma.XOR<Prisma.CreatorCreateWithoutSocialAccountsInput, Prisma.CreatorUncheckedCreateWithoutSocialAccountsInput>
+}
+
+export type CreatorUpsertWithoutSocialAccountsInput = {
+  update: Prisma.XOR<Prisma.CreatorUpdateWithoutSocialAccountsInput, Prisma.CreatorUncheckedUpdateWithoutSocialAccountsInput>
+  create: Prisma.XOR<Prisma.CreatorCreateWithoutSocialAccountsInput, Prisma.CreatorUncheckedCreateWithoutSocialAccountsInput>
+  where?: Prisma.CreatorWhereInput
+}
+
+export type CreatorUpdateToOneWithWhereWithoutSocialAccountsInput = {
+  where?: Prisma.CreatorWhereInput
+  data: Prisma.XOR<Prisma.CreatorUpdateWithoutSocialAccountsInput, Prisma.CreatorUncheckedUpdateWithoutSocialAccountsInput>
+}
+
+export type CreatorUpdateWithoutSocialAccountsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  instagramUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramAccountType?: Prisma.NullableEnumInstagramAccountTypeFieldUpdateOperationsInput | $Enums.InstagramAccountType | null
+  instagramConnectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  instagramTokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  trustScore?: Prisma.IntFieldUpdateOperationsInput | number
+  user?: Prisma.UserUpdateOneRequiredWithoutCreatorNestedInput
+  slots?: Prisma.CampaignCreatorSlotUpdateManyWithoutCreatorNestedInput
+}
+
+export type CreatorUncheckedUpdateWithoutSocialAccountsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -669,6 +774,7 @@ export type CreatorCreateWithoutSlotsInput = {
   instagramTokenExpiresAt?: Date | string | null
   trustScore?: number
   user: Prisma.UserCreateNestedOneWithoutCreatorInput
+  socialAccounts?: Prisma.SocialAccountCreateNestedManyWithoutCreatorInput
 }
 
 export type CreatorUncheckedCreateWithoutSlotsInput = {
@@ -684,6 +790,7 @@ export type CreatorUncheckedCreateWithoutSlotsInput = {
   instagramTokenCiphertext?: string | null
   instagramTokenExpiresAt?: Date | string | null
   trustScore?: number
+  socialAccounts?: Prisma.SocialAccountUncheckedCreateNestedManyWithoutCreatorInput
 }
 
 export type CreatorCreateOrConnectWithoutSlotsInput = {
@@ -715,6 +822,7 @@ export type CreatorUpdateWithoutSlotsInput = {
   instagramTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutCreatorNestedInput
+  socialAccounts?: Prisma.SocialAccountUpdateManyWithoutCreatorNestedInput
 }
 
 export type CreatorUncheckedUpdateWithoutSlotsInput = {
@@ -730,6 +838,7 @@ export type CreatorUncheckedUpdateWithoutSlotsInput = {
   instagramTokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
+  socialAccounts?: Prisma.SocialAccountUncheckedUpdateManyWithoutCreatorNestedInput
 }
 
 
@@ -739,10 +848,12 @@ export type CreatorUncheckedUpdateWithoutSlotsInput = {
 
 export type CreatorCountOutputType = {
   slots: number
+  socialAccounts: number
 }
 
 export type CreatorCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   slots?: boolean | CreatorCountOutputTypeCountSlotsArgs
+  socialAccounts?: boolean | CreatorCountOutputTypeCountSocialAccountsArgs
 }
 
 /**
@@ -762,6 +873,13 @@ export type CreatorCountOutputTypeCountSlotsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.CampaignCreatorSlotWhereInput
 }
 
+/**
+ * CreatorCountOutputType without action
+ */
+export type CreatorCountOutputTypeCountSocialAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SocialAccountWhereInput
+}
+
 
 export type CreatorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -778,6 +896,7 @@ export type CreatorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   trustScore?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   slots?: boolean | Prisma.Creator$slotsArgs<ExtArgs>
+  socialAccounts?: boolean | Prisma.Creator$socialAccountsArgs<ExtArgs>
   _count?: boolean | Prisma.CreatorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["creator"]>
 
@@ -832,6 +951,7 @@ export type CreatorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type CreatorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   slots?: boolean | Prisma.Creator$slotsArgs<ExtArgs>
+  socialAccounts?: boolean | Prisma.Creator$socialAccountsArgs<ExtArgs>
   _count?: boolean | Prisma.CreatorCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CreatorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -846,6 +966,7 @@ export type $CreatorPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     slots: Prisma.$CampaignCreatorSlotPayload<ExtArgs>[]
+    socialAccounts: Prisma.$SocialAccountPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1256,6 +1377,7 @@ export interface Prisma__CreatorClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   slots<T extends Prisma.Creator$slotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Creator$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CampaignCreatorSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  socialAccounts<T extends Prisma.Creator$socialAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Creator$socialAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SocialAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1719,6 +1841,30 @@ export type Creator$slotsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.CampaignCreatorSlotScalarFieldEnum | Prisma.CampaignCreatorSlotScalarFieldEnum[]
+}
+
+/**
+ * Creator.socialAccounts
+ */
+export type Creator$socialAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SocialAccount
+   */
+  select?: Prisma.SocialAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SocialAccount
+   */
+  omit?: Prisma.SocialAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SocialAccountInclude<ExtArgs> | null
+  where?: Prisma.SocialAccountWhereInput
+  orderBy?: Prisma.SocialAccountOrderByWithRelationInput | Prisma.SocialAccountOrderByWithRelationInput[]
+  cursor?: Prisma.SocialAccountWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SocialAccountScalarFieldEnum | Prisma.SocialAccountScalarFieldEnum[]
 }
 
 /**

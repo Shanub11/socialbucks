@@ -55,6 +55,7 @@ export const ModelName = {
   Organization: 'Organization',
   OrganizationMember: 'OrganizationMember',
   Creator: 'Creator',
+  SocialAccount: 'SocialAccount',
   Campaign: 'Campaign',
   CampaignCreatorSlot: 'CampaignCreatorSlot'
 } as const
@@ -128,6 +129,24 @@ export const CreatorScalarFieldEnum = {
 } as const
 
 export type CreatorScalarFieldEnum = (typeof CreatorScalarFieldEnum)[keyof typeof CreatorScalarFieldEnum]
+
+
+export const SocialAccountScalarFieldEnum = {
+  id: 'id',
+  creatorId: 'creatorId',
+  platform: 'platform',
+  externalId: 'externalId',
+  handle: 'handle',
+  displayName: 'displayName',
+  tokenCiphertext: 'tokenCiphertext',
+  tokenExpiresAt: 'tokenExpiresAt',
+  scopes: 'scopes',
+  connectedAt: 'connectedAt',
+  revokedAt: 'revokedAt',
+  lastVerifiedAt: 'lastVerifiedAt'
+} as const
+
+export type SocialAccountScalarFieldEnum = (typeof SocialAccountScalarFieldEnum)[keyof typeof SocialAccountScalarFieldEnum]
 
 
 export const CampaignScalarFieldEnum = {

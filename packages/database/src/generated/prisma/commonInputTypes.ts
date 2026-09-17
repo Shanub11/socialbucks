@@ -196,6 +196,23 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntFilter<$PrismaModel>
 }
 
+export type EnumSocialPlatformFilter<$PrismaModel = never> = {
+  equals?: $Enums.SocialPlatform | Prisma.EnumSocialPlatformFieldRefInput<$PrismaModel>
+  in?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSocialPlatformFilter<$PrismaModel> | $Enums.SocialPlatform
+}
+
+export type EnumSocialPlatformWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SocialPlatform | Prisma.EnumSocialPlatformFieldRefInput<$PrismaModel>
+  in?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSocialPlatformWithAggregatesFilter<$PrismaModel> | $Enums.SocialPlatform
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSocialPlatformFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSocialPlatformFilter<$PrismaModel>
+}
+
 export type EnumCampaignStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.CampaignStatus | Prisma.EnumCampaignStatusFieldRefInput<$PrismaModel>
   in?: $Enums.CampaignStatus[] | Prisma.ListEnumCampaignStatusFieldRefInput<$PrismaModel>
@@ -494,6 +511,23 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumSocialPlatformFilter<$PrismaModel = never> = {
+  equals?: $Enums.SocialPlatform | Prisma.EnumSocialPlatformFieldRefInput<$PrismaModel>
+  in?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSocialPlatformFilter<$PrismaModel> | $Enums.SocialPlatform
+}
+
+export type NestedEnumSocialPlatformWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SocialPlatform | Prisma.EnumSocialPlatformFieldRefInput<$PrismaModel>
+  in?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SocialPlatform[] | Prisma.ListEnumSocialPlatformFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSocialPlatformWithAggregatesFilter<$PrismaModel> | $Enums.SocialPlatform
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSocialPlatformFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSocialPlatformFilter<$PrismaModel>
 }
 
 export type NestedEnumCampaignStatusFilter<$PrismaModel = never> = {

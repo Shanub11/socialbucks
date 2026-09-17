@@ -27,6 +27,14 @@ export const InstagramAccountType = {
 export type InstagramAccountType = (typeof InstagramAccountType)[keyof typeof InstagramAccountType]
 
 
+export const SocialPlatform = {
+  INSTAGRAM: 'INSTAGRAM',
+  YOUTUBE: 'YOUTUBE'
+} as const
+
+export type SocialPlatform = (typeof SocialPlatform)[keyof typeof SocialPlatform]
+
+
 export const CampaignStatus = {
   DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',

@@ -60,6 +60,34 @@ const envSchema = z.object({
   // See signed-request.ts — we accept either, and this lets you drop the
   // ambiguity once you've confirmed which one your app actually sends.
   META_APP_SECRET: z.string().optional(),
+
+  // --- YouTube Data API v3 / OAuth 2.0 ---------------------------------------
+  YOUTUBE_CLIENT_ID: z.string().min(1, 'Missing YOUTUBE_CLIENT_ID'),
+  YOUTUBE_CLIENT_SECRET: z.string().min(1, 'Missing YOUTUBE_CLIENT_SECRET'),
+
+  // Google compares redirect_uri byte-for-byte against the Cloud Console entry,
+  // same failure modes as Instagram: non-HTTPS and trailing slashes.
+  YOUTUBE_REDIRECT_URI: z
+    .string()
+    .startsWith('https://', 'Google rejects non-HTTPS redirect URIs')
+    .refine(
+      (value) => URL.canParse(value),
+      'YOUTUBE_REDIRECT_URI must be an absolute URL',
+    )
+    .refine(
+      (value) => !value.endsWith('/'),
+      'Drop the trailing slash — Google compares redirect_uri byte-for-byte',
+    ),
+
+  // Separate AES-256-GCM key for youtubeTokenCiphertext. Keeping it distinct
+  // from INSTAGRAM_TOKEN_ENCRYPTION_KEY means a ciphertext leak on one platform
+  // does not compromise the other.
+  YOUTUBE_TOKEN_ENCRYPTION_KEY: z
+    .string()
+    .refine(
+      (value) => isBase64OfExactBytes(value, 32),
+      'YOUTUBE_TOKEN_ENCRYPTION_KEY must be base64 decoding to exactly 32 bytes (openssl rand -base64 32)',
+    ),
 });
 
 export const env = envSchema.parse({
@@ -71,4 +99,8 @@ export const env = envSchema.parse({
   INSTAGRAM_REDIRECT_URI: process.env.INSTAGRAM_REDIRECT_URI,
   INSTAGRAM_TOKEN_ENCRYPTION_KEY: process.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY,
   META_APP_SECRET: process.env.META_APP_SECRET,
+  YOUTUBE_CLIENT_ID: process.env.YOUTUBE_CLIENT_ID,
+  YOUTUBE_CLIENT_SECRET: process.env.YOUTUBE_CLIENT_SECRET,
+  YOUTUBE_REDIRECT_URI: process.env.YOUTUBE_REDIRECT_URI,
+  YOUTUBE_TOKEN_ENCRYPTION_KEY: process.env.YOUTUBE_TOKEN_ENCRYPTION_KEY,
 });

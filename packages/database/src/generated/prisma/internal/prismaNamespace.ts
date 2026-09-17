@@ -401,6 +401,7 @@ export const ModelName = {
   Organization: 'Organization',
   OrganizationMember: 'OrganizationMember',
   Creator: 'Creator',
+  SocialAccount: 'SocialAccount',
   Campaign: 'Campaign',
   CampaignCreatorSlot: 'CampaignCreatorSlot'
 } as const
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "organization" | "organizationMember" | "creator" | "campaign" | "campaignCreatorSlot"
+    modelProps: "user" | "organization" | "organizationMember" | "creator" | "socialAccount" | "campaign" | "campaignCreatorSlot"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -718,6 +719,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SocialAccount: {
+      payload: Prisma.$SocialAccountPayload<ExtArgs>
+      fields: Prisma.SocialAccountFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SocialAccountFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SocialAccountFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>
+        }
+        findFirst: {
+          args: Prisma.SocialAccountFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SocialAccountFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>
+        }
+        findMany: {
+          args: Prisma.SocialAccountFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>[]
+        }
+        create: {
+          args: Prisma.SocialAccountCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>
+        }
+        createMany: {
+          args: Prisma.SocialAccountCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SocialAccountCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>[]
+        }
+        delete: {
+          args: Prisma.SocialAccountDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>
+        }
+        update: {
+          args: Prisma.SocialAccountUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>
+        }
+        deleteMany: {
+          args: Prisma.SocialAccountDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SocialAccountUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SocialAccountUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>[]
+        }
+        upsert: {
+          args: Prisma.SocialAccountUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SocialAccountPayload>
+        }
+        aggregate: {
+          args: Prisma.SocialAccountAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSocialAccount>
+        }
+        groupBy: {
+          args: Prisma.SocialAccountGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SocialAccountGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SocialAccountCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SocialAccountCountAggregateOutputType> | number
+        }
+      }
+    }
     Campaign: {
       payload: Prisma.$CampaignPayload<ExtArgs>
       fields: Prisma.CampaignFieldRefs
@@ -960,6 +1035,24 @@ export const CreatorScalarFieldEnum = {
 export type CreatorScalarFieldEnum = (typeof CreatorScalarFieldEnum)[keyof typeof CreatorScalarFieldEnum]
 
 
+export const SocialAccountScalarFieldEnum = {
+  id: 'id',
+  creatorId: 'creatorId',
+  platform: 'platform',
+  externalId: 'externalId',
+  handle: 'handle',
+  displayName: 'displayName',
+  tokenCiphertext: 'tokenCiphertext',
+  tokenExpiresAt: 'tokenExpiresAt',
+  scopes: 'scopes',
+  connectedAt: 'connectedAt',
+  revokedAt: 'revokedAt',
+  lastVerifiedAt: 'lastVerifiedAt'
+} as const
+
+export type SocialAccountScalarFieldEnum = (typeof SocialAccountScalarFieldEnum)[keyof typeof SocialAccountScalarFieldEnum]
+
+
 export const CampaignScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -1094,6 +1187,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'SocialPlatform'
+ */
+export type EnumSocialPlatformFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SocialPlatform'>
+    
+
+
+/**
+ * Reference to a field of type 'SocialPlatform[]'
+ */
+export type ListEnumSocialPlatformFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SocialPlatform[]'>
     
 
 
@@ -1321,6 +1428,7 @@ export type GlobalOmitConfig = {
   organization?: Prisma.OrganizationOmit
   organizationMember?: Prisma.OrganizationMemberOmit
   creator?: Prisma.CreatorOmit
+  socialAccount?: Prisma.SocialAccountOmit
   campaign?: Prisma.CampaignOmit
   campaignCreatorSlot?: Prisma.CampaignCreatorSlotOmit
 }

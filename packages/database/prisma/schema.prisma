@@ -4,8 +4,12 @@
 // format: no url/directUrl here, those live in prisma.config.ts only.)
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  // partialIndexes enables the `where:` clause on @@unique so we can
+  // enforce uniqueness only among active (non-revoked) SocialAccount rows,
+  // which is what reconnect-after-disconnect requires.
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -91,8 +95,70 @@ model Creator {
 
   user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   slots CampaignCreatorSlot[]
+  socialAccounts SocialAccount[]
 
   @@index([instagramUserId])
+}
+
+// ---------- Social platform connections ----------
+// One normalised table for every OAuth connection — Instagram today,
+// YouTube next, others later — rather than a per-platform column set on Creator.
+// The instagram* columns on Creator remain until the Step 2 migration backfills
+// and drops them; see the migration for the exact cut-over sequence.
+
+enum SocialPlatform {
+  INSTAGRAM
+  YOUTUBE
+}
+
+model SocialAccount {
+  id          String         @id @default(cuid())
+  creatorId   String
+  platform    SocialPlatform
+
+  /// Instagram: numeric user id (public, returned by /me). YouTube: UC… channel id.
+  /// Not a secret — appears in public API responses. Left unencrypted so the
+  /// @@unique constraint below can compare it (GCM ciphertext is non-deterministic
+  /// due to random nonces; you cannot enforce uniqueness on it in Postgres).
+  externalId  String
+
+  /// @username / channel handle — display-only. Validate on write; never trust on read.
+  handle      String?
+  displayName String?
+
+  /// Versioned ciphertext envelope: "v1.<iv_b64url>.<tag_b64url>.<ct_b64url>"
+  /// Instagram: 60-day long-lived access token.
+  /// YouTube: OAuth2 refresh token (no fixed expiry — see lastVerifiedAt).
+  /// The format prefix lets the decrypt path be extended without a data migration.
+  tokenCiphertext String
+  tokenExpiresAt  DateTime?
+
+  /// OAuth scopes granted at connect time; stored for audit and re-consent detection.
+  scopes         String[]
+
+  connectedAt    DateTime  @default(now())
+
+  /// Soft-delete: preserves audit trail for payout disputes.
+  /// A revoked row does NOT block reconnecting the same account (see partial indexes below).
+  revokedAt      DateTime?
+
+  /// Drives the YouTube 30-day re-verification requirement.
+  /// Also useful as a liveness signal for Instagram tokens we have not yet refreshed.
+  lastVerifiedAt DateTime?
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+
+  // Partial indexes — uniqueness is enforced only among ACTIVE connections
+  // (revokedAt IS NULL). A revoked row becomes history and does not block:
+  //   • reconnecting the same external account later, or
+  //   • linking a different account on the same platform.
+  // Named explicitly so the migration can reference them, and so pg_indexes
+  // output is readable without decoding Prisma's generated naming scheme.
+  @@unique([platform, externalId], where: { revokedAt: null }, map: "social_account_active_external_id_key")
+  @@unique([creatorId, platform],  where: { revokedAt: null }, map: "social_account_active_creator_platform_key")
+
+  @@index([creatorId])
+  @@index([platform, lastVerifiedAt])
 }
 
 // ---------- Campaigns ----------

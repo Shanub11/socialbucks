@@ -62,6 +62,11 @@ export type OrganizationMember = Prisma.OrganizationMemberModel
  */
 export type Creator = Prisma.CreatorModel
 /**
+ * Model SocialAccount
+ * 
+ */
+export type SocialAccount = Prisma.SocialAccountModel
+/**
  * Model Campaign
  * 
  */

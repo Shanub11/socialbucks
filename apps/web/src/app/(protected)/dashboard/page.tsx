@@ -1,9 +1,10 @@
 // TARGET PATH: apps/web/src/app/(protected)/dashboard/page.tsx
 //
 // The creator-facing surface for the Instagram connection. Server component
-// throughout — there is no client JavaScript on this page at all. The connect
-// action is a link, the disconnect action is a plain form POST, and the live
-// check is a link to a JSON endpoint.
+// apart from one deliberate client island: the connect action is a link, the
+// disconnect action is a plain form POST, and the live check is a link to a
+// JSON endpoint. Only sign-out needs browser JavaScript — see the note in
+// sign-out-button.tsx for why it cannot be a server action.
 //
 // One non-obvious rule: the connect action must be a plain <a>, never
 // next/link. Link prefetches on hover, and prefetching /start would mint an
@@ -15,6 +16,8 @@ import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { getInstagramConnection } from '@/lib/instagram/connection';
 import { REQUIRED_SCOPES } from '@/lib/instagram/constants';
+
+import { SignOutControl } from './sign-out-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,9 +98,13 @@ export default async function DashboardPage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-8">
-      <div>
-        <h1 className="text-xl font-semibold">Dashboard</h1>
-        <p className="mt-1 text-xs text-gray-500">Signed in as {userId}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">Dashboard</h1>
+          <p className="mt-1 text-xs text-gray-500">Signed in as {userId}</p>
+        </div>
+
+        <SignOutControl />
       </div>
 
       <Banner status={first(query.instagram)} reason={first(query.reason)} />
