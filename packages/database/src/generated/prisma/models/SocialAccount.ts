@@ -192,7 +192,7 @@ export type SocialAccountGroupByOutputType = {
   externalId: string
   handle: string | null
   displayName: string | null
-  tokenCiphertext: string
+  tokenCiphertext: string | null
   tokenExpiresAt: Date | null
   scopes: string[]
   connectedAt: Date
@@ -228,7 +228,7 @@ export type SocialAccountWhereInput = {
   externalId?: Prisma.StringFilter<"SocialAccount"> | string
   handle?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
   displayName?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
-  tokenCiphertext?: Prisma.StringFilter<"SocialAccount"> | string
+  tokenCiphertext?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
   tokenExpiresAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   scopes?: Prisma.StringNullableListFilter<"SocialAccount">
   connectedAt?: Prisma.DateTimeFilter<"SocialAccount"> | Date | string
@@ -244,7 +244,7 @@ export type SocialAccountOrderByWithRelationInput = {
   externalId?: Prisma.SortOrder
   handle?: Prisma.SortOrderInput | Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
-  tokenCiphertext?: Prisma.SortOrder
+  tokenCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
   tokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   scopes?: Prisma.SortOrder
   connectedAt?: Prisma.SortOrder
@@ -265,7 +265,7 @@ export type SocialAccountWhereUniqueInput = Prisma.AtLeast<{
   externalId?: Prisma.StringFilter<"SocialAccount"> | string
   handle?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
   displayName?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
-  tokenCiphertext?: Prisma.StringFilter<"SocialAccount"> | string
+  tokenCiphertext?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
   tokenExpiresAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   scopes?: Prisma.StringNullableListFilter<"SocialAccount">
   connectedAt?: Prisma.DateTimeFilter<"SocialAccount"> | Date | string
@@ -281,7 +281,7 @@ export type SocialAccountOrderByWithAggregationInput = {
   externalId?: Prisma.SortOrder
   handle?: Prisma.SortOrderInput | Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
-  tokenCiphertext?: Prisma.SortOrder
+  tokenCiphertext?: Prisma.SortOrderInput | Prisma.SortOrder
   tokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   scopes?: Prisma.SortOrder
   connectedAt?: Prisma.SortOrder
@@ -302,7 +302,7 @@ export type SocialAccountScalarWhereWithAggregatesInput = {
   externalId?: Prisma.StringWithAggregatesFilter<"SocialAccount"> | string
   handle?: Prisma.StringNullableWithAggregatesFilter<"SocialAccount"> | string | null
   displayName?: Prisma.StringNullableWithAggregatesFilter<"SocialAccount"> | string | null
-  tokenCiphertext?: Prisma.StringWithAggregatesFilter<"SocialAccount"> | string
+  tokenCiphertext?: Prisma.StringNullableWithAggregatesFilter<"SocialAccount"> | string | null
   tokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SocialAccount"> | Date | string | null
   scopes?: Prisma.StringNullableListFilter<"SocialAccount">
   connectedAt?: Prisma.DateTimeWithAggregatesFilter<"SocialAccount"> | Date | string
@@ -316,7 +316,7 @@ export type SocialAccountCreateInput = {
   externalId: string
   handle?: string | null
   displayName?: string | null
-  tokenCiphertext: string
+  tokenCiphertext?: string | null
   tokenExpiresAt?: Date | string | null
   scopes?: Prisma.SocialAccountCreatescopesInput | string[]
   connectedAt?: Date | string
@@ -332,7 +332,7 @@ export type SocialAccountUncheckedCreateInput = {
   externalId: string
   handle?: string | null
   displayName?: string | null
-  tokenCiphertext: string
+  tokenCiphertext?: string | null
   tokenExpiresAt?: Date | string | null
   scopes?: Prisma.SocialAccountCreatescopesInput | string[]
   connectedAt?: Date | string
@@ -346,7 +346,7 @@ export type SocialAccountUpdateInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,7 +362,7 @@ export type SocialAccountUncheckedUpdateInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -377,7 +377,7 @@ export type SocialAccountCreateManyInput = {
   externalId: string
   handle?: string | null
   displayName?: string | null
-  tokenCiphertext: string
+  tokenCiphertext?: string | null
   tokenExpiresAt?: Date | string | null
   scopes?: Prisma.SocialAccountCreatescopesInput | string[]
   connectedAt?: Date | string
@@ -391,7 +391,7 @@ export type SocialAccountUpdateManyMutationInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -406,7 +406,7 @@ export type SocialAccountUncheckedUpdateManyInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -546,7 +546,7 @@ export type SocialAccountCreateWithoutCreatorInput = {
   externalId: string
   handle?: string | null
   displayName?: string | null
-  tokenCiphertext: string
+  tokenCiphertext?: string | null
   tokenExpiresAt?: Date | string | null
   scopes?: Prisma.SocialAccountCreatescopesInput | string[]
   connectedAt?: Date | string
@@ -560,7 +560,7 @@ export type SocialAccountUncheckedCreateWithoutCreatorInput = {
   externalId: string
   handle?: string | null
   displayName?: string | null
-  tokenCiphertext: string
+  tokenCiphertext?: string | null
   tokenExpiresAt?: Date | string | null
   scopes?: Prisma.SocialAccountCreatescopesInput | string[]
   connectedAt?: Date | string
@@ -604,7 +604,7 @@ export type SocialAccountScalarWhereInput = {
   externalId?: Prisma.StringFilter<"SocialAccount"> | string
   handle?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
   displayName?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
-  tokenCiphertext?: Prisma.StringFilter<"SocialAccount"> | string
+  tokenCiphertext?: Prisma.StringNullableFilter<"SocialAccount"> | string | null
   tokenExpiresAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   scopes?: Prisma.StringNullableListFilter<"SocialAccount">
   connectedAt?: Prisma.DateTimeFilter<"SocialAccount"> | Date | string
@@ -618,7 +618,7 @@ export type SocialAccountCreateManyCreatorInput = {
   externalId: string
   handle?: string | null
   displayName?: string | null
-  tokenCiphertext: string
+  tokenCiphertext?: string | null
   tokenExpiresAt?: Date | string | null
   scopes?: Prisma.SocialAccountCreatescopesInput | string[]
   connectedAt?: Date | string
@@ -632,7 +632,7 @@ export type SocialAccountUpdateWithoutCreatorInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -646,7 +646,7 @@ export type SocialAccountUncheckedUpdateWithoutCreatorInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -660,7 +660,7 @@ export type SocialAccountUncheckedUpdateManyWithoutCreatorInput = {
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  tokenCiphertext?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -769,9 +769,12 @@ export type $SocialAccountPayload<ExtArgs extends runtime.Types.Extensions.Inter
      * Versioned ciphertext envelope: "v1.<iv_b64url>.<tag_b64url>.<ct_b64url>"
      * Instagram: 60-day long-lived access token.
      * YouTube: OAuth2 refresh token (no fixed expiry — see lastVerifiedAt).
+     * Null for YouTube when Google returns no refresh_token (e.g. no offline
+     * access); the connection row still records channel identity for audit,
+     * but no token is available for API calls until the creator re-authenticates.
      * The format prefix lets the decrypt path be extended without a data migration.
      */
-    tokenCiphertext: string
+    tokenCiphertext: string | null
     tokenExpiresAt: Date | null
     /**
      * OAuth scopes granted at connect time; stored for audit and re-consent detection.

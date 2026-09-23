@@ -129,8 +129,11 @@ model SocialAccount {
   /// Versioned ciphertext envelope: "v1.<iv_b64url>.<tag_b64url>.<ct_b64url>"
   /// Instagram: 60-day long-lived access token.
   /// YouTube: OAuth2 refresh token (no fixed expiry — see lastVerifiedAt).
+  /// Null for YouTube when Google returns no refresh_token (e.g. no offline
+  /// access); the connection row still records channel identity for audit,
+  /// but no token is available for API calls until the creator re-authenticates.
   /// The format prefix lets the decrypt path be extended without a data migration.
-  tokenCiphertext String
+  tokenCiphertext String?
   tokenExpiresAt  DateTime?
 
   /// OAuth scopes granted at connect time; stored for audit and re-consent detection.

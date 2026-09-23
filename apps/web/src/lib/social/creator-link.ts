@@ -16,7 +16,7 @@ export async function linkSocialAccount(params: {
   externalId: string;
   handle: string | null;
   displayName: string | null;
-  tokenCiphertext: string;
+  tokenCiphertext: string | null;
   tokenExpiresAt: Date | null;
   scopes: string[];
 }): Promise<LinkResult> {
@@ -110,7 +110,7 @@ async function ensureSocialAccount(
     externalId: string;
     handle: string | null;
     displayName: string | null;
-    tokenCiphertext: string;
+    tokenCiphertext: string | null;
     tokenExpiresAt: Date | null;
     scopes: string[];
   }
