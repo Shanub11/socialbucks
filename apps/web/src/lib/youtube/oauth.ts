@@ -19,7 +19,6 @@ import { z } from 'zod';
 
 import { env } from '@/lib/env';
 import {
-  OAuthHttpError,
   parseOrThrow,
   requestJson,
   throwForStatus,
@@ -189,7 +188,9 @@ function throwGoogleStatus(
  * Parses an ISO 8601 duration string (e.g. "PT15S", "PT5M30S") into
  * total seconds. Returns null if the string is unparseable.
  *
- * Used to determine whether content is a Short (typically < 60s).
+ * Used to determine whether content could be a Short (typically < 180s).
+ * Duration is only a cheap pre-filter — use verifyIsShort, the Analytics
+ * API's creatorContentType dimension, for the authoritative check.
  */
 export function parseIsoDuration(duration: string | null): number | null {
   if (!duration) return null;

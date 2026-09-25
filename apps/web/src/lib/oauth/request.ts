@@ -76,14 +76,13 @@ export function throwForStatus(
 }
 
 /**
- * Exported so each provider's lib can reuse the same hardening instead of
- * re-implementing it. Treat as internal to lib/oauth — routes should not
- * call it directly.
+ * Internal fetch helper shared by requestJson and requestJsonWithHeaders.
+ * Handles timeout, no-store cache, JSON parsing, and network errors.
  */
-export async function requestJson(
+async function fetchJson(
   url: string,
   init: RequestInit = {},
-): Promise<unknown> {
+): Promise<{ response: Response; body: unknown }> {
   let response: Response;
 
   try {
@@ -102,6 +101,19 @@ export async function requestJson(
   }
 
   const body = await readJson(response);
+  return { response, body };
+}
+
+/**
+ * Exported so each provider's lib can reuse the same hardening instead of
+ * re-implementing it. Treat as internal to lib/oauth — routes should not
+ * call it directly.
+ */
+export async function requestJson(
+  url: string,
+  init: RequestInit = {},
+): Promise<unknown> {
+  const { response, body } = await fetchJson(url, init);
   if (!response.ok) {
     // `throwForStatus` is provided by each provider module, which knows how
     // to extract a safe code from that provider's error envelope.
@@ -111,6 +123,18 @@ export async function requestJson(
     );
   }
   return body;
+}
+
+/**
+ * Like requestJson but returns the response headers alongside the body.
+ * Needed to honor Retry-After headers on rate-limited responses.
+ */
+export async function requestJsonWithHeaders(
+  url: string,
+  init: RequestInit = {},
+): Promise<{ body: unknown; headers: Headers; status: number }> {
+  const { response, body } = await fetchJson(url, init);
+  return { body, headers: response.headers, status: response.status };
 }
 
 /**
@@ -133,4 +157,35 @@ export function parseOrThrow<T>(
     throw new OAuthHttpError(`Unexpected ${label} response from provider`);
   }
   return result.data;
+}
+
+/**
+ * Exponential backoff with jitter for rate limits and transient errors.
+ * Honors the provider's Retry-After header when present.
+ *
+ * @param attempt - Zero-based attempt number (0 = first retry)
+ * @param retryAfterMs - Optional Retry-After value in milliseconds
+ * @returns Number of milliseconds to wait before the next attempt
+ */
+export function computeBackoffMs(
+  attempt: number,
+  retryAfterMs?: number,
+): number {
+  if (retryAfterMs && retryAfterMs > 0) {
+    return retryAfterMs;
+  }
+  const baseDelayMs = 500;
+  const exponential = baseDelayMs * (2 ** attempt);
+  // Jitter: random value between 0 and exponential delay
+  const jitter = Math.floor(Math.random() * exponential);
+  return exponential + jitter;
+}
+
+/**
+ * Sleep for the given number of milliseconds.
+ * Exported so callers (and tests) can stub the delay.
+ */
+export async function sleep(ms: number): Promise<void> {
+  if (ms <= 0) return;
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
