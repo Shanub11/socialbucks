@@ -46,7 +46,7 @@ function makeParsedReport(
 
 describe('parseVideoSettlement', () => {
   it('returns a VideoSettlement with the expected metrics for a normal row', () => {
-    const parsed = makeParsedReport([['x']], {
+    const parsed = makeParsedReport([], {
       views: 1000,
       engagedViews: 200,
       estimatedMinutesWatched: 30,
@@ -68,7 +68,7 @@ describe('parseVideoSettlement', () => {
 
   it('passes through averageViewPercentage values over 100 uncapped', () => {
     // Loopable Shorts get rewatched in one session, so values over 100 are legitimate.
-    const parsed = makeParsedReport([['x']], {
+    const parsed = makeParsedReport([], {
       views: 500,
       averageViewPercentage: 250, // over 100 - should pass through unchanged
     });
@@ -79,7 +79,7 @@ describe('parseVideoSettlement', () => {
   });
 
   it('passes through averageViewPercentage of exactly 100 unchanged', () => {
-    const parsed = makeParsedReport([['x']], { averageViewPercentage: 100 });
+    const parsed = makeParsedReport([], { averageViewPercentage: 100 });
     const result = parseVideoSettlement(parsed);
     expect(result.averageViewPercentage).toBe(100);
   });

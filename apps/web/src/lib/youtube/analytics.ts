@@ -292,9 +292,9 @@ export async function fetchVideoSettlement(
  * Submission-time check, called once when a creator submits a video.
  * Uses the Analytics API's creatorContentType dimension against the channel report.
  *
- * @confirmed The dimensions=video,creatorContentType pairing fails with 400.
- *            Instead, query creatorContentType against the channel report on its own,
- *            matching the workaround in this codebase's own history.
+ * Note: The dimensions=video,creatorContentType pairing fails with 400.
+ * Instead, query creatorContentType against the channel report on its own,
+ * matching the workaround in this codebase's own history.
  *
  * Note on Shorts view-counting (March 2025): YouTube changed how it counts
  * Shorts views — plays with no minimum watch-time threshold are now counted.

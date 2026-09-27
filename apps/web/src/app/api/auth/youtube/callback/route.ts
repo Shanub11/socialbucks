@@ -18,7 +18,7 @@ import type { NextRequest } from 'next/server';
 
 import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
 import {
-  APP_ORIGIN,
+  getAppOrigin,
   CONNECT_RETURN_PATH,
   REQUIRED_SCOPES,
 } from '@/lib/youtube/constants';
@@ -55,7 +55,7 @@ type FailureCode =
 function redirectHome(
   params: Record<string, string>,
 ): NextResponse {
-  const target = new URL(CONNECT_RETURN_PATH, APP_ORIGIN);
+  const target = new URL(CONNECT_RETURN_PATH, getAppOrigin());
   for (const [key, value] of Object.entries(params)) {
     target.searchParams.set(key, value);
   }
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
   const { userId } = await auth();
 
   if (!userId) {
-    const signIn = new URL('/sign-in', APP_ORIGIN);
+    const signIn = new URL('/sign-in', getAppOrigin());
     signIn.searchParams.set('redirect_url', CONNECT_RETURN_PATH);
     return NextResponse.redirect(signIn);
   }

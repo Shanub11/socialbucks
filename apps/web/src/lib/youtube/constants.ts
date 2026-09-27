@@ -3,8 +3,13 @@
 // Endpoints, scopes, and derived origins for YouTube Data API v3 and YouTube
 // Analytics API v2. Kept separate from oauth.ts so the values are greppable
 // and there is exactly one place to touch when Google moves a host.
-
-import { env } from '@/lib/env';
+//
+// IMPORTANT: This file must not import from @/lib/env at module-parse time.
+// analytics.ts and other pure-logic modules import YOUTUBE_ANALYTICS_API_BASE
+// from here. If this file eagerly imports env, every test that imports
+// analytics.ts drags in envSchema.parse() and fails unless all secrets are
+// present. APP_ORIGIN is therefore a lazy getter — it reads env only when
+// called, never on import.
 
 /**
  * OAuth 2.0 authorization endpoint.
@@ -65,12 +70,20 @@ export const REQUIRED_SCOPES = [
 export const TOKEN_ENCRYPTION_CONTEXT = 'youtube:refresh_token:v1';
 
 /**
- * Derived from the redirect URI rather than configured separately, which
- * guarantees post-callback redirects land on the same origin the OAuth
- * flow returned to. Two env vars that must agree is two env vars that
- * eventually won't.
+ * Returns the app origin derived from YOUTUBE_REDIRECT_URI.
+ *
+ * This is a **lazy getter** rather than a module-level constant so that
+ * importing this file (e.g. from analytics.ts) does not trigger
+ * envSchema.parse() at test time when secrets are absent.
+ *
+ * Call this only in request-handling code (callback routes, buildAuthorizeUrl),
+ * never at module-load time.
  */
-export const APP_ORIGIN = new URL(env.YOUTUBE_REDIRECT_URI).origin;
+export function getAppOrigin(): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { env } = require('@/lib/env') as { env: { YOUTUBE_REDIRECT_URI: string } };
+  return new URL(env.YOUTUBE_REDIRECT_URI).origin;
+}
 
 /**
  * Where the user ends up after connecting. Kept here so the callback and

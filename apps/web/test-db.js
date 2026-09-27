@@ -1,1 +1,0 @@
-const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { const accounts = await prisma.socialAccount.findMany({ where: { platform: 'YOUTUBE' } }); console.log(accounts); } main().catch(console.error).finally(() => prisma.$disconnect());

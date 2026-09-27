@@ -9,7 +9,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-import { APP_ORIGIN } from '@/lib/youtube/constants';
+import { getAppOrigin } from '@/lib/youtube/constants';
 import {
   OAUTH_NONCE_COOKIE,
   OAUTH_COOKIE_PATH,
@@ -23,7 +23,7 @@ export async function POST() {
   const { userId } = await auth();
 
   if (!userId) {
-    const signIn = new URL('/sign-in', APP_ORIGIN);
+    const signIn = new URL('/sign-in', getAppOrigin());
     signIn.searchParams.set(
       'redirect_url',
       '/api/auth/youtube/disconnect',
