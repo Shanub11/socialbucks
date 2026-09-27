@@ -78,23 +78,18 @@ export interface VideoSettlement {
 }
 
 /**
- * Internal helper to convert the Analytics API response rows into a VideoSettlement object.
+ * Convert Analytics API response rows into a VideoSettlement object.
  * Assumes the column order matches the metrics requested in the query.
+ *
+ * @throws OAuthHttpError when the API returned no rows — distinguishes
+ *   a "no data for this video" state from a row of all zeros.
  */
-function parseVideoSettlement(parsed: z.infer<typeof analyticsReportSchema>): VideoSettlement {
+export function parseVideoSettlement(parsed: z.infer<typeof analyticsReportSchema>): VideoSettlement {
   if (parsed.rows.length === 0) {
-    // No data for this video in the date range - return zeros
-    return {
-      views: 0,
-      engagedViews: 0,
-      estimatedMinutesWatched: 0,
-      averageViewPercentage: 0,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      subscribersGained: 0,
-      videosAddedToPlaylists: 0,
-    };
+    throw new OAuthHttpError(
+      'YouTube Analytics returned no rows for this video',
+      { status: 404 },
+    );
   }
 
   if (parsed.rows.length > 1) {
@@ -157,6 +152,58 @@ function parseRetryAfter(headers: Headers): number | undefined {
 }
 
 /**
+ * Shared retry-and-backoff helper used by both fetchVideoSettlement and
+ * verifyIsShort. Retries on OAuthHttpError and on 429 / 5xx responses,
+ * with exponential backoff and optional Retry-After honouring.
+ *
+ * @param fetchFn - Async function that makes the request and returns
+ *                { body, headers, status } (e.g. requestJsonWithHeaders)
+ * @param processResult - Function to process the successful result body;
+ *                       returns the final value or throws
+ */
+async function withRetry<T>(
+  fetchFn: () => Promise<{ body: unknown; headers: Headers; status: number }>,
+  processResult: (result: {
+    body: unknown; headers: Headers; status: number;
+  }) => T,
+): Promise<T> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    let result: { body: unknown; headers: Headers; status: number };
+    try {
+      result = await fetchFn();
+    } catch (error) {
+      // Network/timeout error - retryable if we have attempts left
+      if (error instanceof OAuthHttpError && attempt < MAX_RETRIES) {
+        await sleep(computeBackoffMs(attempt));
+        continue;
+      }
+      throw error;
+    }
+
+    // HTTP error status - retry on rate limits (429) and server errors (5xx)
+    if (result.status !== 200) {
+      if ((result.status === 429 || result.status >= 500) && attempt < MAX_RETRIES) {
+        const retryAfterMs = parseRetryAfter(result.headers);
+        await sleep(computeBackoffMs(attempt, retryAfterMs));
+        continue;
+      }
+      // Non-retryable or exhausted retries - process the error through the schema
+      throwForStatus(
+        { ok: false, status: result.status } as Response,
+        result.body,
+        youtubeAnalyticsErrorSchema,
+        'YouTube Analytics',
+      );
+    }
+
+    // Success path - process the result
+    return processResult(result);
+  }
+
+  throw new OAuthHttpError('Failed after max retries');
+}
+
+/**
  * Fetch settlement metrics for a single video over a date range.
  *
  * Confirmed working query shape:
@@ -209,54 +256,34 @@ export async function fetchVideoSettlement(
     'metrics',
     'views,engagedViews,estimatedMinutesWatched,averageViewPercentage,likes,comments,shares,subscribersGained,videosAddedToPlaylists'
   );
-  // Note: intentionally NO dimensions parameter
-  url.searchParams.set('access_token', accessToken);
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    let result: { body: unknown; headers: Headers; status: number };
-    try {
-      result = await requestJsonWithHeaders(url.toString());
-    } catch (error) {
-      // Network/timeout error - retryable
-      if (error instanceof OAuthHttpError && attempt < MAX_RETRIES) {
-        await sleep(computeBackoffMs(attempt));
-        continue;
-      }
-      throw error;
-    }
+  // Auth goes in the Authorization header, never in the URL (see task 3).
+  const fetchFn = () => requestJsonWithHeaders(url.toString(), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
-    // HTTP error status
-    if (result.status !== 200) {
-      // Retry on rate limits (429) and server errors (5xx)
-      if ((result.status === 429 || result.status >= 500) && attempt < MAX_RETRIES) {
-        const retryAfterMs = parseRetryAfter(result.headers);
-        await sleep(computeBackoffMs(attempt, retryAfterMs));
-        continue;
-      }
-      // Non-retryable or exhausted retries - throw with safe error code
-      throwForStatus(
-        { ok: false, status: result.status } as Response,
-        result.body,
-        youtubeAnalyticsErrorSchema,
-        'YouTube Analytics',
-      );
-    }
-
+  const processResult = ({
+    body,
+  }: {
+    body: unknown;
+    headers: Headers;
+    status: number;
+  }) => {
     // Check for API-level error in the response body
-    if (typeof result.body === 'object' && result.body !== null && 'error' in result.body) {
+    if (typeof body === 'object' && body !== null && 'error' in body) {
       throwForStatus(
         { ok: false, status: 400 } as Response,
-        result.body,
+        body,
         youtubeAnalyticsErrorSchema,
         'YouTube Analytics',
       );
     }
 
-    const parsed = parseOrThrow(analyticsReportSchema, result.body, 'analytics report');
+    const parsed = parseOrThrow(analyticsReportSchema, body, 'analytics report');
     return parseVideoSettlement(parsed);
-  }
+  };
 
-  throw new OAuthHttpError('Failed to fetch video settlement after retries');
+  return withRetry(fetchFn, processResult);
 }
 
 /**
@@ -292,6 +319,7 @@ export async function verifyIsShort(
 
   // Query for creatorContentType dimension only (no video dimension due to API limitations)
   // This matches the workaround mentioned in the task description
+  // Auth goes in the Authorization header, never in the URL (see task 3).
   const url = new URL('/reports', YOUTUBE_ANALYTICS_API_BASE);
   url.searchParams.set('ids', 'channel==MINE');
   url.searchParams.set('startDate', '2020-01-01'); // Far enough back to cover all videos
@@ -299,44 +327,28 @@ export async function verifyIsShort(
   url.searchParams.set('filters', `video==${videoId}`);
   url.searchParams.set('dimensions', 'creatorContentType');
   url.searchParams.set('metrics', 'views'); // Need at least one metric
-  url.searchParams.set('access_token', accessToken);
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    let result: { body: unknown; headers: Headers; status: number };
-    try {
-      result = await requestJsonWithHeaders(url.toString());
-    } catch (error) {
-      if (error instanceof OAuthHttpError && attempt < MAX_RETRIES) {
-        await sleep(computeBackoffMs(attempt));
-        continue;
-      }
-      throw error;
-    }
+  const fetchFn = () => requestJsonWithHeaders(url.toString(), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
-    if (result.status !== 200) {
-      if ((result.status === 429 || result.status >= 500) && attempt < MAX_RETRIES) {
-        const retryAfterMs = parseRetryAfter(result.headers);
-        await sleep(computeBackoffMs(attempt, retryAfterMs));
-        continue;
-      }
-      throwForStatus(
-        { ok: false, status: result.status } as Response,
-        result.body,
-        youtubeAnalyticsErrorSchema,
-        'YouTube Analytics',
-      );
-    }
-
-    if (typeof result.body === 'object' && result.body !== null && 'error' in result.body) {
+  const processResult = ({
+    body,
+  }: {
+    body: unknown;
+    headers: Headers;
+    status: number;
+  }) => {
+    if (typeof body === 'object' && body !== null && 'error' in body) {
       throwForStatus(
         { ok: false, status: 400 } as Response,
-        result.body,
+        body,
         youtubeAnalyticsErrorSchema,
         'YouTube Analytics',
       );
     }
 
-    const parsed = parseOrThrow(analyticsReportSchema, result.body, 'analytics report');
+    const parsed = parseOrThrow(analyticsReportSchema, body, 'analytics report');
 
     // Check if any row has creatorContentType == "SHORT"
     for (const row of parsed.rows) {
@@ -351,7 +363,7 @@ export async function verifyIsShort(
 
     // If we get here, no SHORT classification found
     return false;
-  }
+  };
 
-  throw new OAuthHttpError('Failed to verify Short status after retries');
+  return withRetry(fetchFn, processResult);
 }

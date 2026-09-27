@@ -206,13 +206,13 @@ export function parseIsoDuration(duration: string | null): number | null {
 
 /**
  * Returns true if the parsed duration indicates a YouTube Short.
- * YouTube Shorts are typically under 60 seconds. The threshold here
+ * YouTube Shorts are typically under 180 seconds. The threshold here
  * is deliberately generous to avoid false negatives on edge cases
- * (e.g. 58-second content). Adjust if YouTube changes the definition.
+ * (e.g. 178-second content). Adjust if YouTube changes the definition.
  */
 export function isShortByDuration(durationSeconds: number | null): boolean {
   if (durationSeconds === null) return false;
-  return durationSeconds < 60;
+  return durationSeconds < 180;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -341,11 +341,12 @@ export async function fetchChannel(
     ['snippet', 'contentDetails', 'statistics'].join(','),
   );
   url.searchParams.set('mine', 'true');
-  url.searchParams.set('access_token', accessToken);
 
   const parsed = parseOrThrow(
     channelListSchema,
-    await requestJson(url.toString()),
+    await requestJson(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
     'channel list',
   );
 
@@ -364,7 +365,7 @@ export async function fetchChannel(
 
 /**
  * Reads a single video's contentDetails by ID. Used at submission time
- * to confirm the video is a Short (contentDetails.duration < 60s).
+ * to confirm the video is a Short (contentDetails.duration < 180s).
  *
  * The caller must already have verified the video belongs to the
  * authenticated channel (via fetchChannel or a separate ownership
@@ -378,11 +379,12 @@ export async function fetchVideoContentDetails(
   const url = new URL('/videos', YOUTUBE_DATA_API_BASE);
   url.searchParams.set('part', 'snippet,contentDetails');
   url.searchParams.set('id', videoId);
-  url.searchParams.set('access_token', accessToken);
 
   const parsed = parseOrThrow(
     videoListSchema,
-    await requestJson(url.toString()),
+    await requestJson(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
     'video list',
   );
 
