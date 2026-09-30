@@ -235,6 +235,7 @@ export type SocialAccountWhereInput = {
   revokedAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   lastVerifiedAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   creator?: Prisma.XOR<Prisma.CreatorScalarRelationFilter, Prisma.CreatorWhereInput>
+  slots?: Prisma.CampaignCreatorSlotListRelationFilter
 }
 
 export type SocialAccountOrderByWithRelationInput = {
@@ -251,6 +252,7 @@ export type SocialAccountOrderByWithRelationInput = {
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   creator?: Prisma.CreatorOrderByWithRelationInput
+  slots?: Prisma.CampaignCreatorSlotOrderByRelationAggregateInput
 }
 
 export type SocialAccountWhereUniqueInput = Prisma.AtLeast<{
@@ -272,6 +274,7 @@ export type SocialAccountWhereUniqueInput = Prisma.AtLeast<{
   revokedAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   lastVerifiedAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
   creator?: Prisma.XOR<Prisma.CreatorScalarRelationFilter, Prisma.CreatorWhereInput>
+  slots?: Prisma.CampaignCreatorSlotListRelationFilter
 }, "id" | "platform_externalId" | "creatorId_platform">
 
 export type SocialAccountOrderByWithAggregationInput = {
@@ -323,6 +326,7 @@ export type SocialAccountCreateInput = {
   revokedAt?: Date | string | null
   lastVerifiedAt?: Date | string | null
   creator: Prisma.CreatorCreateNestedOneWithoutSocialAccountsInput
+  slots?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutSocialAccountInput
 }
 
 export type SocialAccountUncheckedCreateInput = {
@@ -338,6 +342,7 @@ export type SocialAccountUncheckedCreateInput = {
   connectedAt?: Date | string
   revokedAt?: Date | string | null
   lastVerifiedAt?: Date | string | null
+  slots?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutSocialAccountInput
 }
 
 export type SocialAccountUpdateInput = {
@@ -353,6 +358,7 @@ export type SocialAccountUpdateInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSocialAccountsNestedInput
+  slots?: Prisma.CampaignCreatorSlotUpdateManyWithoutSocialAccountNestedInput
 }
 
 export type SocialAccountUncheckedUpdateInput = {
@@ -368,6 +374,7 @@ export type SocialAccountUncheckedUpdateInput = {
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  slots?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountNestedInput
 }
 
 export type SocialAccountCreateManyInput = {
@@ -485,6 +492,11 @@ export type SocialAccountMinOrderByAggregateInput = {
   lastVerifiedAt?: Prisma.SortOrder
 }
 
+export type SocialAccountNullableScalarRelationFilter = {
+  is?: Prisma.SocialAccountWhereInput | null
+  isNot?: Prisma.SocialAccountWhereInput | null
+}
+
 export type SocialAccountCreateNestedManyWithoutCreatorInput = {
   create?: Prisma.XOR<Prisma.SocialAccountCreateWithoutCreatorInput, Prisma.SocialAccountUncheckedCreateWithoutCreatorInput> | Prisma.SocialAccountCreateWithoutCreatorInput[] | Prisma.SocialAccountUncheckedCreateWithoutCreatorInput[]
   connectOrCreate?: Prisma.SocialAccountCreateOrConnectWithoutCreatorInput | Prisma.SocialAccountCreateOrConnectWithoutCreatorInput[]
@@ -540,6 +552,22 @@ export type SocialAccountUpdatescopesInput = {
   push?: string | string[]
 }
 
+export type SocialAccountCreateNestedOneWithoutSlotsInput = {
+  create?: Prisma.XOR<Prisma.SocialAccountCreateWithoutSlotsInput, Prisma.SocialAccountUncheckedCreateWithoutSlotsInput>
+  connectOrCreate?: Prisma.SocialAccountCreateOrConnectWithoutSlotsInput
+  connect?: Prisma.SocialAccountWhereUniqueInput
+}
+
+export type SocialAccountUpdateOneWithoutSlotsNestedInput = {
+  create?: Prisma.XOR<Prisma.SocialAccountCreateWithoutSlotsInput, Prisma.SocialAccountUncheckedCreateWithoutSlotsInput>
+  connectOrCreate?: Prisma.SocialAccountCreateOrConnectWithoutSlotsInput
+  upsert?: Prisma.SocialAccountUpsertWithoutSlotsInput
+  disconnect?: Prisma.SocialAccountWhereInput | boolean
+  delete?: Prisma.SocialAccountWhereInput | boolean
+  connect?: Prisma.SocialAccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SocialAccountUpdateToOneWithWhereWithoutSlotsInput, Prisma.SocialAccountUpdateWithoutSlotsInput>, Prisma.SocialAccountUncheckedUpdateWithoutSlotsInput>
+}
+
 export type SocialAccountCreateWithoutCreatorInput = {
   id?: string
   platform: $Enums.SocialPlatform
@@ -552,6 +580,7 @@ export type SocialAccountCreateWithoutCreatorInput = {
   connectedAt?: Date | string
   revokedAt?: Date | string | null
   lastVerifiedAt?: Date | string | null
+  slots?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutSocialAccountInput
 }
 
 export type SocialAccountUncheckedCreateWithoutCreatorInput = {
@@ -566,6 +595,7 @@ export type SocialAccountUncheckedCreateWithoutCreatorInput = {
   connectedAt?: Date | string
   revokedAt?: Date | string | null
   lastVerifiedAt?: Date | string | null
+  slots?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutSocialAccountInput
 }
 
 export type SocialAccountCreateOrConnectWithoutCreatorInput = {
@@ -612,6 +642,82 @@ export type SocialAccountScalarWhereInput = {
   lastVerifiedAt?: Prisma.DateTimeNullableFilter<"SocialAccount"> | Date | string | null
 }
 
+export type SocialAccountCreateWithoutSlotsInput = {
+  id?: string
+  platform: $Enums.SocialPlatform
+  externalId: string
+  handle?: string | null
+  displayName?: string | null
+  tokenCiphertext?: string | null
+  tokenExpiresAt?: Date | string | null
+  scopes?: Prisma.SocialAccountCreatescopesInput | string[]
+  connectedAt?: Date | string
+  revokedAt?: Date | string | null
+  lastVerifiedAt?: Date | string | null
+  creator: Prisma.CreatorCreateNestedOneWithoutSocialAccountsInput
+}
+
+export type SocialAccountUncheckedCreateWithoutSlotsInput = {
+  id?: string
+  creatorId: string
+  platform: $Enums.SocialPlatform
+  externalId: string
+  handle?: string | null
+  displayName?: string | null
+  tokenCiphertext?: string | null
+  tokenExpiresAt?: Date | string | null
+  scopes?: Prisma.SocialAccountCreatescopesInput | string[]
+  connectedAt?: Date | string
+  revokedAt?: Date | string | null
+  lastVerifiedAt?: Date | string | null
+}
+
+export type SocialAccountCreateOrConnectWithoutSlotsInput = {
+  where: Prisma.SocialAccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.SocialAccountCreateWithoutSlotsInput, Prisma.SocialAccountUncheckedCreateWithoutSlotsInput>
+}
+
+export type SocialAccountUpsertWithoutSlotsInput = {
+  update: Prisma.XOR<Prisma.SocialAccountUpdateWithoutSlotsInput, Prisma.SocialAccountUncheckedUpdateWithoutSlotsInput>
+  create: Prisma.XOR<Prisma.SocialAccountCreateWithoutSlotsInput, Prisma.SocialAccountUncheckedCreateWithoutSlotsInput>
+  where?: Prisma.SocialAccountWhereInput
+}
+
+export type SocialAccountUpdateToOneWithWhereWithoutSlotsInput = {
+  where?: Prisma.SocialAccountWhereInput
+  data: Prisma.XOR<Prisma.SocialAccountUpdateWithoutSlotsInput, Prisma.SocialAccountUncheckedUpdateWithoutSlotsInput>
+}
+
+export type SocialAccountUpdateWithoutSlotsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  platform?: Prisma.EnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform
+  externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creator?: Prisma.CreatorUpdateOneRequiredWithoutSocialAccountsNestedInput
+}
+
+export type SocialAccountUncheckedUpdateWithoutSlotsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  platform?: Prisma.EnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform
+  externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenCiphertext?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scopes?: Prisma.SocialAccountUpdatescopesInput | string[]
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
 export type SocialAccountCreateManyCreatorInput = {
   id?: string
   platform: $Enums.SocialPlatform
@@ -638,6 +744,7 @@ export type SocialAccountUpdateWithoutCreatorInput = {
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  slots?: Prisma.CampaignCreatorSlotUpdateManyWithoutSocialAccountNestedInput
 }
 
 export type SocialAccountUncheckedUpdateWithoutCreatorInput = {
@@ -652,6 +759,7 @@ export type SocialAccountUncheckedUpdateWithoutCreatorInput = {
   connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  slots?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountNestedInput
 }
 
 export type SocialAccountUncheckedUpdateManyWithoutCreatorInput = {
@@ -669,6 +777,35 @@ export type SocialAccountUncheckedUpdateManyWithoutCreatorInput = {
 }
 
 
+/**
+ * Count Type SocialAccountCountOutputType
+ */
+
+export type SocialAccountCountOutputType = {
+  slots: number
+}
+
+export type SocialAccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  slots?: boolean | SocialAccountCountOutputTypeCountSlotsArgs
+}
+
+/**
+ * SocialAccountCountOutputType without action
+ */
+export type SocialAccountCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SocialAccountCountOutputType
+   */
+  select?: Prisma.SocialAccountCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * SocialAccountCountOutputType without action
+ */
+export type SocialAccountCountOutputTypeCountSlotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CampaignCreatorSlotWhereInput
+}
+
 
 export type SocialAccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -684,6 +821,8 @@ export type SocialAccountSelect<ExtArgs extends runtime.Types.Extensions.Interna
   revokedAt?: boolean
   lastVerifiedAt?: boolean
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
+  slots?: boolean | Prisma.SocialAccount$slotsArgs<ExtArgs>
+  _count?: boolean | Prisma.SocialAccountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["socialAccount"]>
 
 export type SocialAccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -736,6 +875,8 @@ export type SocialAccountSelectScalar = {
 export type SocialAccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "creatorId" | "platform" | "externalId" | "handle" | "displayName" | "tokenCiphertext" | "tokenExpiresAt" | "scopes" | "connectedAt" | "revokedAt" | "lastVerifiedAt", ExtArgs["result"]["socialAccount"]>
 export type SocialAccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
+  slots?: boolean | Prisma.SocialAccount$slotsArgs<ExtArgs>
+  _count?: boolean | Prisma.SocialAccountCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SocialAccountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
@@ -748,6 +889,7 @@ export type $SocialAccountPayload<ExtArgs extends runtime.Types.Extensions.Inter
   name: "SocialAccount"
   objects: {
     creator: Prisma.$CreatorPayload<ExtArgs>
+    slots: Prisma.$CampaignCreatorSlotPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1186,6 +1328,7 @@ readonly fields: SocialAccountFieldRefs;
 export interface Prisma__SocialAccountClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   creator<T extends Prisma.CreatorDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CreatorDefaultArgs<ExtArgs>>): Prisma.Prisma__CreatorClient<runtime.Types.Result.GetResult<Prisma.$CreatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  slots<T extends Prisma.SocialAccount$slotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SocialAccount$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CampaignCreatorSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1625,6 +1768,30 @@ export type SocialAccountDeleteManyArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many SocialAccounts to delete.
    */
   limit?: number
+}
+
+/**
+ * SocialAccount.slots
+ */
+export type SocialAccount$slotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CampaignCreatorSlot
+   */
+  select?: Prisma.CampaignCreatorSlotSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CampaignCreatorSlot
+   */
+  omit?: Prisma.CampaignCreatorSlotOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CampaignCreatorSlotInclude<ExtArgs> | null
+  where?: Prisma.CampaignCreatorSlotWhereInput
+  orderBy?: Prisma.CampaignCreatorSlotOrderByWithRelationInput | Prisma.CampaignCreatorSlotOrderByWithRelationInput[]
+  cursor?: Prisma.CampaignCreatorSlotWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CampaignCreatorSlotScalarFieldEnum | Prisma.CampaignCreatorSlotScalarFieldEnum[]
 }
 
 /**

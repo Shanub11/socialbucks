@@ -57,7 +57,8 @@ export const ModelName = {
   Creator: 'Creator',
   SocialAccount: 'SocialAccount',
   Campaign: 'Campaign',
-  CampaignCreatorSlot: 'CampaignCreatorSlot'
+  CampaignCreatorSlot: 'CampaignCreatorSlot',
+  PayoutEvent: 'PayoutEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -178,6 +179,12 @@ export const CampaignCreatorSlotScalarFieldEnum = {
   approvedAt: 'approvedAt',
   currentViewCount: 'currentViewCount',
   lastViewCheckAt: 'lastViewCheckAt',
+  platform: 'platform',
+  contentId: 'contentId',
+  socialAccountId: 'socialAccountId',
+  isShort: 'isShort',
+  isShortVerifiedAt: 'isShortVerifiedAt',
+  viewTarget: 'viewTarget',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -186,12 +193,38 @@ export const CampaignCreatorSlotScalarFieldEnum = {
 export type CampaignCreatorSlotScalarFieldEnum = (typeof CampaignCreatorSlotScalarFieldEnum)[keyof typeof CampaignCreatorSlotScalarFieldEnum]
 
 
+export const PayoutEventScalarFieldEnum = {
+  id: 'id',
+  slotId: 'slotId',
+  tier: 'tier',
+  amount: 'amount',
+  currency: 'currency',
+  billableViews: 'billableViews',
+  billableMetric: 'billableMetric',
+  thresholdViews: 'thresholdViews',
+  settlementJson: 'settlementJson',
+  disbursementStatus: 'disbursementStatus',
+  disbursedAt: 'disbursedAt',
+  externalRef: 'externalRef',
+  createdAt: 'createdAt'
+} as const
+
+export type PayoutEventScalarFieldEnum = (typeof PayoutEventScalarFieldEnum)[keyof typeof PayoutEventScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -208,4 +241,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

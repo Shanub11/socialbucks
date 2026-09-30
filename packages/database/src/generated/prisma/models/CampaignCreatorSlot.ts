@@ -30,12 +30,14 @@ export type CampaignCreatorSlotAvgAggregateOutputType = {
   escrowAmount: runtime.Decimal | null
   paidToDate: runtime.Decimal | null
   currentViewCount: number | null
+  viewTarget: number | null
 }
 
 export type CampaignCreatorSlotSumAggregateOutputType = {
   escrowAmount: runtime.Decimal | null
   paidToDate: runtime.Decimal | null
   currentViewCount: number | null
+  viewTarget: number | null
 }
 
 export type CampaignCreatorSlotMinAggregateOutputType = {
@@ -51,6 +53,12 @@ export type CampaignCreatorSlotMinAggregateOutputType = {
   approvedAt: Date | null
   currentViewCount: number | null
   lastViewCheckAt: Date | null
+  platform: $Enums.SocialPlatform | null
+  contentId: string | null
+  socialAccountId: string | null
+  isShort: boolean | null
+  isShortVerifiedAt: Date | null
+  viewTarget: number | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -69,6 +77,12 @@ export type CampaignCreatorSlotMaxAggregateOutputType = {
   approvedAt: Date | null
   currentViewCount: number | null
   lastViewCheckAt: Date | null
+  platform: $Enums.SocialPlatform | null
+  contentId: string | null
+  socialAccountId: string | null
+  isShort: boolean | null
+  isShortVerifiedAt: Date | null
+  viewTarget: number | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -87,6 +101,12 @@ export type CampaignCreatorSlotCountAggregateOutputType = {
   approvedAt: number
   currentViewCount: number
   lastViewCheckAt: number
+  platform: number
+  contentId: number
+  socialAccountId: number
+  isShort: number
+  isShortVerifiedAt: number
+  viewTarget: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -98,12 +118,14 @@ export type CampaignCreatorSlotAvgAggregateInputType = {
   escrowAmount?: true
   paidToDate?: true
   currentViewCount?: true
+  viewTarget?: true
 }
 
 export type CampaignCreatorSlotSumAggregateInputType = {
   escrowAmount?: true
   paidToDate?: true
   currentViewCount?: true
+  viewTarget?: true
 }
 
 export type CampaignCreatorSlotMinAggregateInputType = {
@@ -119,6 +141,12 @@ export type CampaignCreatorSlotMinAggregateInputType = {
   approvedAt?: true
   currentViewCount?: true
   lastViewCheckAt?: true
+  platform?: true
+  contentId?: true
+  socialAccountId?: true
+  isShort?: true
+  isShortVerifiedAt?: true
+  viewTarget?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -137,6 +165,12 @@ export type CampaignCreatorSlotMaxAggregateInputType = {
   approvedAt?: true
   currentViewCount?: true
   lastViewCheckAt?: true
+  platform?: true
+  contentId?: true
+  socialAccountId?: true
+  isShort?: true
+  isShortVerifiedAt?: true
+  viewTarget?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -155,6 +189,12 @@ export type CampaignCreatorSlotCountAggregateInputType = {
   approvedAt?: true
   currentViewCount?: true
   lastViewCheckAt?: true
+  platform?: true
+  contentId?: true
+  socialAccountId?: true
+  isShort?: true
+  isShortVerifiedAt?: true
+  viewTarget?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -260,6 +300,12 @@ export type CampaignCreatorSlotGroupByOutputType = {
   approvedAt: Date | null
   currentViewCount: number | null
   lastViewCheckAt: Date | null
+  platform: $Enums.SocialPlatform | null
+  contentId: string | null
+  socialAccountId: string | null
+  isShort: boolean | null
+  isShortVerifiedAt: Date | null
+  viewTarget: number | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -301,11 +347,19 @@ export type CampaignCreatorSlotWhereInput = {
   approvedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   currentViewCount?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
   lastViewCheckAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  platform?: Prisma.EnumSocialPlatformNullableFilter<"CampaignCreatorSlot"> | $Enums.SocialPlatform | null
+  contentId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  socialAccountId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  isShort?: Prisma.BoolNullableFilter<"CampaignCreatorSlot"> | boolean | null
+  isShortVerifiedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  viewTarget?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  socialAccount?: Prisma.XOR<Prisma.SocialAccountNullableScalarRelationFilter, Prisma.SocialAccountWhereInput> | null
   campaign?: Prisma.XOR<Prisma.CampaignScalarRelationFilter, Prisma.CampaignWhereInput>
   creator?: Prisma.XOR<Prisma.CreatorScalarRelationFilter, Prisma.CreatorWhereInput>
+  payoutEvents?: Prisma.PayoutEventListRelationFilter
 }
 
 export type CampaignCreatorSlotOrderByWithRelationInput = {
@@ -321,11 +375,19 @@ export type CampaignCreatorSlotOrderByWithRelationInput = {
   approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   currentViewCount?: Prisma.SortOrderInput | Prisma.SortOrder
   lastViewCheckAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  platform?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialAccountId?: Prisma.SortOrderInput | Prisma.SortOrder
+  isShort?: Prisma.SortOrderInput | Prisma.SortOrder
+  isShortVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  viewTarget?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialAccount?: Prisma.SocialAccountOrderByWithRelationInput
   campaign?: Prisma.CampaignOrderByWithRelationInput
   creator?: Prisma.CreatorOrderByWithRelationInput
+  payoutEvents?: Prisma.PayoutEventOrderByRelationAggregateInput
 }
 
 export type CampaignCreatorSlotWhereUniqueInput = Prisma.AtLeast<{
@@ -345,11 +407,19 @@ export type CampaignCreatorSlotWhereUniqueInput = Prisma.AtLeast<{
   approvedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   currentViewCount?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
   lastViewCheckAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  platform?: Prisma.EnumSocialPlatformNullableFilter<"CampaignCreatorSlot"> | $Enums.SocialPlatform | null
+  contentId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  socialAccountId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  isShort?: Prisma.BoolNullableFilter<"CampaignCreatorSlot"> | boolean | null
+  isShortVerifiedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  viewTarget?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  socialAccount?: Prisma.XOR<Prisma.SocialAccountNullableScalarRelationFilter, Prisma.SocialAccountWhereInput> | null
   campaign?: Prisma.XOR<Prisma.CampaignScalarRelationFilter, Prisma.CampaignWhereInput>
   creator?: Prisma.XOR<Prisma.CreatorScalarRelationFilter, Prisma.CreatorWhereInput>
+  payoutEvents?: Prisma.PayoutEventListRelationFilter
 }, "id" | "campaignId_creatorId">
 
 export type CampaignCreatorSlotOrderByWithAggregationInput = {
@@ -365,6 +435,12 @@ export type CampaignCreatorSlotOrderByWithAggregationInput = {
   approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   currentViewCount?: Prisma.SortOrderInput | Prisma.SortOrder
   lastViewCheckAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  platform?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialAccountId?: Prisma.SortOrderInput | Prisma.SortOrder
+  isShort?: Prisma.SortOrderInput | Prisma.SortOrder
+  isShortVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  viewTarget?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -391,6 +467,12 @@ export type CampaignCreatorSlotScalarWhereWithAggregatesInput = {
   approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
   currentViewCount?: Prisma.IntNullableWithAggregatesFilter<"CampaignCreatorSlot"> | number | null
   lastViewCheckAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  platform?: Prisma.EnumSocialPlatformNullableWithAggregatesFilter<"CampaignCreatorSlot"> | $Enums.SocialPlatform | null
+  contentId?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
+  socialAccountId?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
+  isShort?: Prisma.BoolNullableWithAggregatesFilter<"CampaignCreatorSlot"> | boolean | null
+  isShortVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  viewTarget?: Prisma.IntNullableWithAggregatesFilter<"CampaignCreatorSlot"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
@@ -407,11 +489,18 @@ export type CampaignCreatorSlotCreateInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
   campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
   creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
+  payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
 }
 
 export type CampaignCreatorSlotUncheckedCreateInput = {
@@ -427,9 +516,16 @@ export type CampaignCreatorSlotUncheckedCreateInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedCreateNestedManyWithoutSlotInput
 }
 
 export type CampaignCreatorSlotUpdateInput = {
@@ -443,11 +539,18 @@ export type CampaignCreatorSlotUpdateInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
   campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
+  payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
 }
 
 export type CampaignCreatorSlotUncheckedUpdateInput = {
@@ -463,9 +566,16 @@ export type CampaignCreatorSlotUncheckedUpdateInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedUpdateManyWithoutSlotNestedInput
 }
 
 export type CampaignCreatorSlotCreateManyInput = {
@@ -481,6 +591,12 @@ export type CampaignCreatorSlotCreateManyInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -497,6 +613,11 @@ export type CampaignCreatorSlotUpdateManyMutationInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -515,6 +636,12 @@ export type CampaignCreatorSlotUncheckedUpdateManyInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -548,6 +675,12 @@ export type CampaignCreatorSlotCountOrderByAggregateInput = {
   approvedAt?: Prisma.SortOrder
   currentViewCount?: Prisma.SortOrder
   lastViewCheckAt?: Prisma.SortOrder
+  platform?: Prisma.SortOrder
+  contentId?: Prisma.SortOrder
+  socialAccountId?: Prisma.SortOrder
+  isShort?: Prisma.SortOrder
+  isShortVerifiedAt?: Prisma.SortOrder
+  viewTarget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -557,6 +690,7 @@ export type CampaignCreatorSlotAvgOrderByAggregateInput = {
   escrowAmount?: Prisma.SortOrder
   paidToDate?: Prisma.SortOrder
   currentViewCount?: Prisma.SortOrder
+  viewTarget?: Prisma.SortOrder
 }
 
 export type CampaignCreatorSlotMaxOrderByAggregateInput = {
@@ -572,6 +706,12 @@ export type CampaignCreatorSlotMaxOrderByAggregateInput = {
   approvedAt?: Prisma.SortOrder
   currentViewCount?: Prisma.SortOrder
   lastViewCheckAt?: Prisma.SortOrder
+  platform?: Prisma.SortOrder
+  contentId?: Prisma.SortOrder
+  socialAccountId?: Prisma.SortOrder
+  isShort?: Prisma.SortOrder
+  isShortVerifiedAt?: Prisma.SortOrder
+  viewTarget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -590,6 +730,12 @@ export type CampaignCreatorSlotMinOrderByAggregateInput = {
   approvedAt?: Prisma.SortOrder
   currentViewCount?: Prisma.SortOrder
   lastViewCheckAt?: Prisma.SortOrder
+  platform?: Prisma.SortOrder
+  contentId?: Prisma.SortOrder
+  socialAccountId?: Prisma.SortOrder
+  isShort?: Prisma.SortOrder
+  isShortVerifiedAt?: Prisma.SortOrder
+  viewTarget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -599,6 +745,12 @@ export type CampaignCreatorSlotSumOrderByAggregateInput = {
   escrowAmount?: Prisma.SortOrder
   paidToDate?: Prisma.SortOrder
   currentViewCount?: Prisma.SortOrder
+  viewTarget?: Prisma.SortOrder
+}
+
+export type CampaignCreatorSlotScalarRelationFilter = {
+  is?: Prisma.CampaignCreatorSlotWhereInput
+  isNot?: Prisma.CampaignCreatorSlotWhereInput
 }
 
 export type CampaignCreatorSlotCreateNestedManyWithoutCreatorInput = {
@@ -640,6 +792,48 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorNestedInput = {
   connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
   update?: Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutCreatorInput | Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutCreatorInput[]
   updateMany?: Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutCreatorInput | Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutCreatorInput[]
+  deleteMany?: Prisma.CampaignCreatorSlotScalarWhereInput | Prisma.CampaignCreatorSlotScalarWhereInput[]
+}
+
+export type CampaignCreatorSlotCreateNestedManyWithoutSocialAccountInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput> | Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManySocialAccountInputEnvelope
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+}
+
+export type CampaignCreatorSlotUncheckedCreateNestedManyWithoutSocialAccountInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput> | Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManySocialAccountInputEnvelope
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+}
+
+export type CampaignCreatorSlotUpdateManyWithoutSocialAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput> | Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput[]
+  upsert?: Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutSocialAccountInput | Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutSocialAccountInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManySocialAccountInputEnvelope
+  set?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  disconnect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  delete?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  update?: Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutSocialAccountInput | Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutSocialAccountInput[]
+  updateMany?: Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutSocialAccountInput | Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutSocialAccountInput[]
+  deleteMany?: Prisma.CampaignCreatorSlotScalarWhereInput | Prisma.CampaignCreatorSlotScalarWhereInput[]
+}
+
+export type CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput> | Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput[]
+  upsert?: Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutSocialAccountInput | Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutSocialAccountInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManySocialAccountInputEnvelope
+  set?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  disconnect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  delete?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  update?: Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutSocialAccountInput | Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutSocialAccountInput[]
+  updateMany?: Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutSocialAccountInput | Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutSocialAccountInput[]
   deleteMany?: Prisma.CampaignCreatorSlotScalarWhereInput | Prisma.CampaignCreatorSlotScalarWhereInput[]
 }
 
@@ -701,6 +895,28 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableEnumSocialPlatformFieldUpdateOperationsInput = {
+  set?: $Enums.SocialPlatform | null
+}
+
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
+}
+
+export type CampaignCreatorSlotCreateNestedOneWithoutPayoutEventsInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput>
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutPayoutEventsInput
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput
+}
+
+export type CampaignCreatorSlotUpdateOneRequiredWithoutPayoutEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput>
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutPayoutEventsInput
+  upsert?: Prisma.CampaignCreatorSlotUpsertWithoutPayoutEventsInput
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CampaignCreatorSlotUpdateToOneWithWhereWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUpdateWithoutPayoutEventsInput>, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput>
+}
+
 export type CampaignCreatorSlotCreateWithoutCreatorInput = {
   id?: string
   status?: $Enums.SlotStatus
@@ -712,10 +928,17 @@ export type CampaignCreatorSlotCreateWithoutCreatorInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
   campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
+  payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
 }
 
 export type CampaignCreatorSlotUncheckedCreateWithoutCreatorInput = {
@@ -730,9 +953,16 @@ export type CampaignCreatorSlotUncheckedCreateWithoutCreatorInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedCreateNestedManyWithoutSlotInput
 }
 
 export type CampaignCreatorSlotCreateOrConnectWithoutCreatorInput = {
@@ -777,9 +1007,89 @@ export type CampaignCreatorSlotScalarWhereInput = {
   approvedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   currentViewCount?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
   lastViewCheckAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  platform?: Prisma.EnumSocialPlatformNullableFilter<"CampaignCreatorSlot"> | $Enums.SocialPlatform | null
+  contentId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  socialAccountId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  isShort?: Prisma.BoolNullableFilter<"CampaignCreatorSlot"> | boolean | null
+  isShortVerifiedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  viewTarget?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+}
+
+export type CampaignCreatorSlotCreateWithoutSocialAccountInput = {
+  id?: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
+  creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
+  payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
+}
+
+export type CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput = {
+  id?: string
+  campaignId: string
+  creatorId: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedCreateNestedManyWithoutSlotInput
+}
+
+export type CampaignCreatorSlotCreateOrConnectWithoutSocialAccountInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput>
+}
+
+export type CampaignCreatorSlotCreateManySocialAccountInputEnvelope = {
+  data: Prisma.CampaignCreatorSlotCreateManySocialAccountInput | Prisma.CampaignCreatorSlotCreateManySocialAccountInput[]
+  skipDuplicates?: boolean
+}
+
+export type CampaignCreatorSlotUpsertWithWhereUniqueWithoutSocialAccountInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  update: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutSocialAccountInput>
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput>
+}
+
+export type CampaignCreatorSlotUpdateWithWhereUniqueWithoutSocialAccountInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutSocialAccountInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutSocialAccountInput>
+}
+
+export type CampaignCreatorSlotUpdateManyWithWhereWithoutSocialAccountInput = {
+  where: Prisma.CampaignCreatorSlotScalarWhereInput
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateManyMutationInput, Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountInput>
 }
 
 export type CampaignCreatorSlotCreateWithoutCampaignInput = {
@@ -793,10 +1103,17 @@ export type CampaignCreatorSlotCreateWithoutCampaignInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
   creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
+  payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
 }
 
 export type CampaignCreatorSlotUncheckedCreateWithoutCampaignInput = {
@@ -811,9 +1128,16 @@ export type CampaignCreatorSlotUncheckedCreateWithoutCampaignInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedCreateNestedManyWithoutSlotInput
 }
 
 export type CampaignCreatorSlotCreateOrConnectWithoutCampaignInput = {
@@ -842,6 +1166,118 @@ export type CampaignCreatorSlotUpdateManyWithWhereWithoutCampaignInput = {
   data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateManyMutationInput, Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutCampaignInput>
 }
 
+export type CampaignCreatorSlotCreateWithoutPayoutEventsInput = {
+  id?: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
+  campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
+  creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
+}
+
+export type CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput = {
+  id?: string
+  campaignId: string
+  creatorId: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type CampaignCreatorSlotCreateOrConnectWithoutPayoutEventsInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput>
+}
+
+export type CampaignCreatorSlotUpsertWithoutPayoutEventsInput = {
+  update: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput>
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput>
+  where?: Prisma.CampaignCreatorSlotWhereInput
+}
+
+export type CampaignCreatorSlotUpdateToOneWithWhereWithoutPayoutEventsInput = {
+  where?: Prisma.CampaignCreatorSlotWhereInput
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput>
+}
+
+export type CampaignCreatorSlotUpdateWithoutPayoutEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
+  campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
+  creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
+}
+
+export type CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  campaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
 export type CampaignCreatorSlotCreateManyCreatorInput = {
   id?: string
   campaignId: string
@@ -854,6 +1290,12 @@ export type CampaignCreatorSlotCreateManyCreatorInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -870,10 +1312,17 @@ export type CampaignCreatorSlotUpdateWithoutCreatorInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
   campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
+  payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
 }
 
 export type CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput = {
@@ -888,9 +1337,16 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedUpdateManyWithoutSlotNestedInput
 }
 
 export type CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorInput = {
@@ -905,6 +1361,106 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type CampaignCreatorSlotCreateManySocialAccountInput = {
+  id?: string
+  campaignId: string
+  creatorId: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type CampaignCreatorSlotUpdateWithoutSocialAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
+  creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
+  payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
+}
+
+export type CampaignCreatorSlotUncheckedUpdateWithoutSocialAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  campaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedUpdateManyWithoutSlotNestedInput
+}
+
+export type CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  campaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -922,6 +1478,12 @@ export type CampaignCreatorSlotCreateManyCampaignInput = {
   approvedAt?: Date | string | null
   currentViewCount?: number | null
   lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -938,10 +1500,17 @@ export type CampaignCreatorSlotUpdateWithoutCampaignInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
+  payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
 }
 
 export type CampaignCreatorSlotUncheckedUpdateWithoutCampaignInput = {
@@ -956,9 +1525,16 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutCampaignInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedUpdateManyWithoutSlotNestedInput
 }
 
 export type CampaignCreatorSlotUncheckedUpdateManyWithoutCampaignInput = {
@@ -973,11 +1549,46 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCampaignInput = {
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
+
+/**
+ * Count Type CampaignCreatorSlotCountOutputType
+ */
+
+export type CampaignCreatorSlotCountOutputType = {
+  payoutEvents: number
+}
+
+export type CampaignCreatorSlotCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  payoutEvents?: boolean | CampaignCreatorSlotCountOutputTypeCountPayoutEventsArgs
+}
+
+/**
+ * CampaignCreatorSlotCountOutputType without action
+ */
+export type CampaignCreatorSlotCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CampaignCreatorSlotCountOutputType
+   */
+  select?: Prisma.CampaignCreatorSlotCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * CampaignCreatorSlotCountOutputType without action
+ */
+export type CampaignCreatorSlotCountOutputTypeCountPayoutEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PayoutEventWhereInput
+}
 
 
 export type CampaignCreatorSlotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -993,11 +1604,20 @@ export type CampaignCreatorSlotSelect<ExtArgs extends runtime.Types.Extensions.I
   approvedAt?: boolean
   currentViewCount?: boolean
   lastViewCheckAt?: boolean
+  platform?: boolean
+  contentId?: boolean
+  socialAccountId?: boolean
+  isShort?: boolean
+  isShortVerifiedAt?: boolean
+  viewTarget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
+  payoutEvents?: boolean | Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs>
+  _count?: boolean | Prisma.CampaignCreatorSlotCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["campaignCreatorSlot"]>
 
 export type CampaignCreatorSlotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1013,9 +1633,16 @@ export type CampaignCreatorSlotSelectCreateManyAndReturn<ExtArgs extends runtime
   approvedAt?: boolean
   currentViewCount?: boolean
   lastViewCheckAt?: boolean
+  platform?: boolean
+  contentId?: boolean
+  socialAccountId?: boolean
+  isShort?: boolean
+  isShortVerifiedAt?: boolean
+  viewTarget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["campaignCreatorSlot"]>
@@ -1033,9 +1660,16 @@ export type CampaignCreatorSlotSelectUpdateManyAndReturn<ExtArgs extends runtime
   approvedAt?: boolean
   currentViewCount?: boolean
   lastViewCheckAt?: boolean
+  platform?: boolean
+  contentId?: boolean
+  socialAccountId?: boolean
+  isShort?: boolean
+  isShortVerifiedAt?: boolean
+  viewTarget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["campaignCreatorSlot"]>
@@ -1053,21 +1687,32 @@ export type CampaignCreatorSlotSelectScalar = {
   approvedAt?: boolean
   currentViewCount?: boolean
   lastViewCheckAt?: boolean
+  platform?: boolean
+  contentId?: boolean
+  socialAccountId?: boolean
+  isShort?: boolean
+  isShortVerifiedAt?: boolean
+  viewTarget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type CampaignCreatorSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "campaignId" | "creatorId" | "status" | "escrowAmount" | "currentTier" | "paidToDate" | "contentUrl" | "submittedAt" | "approvedAt" | "currentViewCount" | "lastViewCheckAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaignCreatorSlot"]>
+export type CampaignCreatorSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "campaignId" | "creatorId" | "status" | "escrowAmount" | "currentTier" | "paidToDate" | "contentUrl" | "submittedAt" | "approvedAt" | "currentViewCount" | "lastViewCheckAt" | "platform" | "contentId" | "socialAccountId" | "isShort" | "isShortVerifiedAt" | "viewTarget" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaignCreatorSlot"]>
 export type CampaignCreatorSlotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
+  payoutEvents?: boolean | Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs>
+  _count?: boolean | Prisma.CampaignCreatorSlotCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CampaignCreatorSlotIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }
 export type CampaignCreatorSlotIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }
@@ -1075,8 +1720,10 @@ export type CampaignCreatorSlotIncludeUpdateManyAndReturn<ExtArgs extends runtim
 export type $CampaignCreatorSlotPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "CampaignCreatorSlot"
   objects: {
+    socialAccount: Prisma.$SocialAccountPayload<ExtArgs> | null
     campaign: Prisma.$CampaignPayload<ExtArgs>
     creator: Prisma.$CreatorPayload<ExtArgs>
+    payoutEvents: Prisma.$PayoutEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1091,6 +1738,36 @@ export type $CampaignCreatorSlotPayload<ExtArgs extends runtime.Types.Extensions
     approvedAt: Date | null
     currentViewCount: number | null
     lastViewCheckAt: Date | null
+    /**
+     * The platform the submitted content lives on. Set at CONTENT_SUBMITTED
+     * time, immutable thereafter. null means the slot is not yet eligible
+     * for settlement (fail-closed). Write-once in practice.
+     */
+    platform: $Enums.SocialPlatform | null
+    /**
+     * The platform's canonical content ID (YouTube video ID, Instagram media ID).
+     * Never the full URL — the URL is display-only. This is what the analytics
+     * function receives. null -> not eligible (HELD).
+     */
+    contentId: string | null
+    /**
+     * Foreign key to the SocialAccount used when this content was submitted.
+     * Null -> not eligible (HELD). Write-once in practice.
+     */
+    socialAccountId: string | null
+    /**
+     * Result of the one-time verifyIsShort() call made at CONTENT_APPROVED time.
+     * null = not yet determined (job has not run) or platform does not apply.
+     * This column is write-once: once set it is never updated.
+     * For YOUTUBE slots, a null or false value blocks settlement (fail-closed).
+     */
+    isShort: boolean | null
+    isShortVerifiedAt: Date | null
+    /**
+     * Per-creator view target for tier thresholds. A slot with a null or
+     * <= 0 target never settles (threshold algorithm is skipped).
+     */
+    viewTarget: number | null
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
@@ -1488,8 +2165,10 @@ readonly fields: CampaignCreatorSlotFieldRefs;
  */
 export interface Prisma__CampaignCreatorSlotClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  socialAccount<T extends Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>>): Prisma.Prisma__SocialAccountClient<runtime.Types.Result.GetResult<Prisma.$SocialAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   campaign<T extends Prisma.CampaignDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignDefaultArgs<ExtArgs>>): Prisma.Prisma__CampaignClient<runtime.Types.Result.GetResult<Prisma.$CampaignPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   creator<T extends Prisma.CreatorDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CreatorDefaultArgs<ExtArgs>>): Prisma.Prisma__CreatorClient<runtime.Types.Result.GetResult<Prisma.$CreatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  payoutEvents<T extends Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PayoutEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1531,6 +2210,12 @@ export interface CampaignCreatorSlotFieldRefs {
   readonly approvedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly currentViewCount: Prisma.FieldRef<"CampaignCreatorSlot", 'Int'>
   readonly lastViewCheckAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly platform: Prisma.FieldRef<"CampaignCreatorSlot", 'SocialPlatform'>
+  readonly contentId: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
+  readonly socialAccountId: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
+  readonly isShort: Prisma.FieldRef<"CampaignCreatorSlot", 'Boolean'>
+  readonly isShortVerifiedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly viewTarget: Prisma.FieldRef<"CampaignCreatorSlot", 'Int'>
   readonly createdAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
@@ -1932,6 +2617,49 @@ export type CampaignCreatorSlotDeleteManyArgs<ExtArgs extends runtime.Types.Exte
    * Limit how many CampaignCreatorSlots to delete.
    */
   limit?: number
+}
+
+/**
+ * CampaignCreatorSlot.socialAccount
+ */
+export type CampaignCreatorSlot$socialAccountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SocialAccount
+   */
+  select?: Prisma.SocialAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SocialAccount
+   */
+  omit?: Prisma.SocialAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SocialAccountInclude<ExtArgs> | null
+  where?: Prisma.SocialAccountWhereInput
+}
+
+/**
+ * CampaignCreatorSlot.payoutEvents
+ */
+export type CampaignCreatorSlot$payoutEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PayoutEvent
+   */
+  select?: Prisma.PayoutEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PayoutEvent
+   */
+  omit?: Prisma.PayoutEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PayoutEventInclude<ExtArgs> | null
+  where?: Prisma.PayoutEventWhereInput
+  orderBy?: Prisma.PayoutEventOrderByWithRelationInput | Prisma.PayoutEventOrderByWithRelationInput[]
+  cursor?: Prisma.PayoutEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PayoutEventScalarFieldEnum | Prisma.PayoutEventScalarFieldEnum[]
 }
 
 /**

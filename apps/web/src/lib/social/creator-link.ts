@@ -1,4 +1,4 @@
-import { prisma, SocialPlatform } from '@repo/database';
+import { prisma, SocialPlatform, Prisma, PrismaClient } from '@repo/database';
 
 export type LinkFailure = 'user_not_provisioned' | 'account_already_linked';
 
@@ -103,7 +103,7 @@ export async function linkSocialAccount(params: {
 // Helper to upsert a SocialAccount correctly considering we don't have a true
 // unique key without revokedAt constraint. We just find the latest one or create.
 async function ensureSocialAccount(
-  tx: any,
+  tx: Prisma.TransactionClient,
   data: {
     creatorId: string;
     platform: SocialPlatform;

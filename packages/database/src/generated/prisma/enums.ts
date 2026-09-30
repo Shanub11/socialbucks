@@ -68,3 +68,12 @@ export const MilestoneTier = {
 } as const
 
 export type MilestoneTier = (typeof MilestoneTier)[keyof typeof MilestoneTier]
+
+
+export const DisbursementStatus = {
+  PENDING: 'PENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+} as const
+
+export type DisbursementStatus = (typeof DisbursementStatus)[keyof typeof DisbursementStatus]

@@ -403,7 +403,8 @@ export const ModelName = {
   Creator: 'Creator',
   SocialAccount: 'SocialAccount',
   Campaign: 'Campaign',
-  CampaignCreatorSlot: 'CampaignCreatorSlot'
+  CampaignCreatorSlot: 'CampaignCreatorSlot',
+  PayoutEvent: 'PayoutEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "organization" | "organizationMember" | "creator" | "socialAccount" | "campaign" | "campaignCreatorSlot"
+    modelProps: "user" | "organization" | "organizationMember" | "creator" | "socialAccount" | "campaign" | "campaignCreatorSlot" | "payoutEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -941,6 +942,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PayoutEvent: {
+      payload: Prisma.$PayoutEventPayload<ExtArgs>
+      fields: Prisma.PayoutEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PayoutEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PayoutEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>
+        }
+        findFirst: {
+          args: Prisma.PayoutEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PayoutEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>
+        }
+        findMany: {
+          args: Prisma.PayoutEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>[]
+        }
+        create: {
+          args: Prisma.PayoutEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>
+        }
+        createMany: {
+          args: Prisma.PayoutEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PayoutEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>[]
+        }
+        delete: {
+          args: Prisma.PayoutEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>
+        }
+        update: {
+          args: Prisma.PayoutEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.PayoutEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PayoutEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PayoutEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.PayoutEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PayoutEventPayload>
+        }
+        aggregate: {
+          args: Prisma.PayoutEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePayoutEvent>
+        }
+        groupBy: {
+          args: Prisma.PayoutEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PayoutEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PayoutEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PayoutEventCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1082,6 +1157,12 @@ export const CampaignCreatorSlotScalarFieldEnum = {
   approvedAt: 'approvedAt',
   currentViewCount: 'currentViewCount',
   lastViewCheckAt: 'lastViewCheckAt',
+  platform: 'platform',
+  contentId: 'contentId',
+  socialAccountId: 'socialAccountId',
+  isShort: 'isShort',
+  isShortVerifiedAt: 'isShortVerifiedAt',
+  viewTarget: 'viewTarget',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -1090,12 +1171,38 @@ export const CampaignCreatorSlotScalarFieldEnum = {
 export type CampaignCreatorSlotScalarFieldEnum = (typeof CampaignCreatorSlotScalarFieldEnum)[keyof typeof CampaignCreatorSlotScalarFieldEnum]
 
 
+export const PayoutEventScalarFieldEnum = {
+  id: 'id',
+  slotId: 'slotId',
+  tier: 'tier',
+  amount: 'amount',
+  currency: 'currency',
+  billableViews: 'billableViews',
+  billableMetric: 'billableMetric',
+  thresholdViews: 'thresholdViews',
+  settlementJson: 'settlementJson',
+  disbursementStatus: 'disbursementStatus',
+  disbursedAt: 'disbursedAt',
+  externalRef: 'externalRef',
+  createdAt: 'createdAt'
+} as const
+
+export type PayoutEventScalarFieldEnum = (typeof PayoutEventScalarFieldEnum)[keyof typeof PayoutEventScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1112,6 +1219,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -1257,6 +1373,41 @@ export type EnumMilestoneTierFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'MilestoneTier[]'
  */
 export type ListEnumMilestoneTierFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MilestoneTier[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'DisbursementStatus'
+ */
+export type EnumDisbursementStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DisbursementStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'DisbursementStatus[]'
+ */
+export type ListEnumDisbursementStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DisbursementStatus[]'>
     
 
 
@@ -1431,6 +1582,7 @@ export type GlobalOmitConfig = {
   socialAccount?: Prisma.SocialAccountOmit
   campaign?: Prisma.CampaignOmit
   campaignCreatorSlot?: Prisma.CampaignCreatorSlotOmit
+  payoutEvent?: Prisma.PayoutEventOmit
 }
 
 /* Types for Logging */

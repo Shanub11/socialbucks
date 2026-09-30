@@ -76,3 +76,12 @@ export type Campaign = Prisma.CampaignModel
  * 
  */
 export type CampaignCreatorSlot = Prisma.CampaignCreatorSlotModel
+/**
+ * Model PayoutEvent
+ * Immutable audit ledger for every escrow release. A PayoutEvent row means
+ * "released from escrow, pending disbursement" — it does NOT move money on
+ * its own (no payment rail in this pass). Append-only: no delete path exists
+ * anywhere in the codebase. The @@unique([slotId, tier]) constraint is the
+ * database-level idempotency guarantee.
+ */
+export type PayoutEvent = Prisma.PayoutEventModel

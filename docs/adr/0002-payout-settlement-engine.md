@@ -2,7 +2,7 @@
 
 | Field        | Value                  |
 |--------------|------------------------|
-| Status       | **Proposed**           |
+| Status       | **Accepted**           |
 | Date         | 2026-09-27             |
 | Author       | @Shanub11              |
 | Supersedes   | —                      |
@@ -381,3 +381,18 @@ is the right granularity for financial idempotency. Rejected.
   schedulable.
 - Adding `socialAccountId` to `CampaignCreatorSlot` requires a migration
   and a one-time backfill for any existing slots.
+
+## Decision Log
+
+Recorded 2026-09-30, implementing the engine in three phases.
+
+- **D1** — View target lives on the slot: `CampaignCreatorSlot.viewTarget Int?` (escrowAmount is per-slot, so the target is too). A slot with a null or <= 0 target never settles.
+- **D2** — The billable metric is chosen by ONE per-platform mapping function: YouTube -> engagedViews, Instagram -> views. Flipping a platform's metric must be a one-line change. The ledger stores both the metric name and its value.
+- **D3** — `verifyIsShort` is still unverified against real channels, so fail closed: a YOUTUBE slot settles only if `isShort === true`. null or false -> HELD, no writes. Real-channel verification remains a human step; the ADR must say payouts must not be enabled in production until its result is recorded there.
+- **D4** — Rounding. Integer minor units only, never JS floats. Cumulative basis points: BASELINE 2000, TIER_40 4000, TIER_70 7000, TIER_100 10000. `cumAmount(tier) = floor(escrowMinor * cumBps / 10000)`, except TIER_100 = escrowMinor exactly. `tierAmount = cumAmount(tier) - cumAmount(previous tier)`. The final tier absorbs the remainder, so the tiers always sum to escrow exactly. Thresholds: `thresholdViews = ceil(viewTarget * cumBps / 10000)`, integer math. A tier is crossed when `billableViews >= thresholdViews`.
+- **D5** — Scope: this is the internal ledger + state machine only. A PayoutEvent row means "released from escrow, pending disbursement" — it does NOT move money. No payment rail, no clawbacks. `DisbursementStatus {PENDING, SENT, FAILED}`, `PayoutEvent.disbursementStatus` default PENDING, plus nullable `disbursedAt` and `externalRef` for the future rail. Nothing in this pass writes anything but PENDING.
+- **D6** — No pg-boss this pass. `settleSlot()` is an internal service function with no HTTP surface and no scheduler.
+- **D7** — New slot columns are nullable in the schema; the engine treats a null platform/contentId/socialAccountId as not eligible (HELD).
+- **D8** — `settlementJson` stores the raw VideoSettlement snapshot.
+- **D9** — Only the DISPUTED freeze is implemented (settlement skips any slot not IN_PROGRESS). Raising disputes and clawbacks are out of scope.
+- **D10** — The ledger is the source of truth. `paidToDate` and `currentTier` are caches recomputed from the ledger inside the transaction, never incremented. Currency comes from `Campaign.currency`; assert a 2-decimal currency and throw otherwise.

@@ -150,6 +150,7 @@ model SocialAccount {
   lastVerifiedAt DateTime?
 
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  slots   CampaignCreatorSlot[]
 
   // Partial indexes — uniqueness is enforced only among ACTIVE connections
   // (revokedAt IS NULL). A revoked row becomes history and does not block:
@@ -215,6 +216,12 @@ enum MilestoneTier {
   TIER_100
 }
 
+enum DisbursementStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model CampaignCreatorSlot {
   id         String     @id @default(cuid())
   campaignId String
@@ -232,15 +239,69 @@ model CampaignCreatorSlot {
   currentViewCount Int?
   lastViewCheckAt  DateTime?
 
+  /// The platform the submitted content lives on. Set at CONTENT_SUBMITTED
+  /// time, immutable thereafter. null means the slot is not yet eligible
+  /// for settlement (fail-closed). Write-once in practice.
+  platform     SocialPlatform?
+  /// The platform's canonical content ID (YouTube video ID, Instagram media ID).
+  /// Never the full URL — the URL is display-only. This is what the analytics
+  /// function receives. null -> not eligible (HELD).
+  contentId    String?
+  /// Foreign key to the SocialAccount used when this content was submitted.
+  /// Null -> not eligible (HELD). Write-once in practice.
+  socialAccountId String?
+  socialAccount SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: Restrict)
+
+  /// Result of the one-time verifyIsShort() call made at CONTENT_APPROVED time.
+  /// null = not yet determined (job has not run) or platform does not apply.
+  /// This column is write-once: once set it is never updated.
+  /// For YOUTUBE slots, a null or false value blocks settlement (fail-closed).
+  isShort        Boolean?
+  isShortVerifiedAt DateTime?
+
+  /// Per-creator view target for tier thresholds. A slot with a null or
+  /// <= 0 target never settles (threshold algorithm is skipped).
+  viewTarget Int?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
   creator  Creator  @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  payoutEvents PayoutEvent[]
 
   @@unique([campaignId, creatorId])
   @@index([campaignId])
   @@index([creatorId])
   @@index([status])
+}
+
+/// Immutable audit ledger for every escrow release. A PayoutEvent row means
+/// "released from escrow, pending disbursement" — it does NOT move money on
+/// its own (no payment rail in this pass). Append-only: no delete path exists
+/// anywhere in the codebase. The @@unique([slotId, tier]) constraint is the
+/// database-level idempotency guarantee.
+model PayoutEvent {
+  id               String   @id @default(cuid())
+  slotId           String
+  tier             MilestoneTier
+  amount           Decimal  @db.Decimal(12, 2)
+  currency         String   @default("USD")
+  billableViews    Int
+  billableMetric   String
+  thresholdViews   Int
+  /// Raw VideoSettlement snapshot at trigger time (D8: raw JSON).
+  settlementJson   Json
+  disbursementStatus DisbursementStatus @default(PENDING)
+  disbursedAt      DateTime?
+  externalRef      String?
+  createdAt        DateTime @default(now())
+
+  slot CampaignCreatorSlot @relation(fields: [slotId], references: [id], onDelete: Restrict)
+
+  /// Idempotency key: a given (slot, tier) pair can only pay out once.
+  @@unique([slotId, tier])
+  @@index([slotId])
+  @@index([createdAt])
 }
