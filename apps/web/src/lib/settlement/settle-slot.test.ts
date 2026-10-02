@@ -10,14 +10,54 @@
 //
 // Run: RUN_DB_TESTS=1 TEST_DATABASE_URL=postgres://... vitest run settle-slot.test.ts
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PrismaClient, MilestoneTier, SlotStatus, SocialPlatform } from '@repo/database';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma } from '@repo/database';
 const Decimal = Prisma.Decimal;
 type Decimal = Prisma.Decimal;;
 import { settleSlot, type MetricsProvider, UnsupportedPlatformError } from './settle-slot';
+import { instagramMetricsProvider } from './adapters/instagram';
 import { OAuthHttpError } from '@/lib/oauth/request';
+
+vi.mock('@/lib/crypto/secret-box', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/crypto/secret-box')>();
+  return {
+    ...actual,
+    decryptToken: vi.fn((_ciphertext: string, _platform: SocialPlatform) => 'fake-refresh-token-123'),
+  };
+});
+
+vi.mock('@/lib/youtube/oauth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/youtube/oauth')>();
+  return {
+    ...actual,
+    refreshAccessToken: vi.fn(async (_refreshToken: string) => ({
+      accessToken: 'fake-access-token-456',
+      expiresAt: new Date(Date.now() + 3600_000),
+    })),
+  };
+});
+
+vi.mock('@/lib/youtube/analytics', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/youtube/analytics')>();
+  return {
+    ...actual,
+    fetchVideoSettlement: vi.fn(
+      async (_contentId: string, _startDate: string, _endDate: string, _accessToken: string) => ({
+        views: 100,
+        engagedViews: 50,
+        estimatedMinutesWatched: 10,
+        averageViewPercentage: 60,
+        likes: 1,
+        comments: 0,
+        shares: 0,
+        subscribersGained: 0,
+        videosAddedToPlaylists: 0,
+      }),
+    ),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // DB guard — fail loudly, never silently skip
@@ -506,6 +546,28 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
       expect(events).toBe(0);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // INSTAGRAM platform — clean skip via UnsupportedPlatformError
+  // -------------------------------------------------------------------------
+
+  describe('INSTAGRAM platform — unsupported platform skips cleanly', () => {
+    let f: SlotFixture;
+    beforeEach(async () => {
+      f = await createSlotFixture(prisma, { platform: SocialPlatform.INSTAGRAM });
+    });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+
+    it('returns SKIPPED_NOT_ELIGIBLE with platform_not_supported, zero writes', async () => {
+      const result = await settleSlot(f.slotId, prisma, instagramMetricsProvider);
+      expect(result.status).toBe('SKIPPED_NOT_ELIGIBLE');
+      if (result.status !== 'SKIPPED_NOT_ELIGIBLE') throw new Error('unreachable');
+      expect(result.reason).toBe('platform_not_supported');
+
+      const events = await prisma.payoutEvent.count({ where: { slotId: f.slotId } });
+      expect(events).toBe(0);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -513,52 +575,35 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
 // ---------------------------------------------------------------------------
 
 describe('YouTube adapter wiring', () => {
-  it('decryptToken is called with YOUTUBE platform', async () => {
-    // Import the adapter and verify it passes YOUTUBE to decryptToken.
-    // We mock the downstream calls to prevent real crypto/network calls.
+  it('decrypts with YOUTUBE platform, uses the refreshed access token, and passes the date range through unchanged', async () => {
     const { youtubeMetricsProvider } = await import('./adapters/youtube');
     const { decryptToken } = await import('@/lib/crypto/secret-box');
-    const { refreshAccessToken } = await import('@/lib/youtube/oauth');
     const { fetchVideoSettlement } = await import('@/lib/youtube/analytics');
 
-    // Spy approach: capture arguments without real crypto
-    let decryptPlatformArg: SocialPlatform | undefined;
-    let bearerHeaderSeen: string | undefined;
-    let dateRangeSeen: { start: string; end: string } | undefined;
+    await youtubeMetricsProvider.fetchMetrics({
+      platform: SocialPlatform.YOUTUBE,
+      contentId: 'vid_abc123',
+      startDate: '2026-01-01',
+      endDate: '2026-09-30',
+      accessToken: 'v1.fake.ciphertext.value',
+    });
 
-    // We use vi.mock for this wiring test only
-    // Instead of full mocking, we verify the wiring by calling with a known
-    // bad token and checking the specific error it throws (SecretBoxError
-    // from the decrypt step, NOT an analytics error — proving the call chain).
-    // This light test verifies the adapter calls decryptToken before anything
-    // else.
+    // Proves decryptToken was called with YOUTUBE specifically, not some
+    // other platform's key, and with the exact ciphertext that was passed in.
+    expect(decryptToken).toHaveBeenCalledWith(
+      'v1.fake.ciphertext.value',
+      SocialPlatform.YOUTUBE,
+    );
 
-    const fakeCiphertext = 'v1.invalid.wiring.test';
-
-    await expect(
-      youtubeMetricsProvider.fetchMetrics({
-        platform: SocialPlatform.YOUTUBE,
-        contentId: 'test123456a',
-        startDate: '2026-01-01',
-        endDate: '2026-09-30',
-        accessToken: fakeCiphertext,
-      }),
-    ).rejects.toThrow(); // Throws SecretBoxError (bad ciphertext) before reaching network
-
-    // The error must NOT be "platform not supported" — that would mean we
-    // never reached the decrypt step (wiring is wrong).
-    try {
-      await youtubeMetricsProvider.fetchMetrics({
-        platform: SocialPlatform.YOUTUBE,
-        contentId: 'test123456a',
-        startDate: '2026-01-01',
-        endDate: '2026-09-30',
-        accessToken: fakeCiphertext,
-      });
-    } catch (err) {
-      expect(err).not.toBeInstanceOf(UnsupportedPlatformError);
-      // Should be a SecretBoxError or similar crypto error
-      expect(String(err)).toMatch(/decrypt|ciphertext|malformed|wrong|box|secret/i);
-    }
+    // Proves the refreshed access token (not the ciphertext, not the
+    // refresh token) is what actually reaches the analytics call, and
+    // that the date range flows through unmodified.
+    expect(fetchVideoSettlement).toHaveBeenCalledWith(
+      'vid_abc123',
+      '2026-01-01',
+      '2026-09-30',
+      'fake-access-token-456',
+    );
   });
 });
+

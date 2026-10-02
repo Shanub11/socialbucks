@@ -9,7 +9,7 @@
 
 import { Prisma } from '@repo/database';
 const Decimal = Prisma.Decimal;
-type Decimal = Prisma.Decimal;;
+type Decimal = Prisma.Decimal;
 
 // ---------------------------------------------------------------------------
 // Error types

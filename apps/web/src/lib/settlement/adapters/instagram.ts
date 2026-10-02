@@ -7,7 +7,9 @@
 // snapshot shape that VideoSettlement provides for YouTube. The engine
 // stores settlementJson for dispute evidence. Until Instagram's insights
 // shape is wrapped in a typed settlement snapshot equivalent, this
-// adapter throws UnsupportedPlatformError (fail-closed, D3 principle).
+// adapter throws UnsupportedPlatformError, which settleSlot() catches and
+// turns into a clean SKIPPED_NOT_ELIGIBLE / 'platform_not_supported'
+// result — no crash, no writes.
 //
 // This is explicitly a follow-up item — not an oversight.
 

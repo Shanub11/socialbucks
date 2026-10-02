@@ -14,7 +14,7 @@
 import { MilestoneTier, SocialPlatform } from '@repo/database';
 import { Prisma } from '@repo/database';
 const Decimal = Prisma.Decimal;
-type Decimal = Prisma.Decimal;;
+type Decimal = Prisma.Decimal;
 import {
   bigintCeilDiv,
   bigintFloorDiv,

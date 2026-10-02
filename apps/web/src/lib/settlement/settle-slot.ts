@@ -15,8 +15,8 @@
 import { MilestoneTier, SocialPlatform, SlotStatus, PrismaClient } from '@repo/database';
 import { Prisma } from '@repo/database';
 const Decimal = Prisma.Decimal;
-type Decimal = Prisma.Decimal;;
-import { computeNewTiers, getBillableMetric, TIER_ORDER } from './tiers';
+type Decimal = Prisma.Decimal;
+import { computeNewTiers, TIER_ORDER } from './tiers';
 import { assertTwoDecimalCurrency, fromMinorUnits, toMinorUnits } from './money';
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,8 @@ export type SkippedReason =
   | 'view_target_invalid'
   | 'social_account_revoked'
   | 'social_account_no_token'
-  | 'youtube_not_short';
+  | 'youtube_not_short'
+  | 'platform_not_supported';
 
 // ---------------------------------------------------------------------------
 // Dependency-injection types (allow faking in tests)
@@ -69,7 +70,14 @@ export interface MetricsProvider {
     startDate: string;
     /** ISO 8601 date string — today UTC */
     endDate: string;
-    /** Decrypted access token */
+    /**
+     * The ENCRYPTED ciphertext from SocialAccount.tokenCiphertext — NOT a
+     * decrypted token. Every adapter is responsible for decrypting this
+     * itself (see adapters/youtube.ts for the pattern: decryptToken, then
+     * exchange for a short-lived access token before calling the real API).
+     * Do not pass a plaintext token here, and do not decrypt it again
+     * inside settleSlot() — that would double-decrypt and fail.
+     */
     accessToken: string;
   }): Promise<MetricsResult>;
 }
@@ -265,6 +273,12 @@ export async function settleSlot(
       accessToken: sa.tokenCiphertext, // encrypted; adapter decrypts it
     });
   } catch (err) {
+    // A platform with no implemented adapter is a clean skip, not a crash —
+    // this is what lets a settlement job loop over many slots without one
+    // unsupported platform taking down the whole batch.
+    if (err instanceof UnsupportedPlatformError) {
+      return { status: 'SKIPPED_NOT_ELIGIBLE', reason: 'platform_not_supported' };
+    }
     // OAuthHttpError with status 404 → no data yet → HELD_NO_DATA
     if (
       err instanceof Error &&
@@ -285,8 +299,6 @@ export async function settleSlot(
 
   const capturedSlotId = slot.id;
   const capturedPlatform = slot.platform;
-  const capturedContentId = slot.contentId;
-  const capturedViewTarget = slot.viewTarget;
   const capturedCurrency = slot.campaign.currency;
 
   return withSerializableRetry(async () => {

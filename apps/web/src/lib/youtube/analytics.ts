@@ -247,7 +247,7 @@ export async function fetchVideoSettlement(
     });
   }
 
-  const url = new URL('/reports', YOUTUBE_ANALYTICS_API_BASE);
+  const url = new URL(`${YOUTUBE_ANALYTICS_API_BASE}/reports`);
   url.searchParams.set('ids', 'channel==MINE');
   url.searchParams.set('startDate', startDate);
   url.searchParams.set('endDate', endDate);
@@ -320,7 +320,7 @@ export async function verifyIsShort(
   // Query for creatorContentType dimension only (no video dimension due to API limitations)
   // This matches the workaround mentioned in the task description
   // Auth goes in the Authorization header, never in the URL (see task 3).
-  const url = new URL('/reports', YOUTUBE_ANALYTICS_API_BASE);
+  const url = new URL(`${YOUTUBE_ANALYTICS_API_BASE}/reports`);
   url.searchParams.set('ids', 'channel==MINE');
   url.searchParams.set('startDate', '2020-01-01'); // Far enough back to cover all videos
   url.searchParams.set('endDate', '2030-01-01'); // Far enough forward
@@ -350,18 +350,21 @@ export async function verifyIsShort(
 
     const parsed = parseOrThrow(analyticsReportSchema, body, 'analytics report');
 
-    // Check if any row has creatorContentType == "SHORT"
+    // Check if any row has creatorContentType == "SHORTS". Confirmed
+    // 2026-10-02 against a real channel: the API returns "shorts"
+    // (lowercase, plural) — see OQ-2 in
+    // docs/adr/0002-payout-settlement-engine.md for the verification record.
     for (const row of parsed.rows) {
       if (row.length >= 2) {
         const dimensionValue = row[0]; // creatorContentType is first (dimensions)
-        if (typeof dimensionValue === 'string' && dimensionValue.toUpperCase() === 'SHORT') {
-          // Found a row where creatorContentType is SHORT - this is a Short
+        if (typeof dimensionValue === 'string' && dimensionValue.toUpperCase() === 'SHORTS') {
+          // Found a row where creatorContentType is SHORTS - this is a Short
           return true;
         }
       }
     }
 
-    // If we get here, no SHORT classification found
+    // If we get here, no SHORTS classification found
     return false;
   };
 
