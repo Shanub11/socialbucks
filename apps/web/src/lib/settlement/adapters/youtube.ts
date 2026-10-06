@@ -12,8 +12,7 @@
 // This adapter NEVER logs tokens. It logs only contentId and outcome.
 
 import { SocialPlatform } from '@repo/database';
-import { decryptToken } from '@/lib/crypto/secret-box';
-import { refreshAccessToken } from '@/lib/youtube/oauth';
+import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
 import { fetchVideoSettlement } from '@/lib/youtube/analytics';
 import type { MetricsProvider, MetricsResult } from '../settle-slot';
 import { UnsupportedPlatformError } from '../settle-slot';
@@ -34,11 +33,8 @@ export const youtubeMetricsProvider: MetricsProvider = {
       throw new UnsupportedPlatformError(platform);
     }
 
-    // Step 1: decrypt the refresh token (AES-256-GCM, platform-scoped key)
-    const refreshToken = decryptToken(ciphertext, SocialPlatform.YOUTUBE);
-
-    // Step 2: exchange for a fresh access token (1-hour TTL)
-    const { accessToken } = await refreshAccessToken(refreshToken);
+    // Step 1 & 2: decrypt refresh token and exchange for access token
+    const accessToken = await getYoutubeAccessToken(ciphertext);
 
     // Step 3: fetch settlement metrics
     // fetchVideoSettlement throws OAuthHttpError(404) when no rows are returned —
