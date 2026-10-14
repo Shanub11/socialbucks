@@ -16,7 +16,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma } from '@repo/database';
 const Decimal = Prisma.Decimal;
 type Decimal = Prisma.Decimal;;
-import { settleSlot, type MetricsProvider, UnsupportedPlatformError } from './settle-slot';
+import { settleSlot, type MetricsProvider, type SettleOutcome } from './settle-slot';
 import { instagramMetricsProvider } from './adapters/instagram';
 import { OAuthHttpError } from '@/lib/oauth/request';
 
@@ -349,29 +349,133 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
     afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
 
     it('5 concurrent settleSlot calls leave exactly one row per tier', async () => {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         Array.from({ length: 5 }, () =>
           settleSlot(f.slotId, prisma, makeFakeMetrics(20000)),
         ),
       );
 
-      // At least one must have ADVANCED; others must be NO_CHANGE
-      const advanced = results.filter((r) => r.status === 'ADVANCED');
-      const noChange = results.filter((r) => r.status === 'NO_CHANGE');
-      expect(advanced.length + noChange.length).toBe(5);
-      expect(advanced.length).toBeGreaterThanOrEqual(1);
+      // No call may be rejected — all must resolve (larger retry budget ensures this)
+      expect(results).not.toHaveLength(0);
+      for (const r of results) {
+        expect(r.status).toBe('fulfilled');
+      }
 
-      // Exactly one PayoutEvent row for BASELINE
+      const outcomes: SettleOutcome[] = results.map((r) =>
+        (r as PromiseFulfilledResult<SettleOutcome>).value,
+      );
+
+      // Exactly one ADVANCED and four NO_CHANGE
+      const advanced = outcomes.filter((r) => r.status === 'ADVANCED');
+      const noChange = outcomes.filter((r) => r.status === 'NO_CHANGE');
+      expect(advanced.length).toBe(1);
+      expect(noChange.length).toBe(4);
+      expect(advanced.length + noChange.length).toBe(5);
+
+      // Exactly one PayoutEvent row for BASELINE (no duplicates from contention)
       const events = await prisma.payoutEvent.findMany({ where: { slotId: f.slotId } });
       expect(events).toHaveLength(1);
       expect(events[0]!.tier).toBe(MilestoneTier.BASELINE);
 
-      // paidToDate equals ledger sum
+      // paidToDate equals ledger sum and is <= escrowAmount
       const slot = await prisma.campaignCreatorSlot.findUnique({
         where: { id: f.slotId },
         select: { paidToDate: true },
       });
       expect(slot!.paidToDate.toNumber()).toBeCloseTo(200.00, 2);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // DB stress test: 10 concurrent settleSlot calls, 3 rounds with rising views
+  // -------------------------------------------------------------------------
+
+  describe('concurrent stress test', () => {
+    const rounds = 3;
+
+    it('10 concurrent settleSlot calls across 3 rounds with rising view counts', async () => {
+      let viewCount = 20000;
+
+      for (let round = 0; round < rounds; round++) {
+        const slotFixture = await createSlotFixture(prisma, {
+          viewTarget: 100000,
+          escrowAmount: '1000.00',
+        });
+        const slotId = slotFixture.slotId;
+
+        try {
+          const results = await Promise.allSettled(
+            Array.from({ length: 10 }, () =>
+              settleSlot(slotId, prisma, makeFakeMetrics(viewCount)),
+            ),
+          );
+
+          // Surface the first rejection's message in the assertion failure output
+          // so a failure is diagnosable.
+          const firstRejection = results.find(
+            (r): r is PromiseRejectedResult => r.status === 'rejected',
+          );
+          expect(
+            firstRejection,
+            firstRejection
+              ? `settleSlot rejected: ${
+                  firstRejection.reason instanceof Error
+                    ? firstRejection.reason.message
+                    : String(firstRejection.reason)
+                }`
+              : 'no call should reject',
+          ).toBeUndefined();
+
+          const outcomes = results.map((r) => (r as PromiseFulfilledResult<SettleOutcome>).value);
+
+          // Exactly one ADVANCED, the rest NO_CHANGE
+          const advanced = outcomes.filter((r) => r.status === 'ADVANCED');
+          const noChange = outcomes.filter((r) => r.status === 'NO_CHANGE');
+          expect(advanced.length).toBe(1);
+          expect(noChange.length).toBe(9);
+          expect(advanced.length + noChange.length).toBe(10);
+
+          // Verify DB-level idempotency: each tier reached has exactly one ledger row
+          // The @@unique([slotId, tier]) constraint prevents duplicates even under 10-way contention
+          const tierCounts = await prisma.payoutEvent.groupBy({
+            by: ['tier'],
+            where: { slotId },
+            _count: { _all: true },
+          });
+          // Each tier reached must have exactly one row — no duplicates from contention
+          for (const tc of tierCounts) {
+            expect(tc._count._all).toBe(1);
+          }
+          // The ledger tiers must exactly match the ADVANCED outcome's newTiers
+          if (advanced.length !== 1) throw new Error('expected exactly one ADVANCED outcome');
+          expect(new Set(tierCounts.map((tc) => tc.tier))).toEqual(
+            new Set(advanced[0].newTiers),
+          );
+
+          // Verify paidToDate = ledger sum
+          const slot = await prisma.campaignCreatorSlot.findUnique({
+            where: { id: slotId },
+            select: { paidToDate: true, escrowAmount: true },
+          });
+          if (!slot) throw new Error(`slot ${slotId} not found`);
+          const ledgerEvents = await prisma.payoutEvent.findMany({
+            where: { slotId },
+            select: { amount: true },
+          });
+          const totalPaid = ledgerEvents.reduce(
+            (sum, e) => sum + e.amount.toNumber(),
+            0,
+          );
+          expect(slot.paidToDate.toNumber()).toBeCloseTo(totalPaid, 2);
+          // paidToDate must never exceed escrowAmount
+          expect(slot.paidToDate.lessThanOrEqualTo(slot.escrowAmount)).toBe(true);
+
+          viewCount += 20000; // rising views for next round
+        } finally {
+          // cleanup — always runs, even if an assertion throws above
+          await cleanSlotFixture(prisma, slotFixture);
+        }
+      }
     });
   });
 
