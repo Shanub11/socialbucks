@@ -406,3 +406,7 @@ Recorded 2026-09-30, implementing the engine in three phases.
 - **D8** — `settlementJson` stores the raw VideoSettlement snapshot.
 - **D9** — Only the DISPUTED freeze is implemented (settlement skips any slot not IN_PROGRESS). Raising disputes and clawbacks are out of scope.
 - **D10** — The ledger is the source of truth. `paidToDate` and `currentTier` are caches recomputed from the ledger inside the transaction, never incremented. Currency comes from `Campaign.currency`; assert a 2-decimal currency and throw otherwise.
+
+## Security Notes
+
+**Self-approval blocked (2026-10-14).** The `POST /api/campaigns/slots/[slotId]/approve` route now explicitly rejects approval when the requesting user is the slot's creator. The guard runs after org membership authorization (so non-members never see the SELF_APPROVAL_NOT_ALLOWED reason — no information leak) and before the slot status check (so no slot state is leaked). It keys on identity: `slot.creator.userId !== provisioned.userId`. This does not prevent colluding admins and creators in the same org; that remains out of scope and is explicitly deferred.

@@ -448,4 +448,330 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       await cleanup(f);
     }
   });
+
+  // ----- Dual-role fixture helpers -----
+  interface DualRoleFixture {
+    slotId: string;
+    userId: string;
+    creatorId: string;
+    organizationId: string;
+    socialAccountId: string;
+    clerkId: string;
+  }
+
+  async function createDualRoleFixture(
+    overrides: { status?: SlotStatus } = {},
+  ): Promise<DualRoleFixture> {
+    const suffix = Math.random().toString(36).slice(2, 10);
+
+    let dualUserId = '';
+    let dualCreatorId = '';
+    let organizationId = '';
+    let campaignId = '';
+    let socialAccountId = '';
+    let slotId = '';
+
+    try {
+      const dualUser = await prisma.user.create({
+        data: { clerkId: `clerk_dual_${suffix}`, email: `dual_${suffix}@test.local` },
+        select: { id: true, clerkId: true },
+      });
+      dualUserId = dualUser.id;
+
+      const creator = await prisma.creator.create({ data: { userId: dualUser.id } });
+      dualCreatorId = creator.id;
+
+      const organization = await prisma.organization.create({ data: { name: `Dual Org ${suffix}` } });
+      organizationId = organization.id;
+
+      const campaign = await prisma.campaign.create({
+        data: { organizationId: organization.id, title: `Dual Campaign ${suffix}`, totalBudget: 1000, currency: 'USD' },
+      });
+      campaignId = campaign.id;
+
+      const socialAccount = await prisma.socialAccount.create({
+        data: {
+          creatorId: creator.id,
+          platform: SocialPlatform.YOUTUBE,
+          externalId: `ext_${suffix}`,
+          handle: `handle_${suffix}`,
+          scopes: ['yt-analytics.readonly'],
+          tokenCiphertext: `v1.fake.${suffix}`,
+          revokedAt: null,
+        },
+        select: { id: true },
+      });
+      socialAccountId = socialAccount.id;
+
+      const slot = await prisma.campaignCreatorSlot.create({
+        data: {
+          campaignId: campaign.id,
+          creatorId: creator.id,
+          escrowAmount: 1000,
+          status: overrides.status ?? SlotStatus.CONTENT_SUBMITTED,
+          platform: SocialPlatform.YOUTUBE,
+          contentId: 'vid_abcd12345',
+          socialAccountId: socialAccount.id,
+        },
+        select: { id: true },
+      });
+      slotId = slot.id;
+
+      // Auth mock must return THIS fixture's dual user clerkId
+      vi.mocked(auth).mockResolvedValue({ userId: dualUser.clerkId } as never);
+
+      return {
+        slotId: slot.id,
+        userId: dualUser.id,
+        creatorId: creator.id,
+        organizationId: organization.id,
+        socialAccountId: socialAccount.id,
+        clerkId: dualUser.clerkId,
+      };
+    } catch (error) {
+      await prisma.campaignCreatorSlot.delete({ where: { id: slotId } }).catch(() => {});
+      await prisma.socialAccount.delete({ where: { id: socialAccountId } }).catch(() => {});
+      await prisma.campaign.delete({ where: { id: campaignId } }).catch(() => {});
+      await prisma.organization.delete({ where: { id: organizationId } }).catch(() => {});
+      await prisma.creator.delete({ where: { id: dualCreatorId } }).catch(() => {});
+      await prisma.user.delete({ where: { id: dualUserId } }).catch(() => {});
+      throw error;
+    }
+  }
+
+  async function cleanupDualRole(f: DualRoleFixture) {
+    // FK-safe order (all relations here are onDelete: Restrict except
+    // OrganizationMember, which Cascade-deletes under its org/user):
+    //   PayoutEvent -> Slot -> SocialAccount -> Campaign -> Org -> Creator -> User
+    // Errors are NOT swallowed here; the caller wraps this in .catch() so a
+    // cleanup failure is logged instead of masking a body assertion error.
+    await prisma.payoutEvent.deleteMany({ where: { slotId: f.slotId } });
+    await prisma.campaignCreatorSlot.delete({ where: { id: f.slotId } });
+    await prisma.socialAccount.delete({ where: { id: f.socialAccountId } });
+    await prisma.organizationMember.deleteMany({ where: { organizationId: f.organizationId } });
+    await prisma.campaign.deleteMany({ where: { organizationId: f.organizationId } });
+    await prisma.organization.delete({ where: { id: f.organizationId } });
+    await prisma.creator.delete({ where: { id: f.creatorId } });
+    await prisma.user.delete({ where: { id: f.userId } });
+  }
+
+  // ----- Test 1: Dual-role ADMIN approves own slot -> 403 -----
+  it('dual-role ADMIN approves own slot -> 403 SELF_APPROVAL_NOT_ALLOWED, no writes, no external calls', async () => {
+    const f = await createDualRoleFixture();
+    await addMember(f.organizationId, f.userId, 'ADMIN');
+    try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+
+      const res = await callRoute(f.slotId, 100000);
+      const body = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(body).toEqual({
+        error: 'You cannot approve your own content',
+        code: 'SELF_APPROVAL_NOT_ALLOWED',
+      });
+
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(after).toEqual(before);
+
+      expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
+      expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
+    } finally {
+      await cleanupDualRole(f).catch((e) =>
+        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
+      );
+    }
+  });
+
+  // ----- Test 2: Dual-role OWNER approves own slot -> 403 -----
+  it('dual-role OWNER approves own slot -> 403 SELF_APPROVAL_NOT_ALLOWED, no writes, no external calls', async () => {
+    const f = await createDualRoleFixture();
+    await addMember(f.organizationId, f.userId, 'OWNER');
+    try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+
+      const res = await callRoute(f.slotId, 100000);
+      const body = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(body).toEqual({
+        error: 'You cannot approve your own content',
+        code: 'SELF_APPROVAL_NOT_ALLOWED',
+      });
+
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(after).toEqual(before);
+
+      expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
+      expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
+    } finally {
+      await cleanupDualRole(f).catch((e) =>
+        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
+      );
+    }
+  });
+
+  // ----- Test 3: Positive control: different ADMIN of same org approves another creator slot -> 200 -----
+  it('positive control: different ADMIN of same org approves another creator slot -> 200 IN_PROGRESS with approvedAt and viewTarget', async () => {
+    const f = await createFixture();
+    await addMember(f.organizationId, f.userId, 'ADMIN');
+    try {
+      const res = await callRoute(f.slotId, 100000);
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.status).toBe(SlotStatus.IN_PROGRESS);
+      expect(body.approvedAt).toBeTruthy();
+      expect(body.viewTarget).toBe(100000);
+
+      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
+      expect(slot.status).toBe(SlotStatus.IN_PROGRESS);
+      expect(slot.approvedAt).not.toBeNull();
+      expect(slot.viewTarget).toBe(100000);
+    } finally {
+      await cleanup(f);
+    }
+  });
+
+  // ----- Test 4: Dual-role user approving ANOTHER creator's slot -> 200 -----
+  it('dual-role user approves another creator slot in same org -> 200, slot advances', async () => {
+    const dualF = await createDualRoleFixture();
+    const otherSuffix = Math.random().toString(36).slice(2, 10);
+
+    let otherUserId = '';
+    let otherCreatorId = '';
+    let otherSocialAccountId = '';
+    let otherSlotId = '';
+
+    try {
+      const otherUser = await prisma.user.create({
+        data: { clerkId: `clerk_other_${otherSuffix}`, email: `other_${otherSuffix}@test.local` },
+        select: { id: true, clerkId: true },
+      });
+      otherUserId = otherUser.id;
+
+      const otherCreator = await prisma.creator.create({ data: { userId: otherUser.id } });
+      otherCreatorId = otherCreator.id;
+
+      const otherSocialAccount = await prisma.socialAccount.create({
+        data: {
+          creatorId: otherCreator.id,
+          platform: SocialPlatform.YOUTUBE,
+          externalId: `ext_${otherSuffix}`,
+          handle: `handle_${otherSuffix}`,
+          scopes: ['yt-analytics.readonly'],
+          tokenCiphertext: `v1.fake.${otherSuffix}`,
+          revokedAt: null,
+        },
+        select: { id: true },
+      });
+      otherSocialAccountId = otherSocialAccount.id;
+
+      const otherCampaign = await prisma.campaign.create({
+        data: { organizationId: dualF.organizationId, title: `Other Campaign ${otherSuffix}`, totalBudget: 1000, currency: 'USD' },
+      });
+
+      const otherSlot = await prisma.campaignCreatorSlot.create({
+        data: {
+          campaignId: otherCampaign.id,
+          creatorId: otherCreator.id,
+          escrowAmount: 500,
+          status: SlotStatus.CONTENT_SUBMITTED,
+          platform: SocialPlatform.YOUTUBE,
+          contentId: `vid_efgh${otherSuffix}`,
+          socialAccountId: otherSocialAccount.id,
+        },
+        select: { id: true },
+      });
+      otherSlotId = otherSlot.id;
+
+      // The dual-role user must be an org member to be authorized.
+      await addMember(dualF.organizationId, dualF.userId, 'ADMIN');
+      vi.mocked(auth).mockResolvedValue({ userId: dualF.clerkId } as never);
+
+      const res = await callRoute(otherSlotId, 100000);
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.status).toBe(SlotStatus.IN_PROGRESS);
+      expect(body.approvedAt).toBeTruthy();
+      expect(body.viewTarget).toBe(100000);
+
+      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: otherSlotId } });
+      expect(slot.status).toBe(SlotStatus.IN_PROGRESS);
+      expect(slot.approvedAt).not.toBeNull();
+      expect(slot.viewTarget).toBe(100000);
+
+      // The dual-role user's OWN slot must be untouched by this approval.
+      const ownSlot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: dualF.slotId } });
+      expect(ownSlot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
+      expect(ownSlot.approvedAt).toBeNull();
+      expect(ownSlot.viewTarget).toBeNull();
+    } finally {
+      // FK-safe order (all relations here are onDelete: Restrict except
+      // OrganizationMember, which Cascade-deletes under its org/user):
+      //   PayoutEvent -> Slot -> SocialAccount -> Campaign -> Org -> Creator -> User
+      // Both campaigns live in dualF's org, so delete BOTH slots before the
+      // org's campaigns. Errors are logged, never swallowed, so a cleanup
+      // failure cannot mask a body assertion error.
+      await prisma.payoutEvent.deleteMany({ where: { slotId: otherSlotId } }).catch(() => {});
+      await prisma.campaignCreatorSlot.delete({ where: { id: otherSlotId } }).catch(() => {});
+      await prisma.socialAccount.delete({ where: { id: otherSocialAccountId } }).catch(() => {});
+      await cleanupDualRole(dualF).catch((e) =>
+        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
+      );
+      await prisma.creator.delete({ where: { id: otherCreatorId } }).catch(() => {});
+      await prisma.user.delete({ where: { id: otherUserId } }).catch(() => {});
+    }
+  });
+
+  // ----- Test 5: Ordering: dual-role user on own slot NOT CONTENT_SUBMITTED -> 403 SELF_APPROVAL_NOT_ALLOWED, not 409 -----
+  it('ordering: dual-role user on own ACCEPTED slot -> 403 SELF_APPROVAL_NOT_ALLOWED, not 409', async () => {
+    const f = await createDualRoleFixture({ status: SlotStatus.ACCEPTED });
+    await addMember(f.organizationId, f.userId, 'ADMIN');
+    try {
+      const res = await callRoute(f.slotId, 100000);
+      const body = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(body).toEqual({
+        error: 'You cannot approve your own content',
+        code: 'SELF_APPROVAL_NOT_ALLOWED',
+      });
+    } finally {
+      await cleanupDualRole(f).catch((e) =>
+        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
+      );
+    }
+  });
+
+  // ----- Test 6: Creator with no org membership -> 403 Forbidden, no code field -----
+  it('creator with no org membership approving own slot -> 403 Forbidden, no code field (authorization precedes guard)', async () => {
+    const f = await createDualRoleFixture();
+    // No membership added — the user is a creator but not an org member.
+    vi.mocked(auth).mockResolvedValue({ userId: f.clerkId } as never);
+    try {
+      const res = await callRoute(f.slotId, 100000);
+      const body = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(body).toEqual({ error: 'Forbidden' });
+      expect(body.code).toBeUndefined();
+    } finally {
+      await cleanupDualRole(f).catch((e) =>
+        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
+      );
+    }
+  });
+
+  // ----- Test 7: Existing tests remain unaffected; all 37 + 7 new pass -----
+  // Verified manually: none of the existing test cases are modified.
 });

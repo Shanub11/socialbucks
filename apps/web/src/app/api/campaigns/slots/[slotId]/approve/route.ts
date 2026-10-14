@@ -56,6 +56,7 @@ export async function POST(
     where: { id: slotId },
     include: {
       campaign: { select: { organizationId: true } },
+      creator: { select: { userId: true } },
       socialAccount: true,
     },
   });
@@ -81,6 +82,29 @@ export async function POST(
       organizationId: slot.campaign.organizationId,
     });
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // --- STEP 2b: Self-approval guard ------------------------------------------
+  // A creator who is also an OWNER/ADMIN of the campaign's organization must
+  // not approve their own submitted content. This runs *after* the membership
+  // check (so non-members never see the SELF_APPROVAL_NOT_ALLOWED reason —
+  // no information leak on slot ownership) and *before* the status check and
+  // any token decryption, YouTube API call, or DB write, so a blocked request
+  // touches nothing external.
+  // NOTE: this is not a complete fraud-control surface — it does not catch
+  // colluding admins and creators in the same org. See ADR-0002.
+  if (slot.creator.userId === provisioned.userId) {
+    console.warn('[campaigns] slot approve self-approval blocked', {
+      slotId,
+      organizationId: slot.campaign.organizationId,
+    });
+    return NextResponse.json(
+      {
+        error: 'You cannot approve your own content',
+        code: 'SELF_APPROVAL_NOT_ALLOWED',
+      },
+      { status: 403 },
+    );
   }
 
   // --- STEP 3: Status check ------------------------------------------------
