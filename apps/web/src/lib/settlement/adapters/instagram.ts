@@ -2,7 +2,15 @@
 //
 // Instagram MetricsProvider adapter for settleSlot().
 //
-// FOLLOW-UP REQUIRED: Instagram's fetchMediaInsights returns a
+// GATED AT THE ROUTE LAYER: settlement for Instagram is currently blocked by
+// the fail-closed platform gate (INSTAGRAM: false) in
+// supported-platforms.ts, enforced in POST
+// /api/campaigns/slots/[slotId]/approve and POST
+// /api/campaigns/slots/[slotId]/submit. parseContentUrl still recognises
+// /p/ and /reel/ URLs, but any Instagram slot is rejected before submission
+// and before approval — it can never reach settleSlot().
+//
+// UNIMPLEMENTED: Instagram's fetchMediaInsights returns a
 // Record<string, number> which does not include the raw settlement
 // snapshot shape that VideoSettlement provides for YouTube. The engine
 // stores settlementJson for dispute evidence. Until Instagram's insights
@@ -11,7 +19,12 @@
 // turns into a clean SKIPPED_NOT_ELIGIBLE / 'platform_not_supported'
 // result — no crash, no writes.
 //
-// This is explicitly a follow-up item — not an oversight.
+// REMOVAL CRITERIA (flip INSTAGRAM: true in supported-platforms.ts only when
+// ALL hold): (a) the adapter returns a typed settlement snapshot; (b) the
+// billable metric is verified as 'views'; (c) an ownership check for Instagram
+// media exists; (d) tests cover all of the above.
+//
+// See supported-platforms.ts for the single source of truth and gate.
 
 import { SocialPlatform } from '@repo/database';
 import type { MetricsProvider } from '../settle-slot';

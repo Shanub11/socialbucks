@@ -18,6 +18,7 @@ import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
 import { prisma } from '@repo/database';
 import { SlotStatus } from '@repo/database';
 import { parseContentUrl } from '@/lib/campaigns/parse-content-url';
+import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -121,6 +122,26 @@ export async function POST(
   }
 
   const { platform, contentId } = parsed;
+
+  // --- STEP 2b: Fail-closed platform gate ---------------------------------
+  // Reject content that can never be approved (and thus never settled).
+  // parseContentUrl itself stays unchanged — it is a pure parser and must
+  // keep recognising Instagram URLs.
+
+  if (!isSettlementSupported(platform)) {
+    console.info('[campaigns] slot submit platform not supported', {
+      slotId,
+      platform,
+    });
+    return NextResponse.json(
+      {
+        error: 'Submission is not yet available for this platform',
+        code: 'PLATFORM_NOT_SUPPORTED',
+        platform,
+      },
+      { status: 422 },
+    );
+  }
 
   // --- STEP 3: Find the creator's active SocialAccount for that platform ---
 

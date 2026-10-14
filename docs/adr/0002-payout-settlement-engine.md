@@ -382,6 +382,16 @@ is the right granularity for financial idempotency. Rejected.
 - Adding `socialAccountId` to `CampaignCreatorSlot` requires a migration
   and a one-time backfill for any existing slots.
 
+## Follow-ups
+
+- **Instagram settlement gating (2026-10-08).** `apps/web/src/lib/settlement/adapters/instagram.ts` is still a stub that throws `UnsupportedPlatformError`. Settlement for Instagram slots is therefore gated at both the submit route
+  (`POST /api/campaigns/slots/[slotId]/submit`) and the approve route
+  (`POST /api/campaigns/slots/[slotId]/approve`) via the fail-closed
+  allow-list in `apps/web/src/lib/settlement/supported-platforms.ts`
+  (`INSTAGRAM: false`) until the adapter is implemented. An Instagram slot can
+  no longer be submitted or approved, so escrow cannot be locked for a platform
+  that has no settlement path.
+
 ## Decision Log
 
 Recorded 2026-09-30, implementing the engine in three phases.

@@ -213,19 +213,28 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     }
   });
 
-  it('INSTAGRAM happy path: no verifyIsShort call -> 200, IN_PROGRESS, isShort stays null', async () => {
+  it('INSTAGRAM slot, OWNER caller -> 422 PLATFORM_NOT_SUPPORTED, slot unchanged', async () => {
     const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
       const res = await callRoute(f.slotId, 50000);
       const body = await res.json();
 
-      expect(res.status).toBe(200);
-      expect(body.status).toBe(SlotStatus.IN_PROGRESS);
-      // Prisma `null` values can be omitted or returned as omitted properties by route response
-      expect(body.isShort).toBeNull();
+      expect(res.status).toBe(422);
+      expect(body).toEqual({
+        error: 'Approval is not yet available for this platform',
+        code: 'PLATFORM_NOT_SUPPORTED',
+        platform: SocialPlatform.INSTAGRAM,
+      });
       expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
       expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
+
+      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
+      expect(slot.approvedAt).toBeNull();
+      expect(slot.viewTarget).toBeNull();
     } finally {
       await cleanup(f);
     }
@@ -234,10 +243,19 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
   it('non-member -> 403, slot unchanged', async () => {
     const f = await createFixture();
     try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: { status: true },
+      });
+
       const res = await callRoute(f.slotId, 100000);
       expect(res.status).toBe(403);
-      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
-      expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
+
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: { status: true },
+      });
+      expect(after).toEqual(before);
     } finally {
       await cleanup(f);
     }
@@ -247,8 +265,19 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture();
     await addMember(f.organizationId, f.userId, 'MEMBER');
     try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: { status: true },
+      });
+
       const res = await callRoute(f.slotId, 100000);
       expect(res.status).toBe(403);
+
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: { status: true },
+      });
+      expect(after).toEqual(before);
     } finally {
       await cleanup(f);
     }
@@ -262,6 +291,81 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(res.status).toBe(409);
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
       expect(slot.status).toBe(SlotStatus.ACCEPTED);
+    } finally {
+      await cleanup(f);
+    }
+  });
+
+  it('INSTAGRAM slot, non-member caller -> 403 (authorization precedes platform gate)', async () => {
+    const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
+    // Do NOT add a membership — the auth mock user has no role in this org.
+    try {
+      const res = await callRoute(f.slotId, 50000);
+      expect(res.status).toBe(403);
+      expect((await res.json()).error).toBe('Forbidden');
+      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
+    } finally {
+      await cleanup(f);
+    }
+  });
+
+  it('INSTAGRAM slot, MEMBER role -> 403 (authorization precedes platform gate)', async () => {
+    const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
+    await addMember(f.organizationId, f.userId, 'MEMBER');
+    try {
+      const res = await callRoute(f.slotId, 50000);
+      expect(res.status).toBe(403);
+      expect((await res.json()).error).toBe('Forbidden');
+    } finally {
+      await cleanup(f);
+    }
+  });
+
+  it('platform = null with CONTENT_SUBMITTED -> 500 Slot data is inconsistent, no DB write', async () => {
+    const f = await createFixture();
+    await addMember(f.organizationId, f.userId, 'OWNER');
+
+    // Set platform to null after fixture creation
+    await prisma.campaignCreatorSlot.update({
+      where: { id: f.slotId },
+      data: { platform: null },
+    });
+
+    try {
+      const res = await callRoute(f.slotId, 100000);
+      expect(res.status).toBe(500);
+      const body = await res.json();
+      expect(body.error).toBe('Slot data is inconsistent');
+      expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
+      expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
+
+      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
+      expect(slot.approvedAt).toBeNull();
+      expect(slot.viewTarget).toBeNull();
+    } finally {
+      await cleanup(f);
+    }
+  });
+
+  it('INSTAGRAM slot not in CONTENT_SUBMITTED (IN_PROGRESS) -> 409, unchanged', async () => {
+    const f = await createFixture({
+      platform: SocialPlatform.INSTAGRAM,
+      status: SlotStatus.IN_PROGRESS,
+    });
+    await addMember(f.organizationId, f.userId, 'OWNER');
+    try {
+      const res = await callRoute(f.slotId, 100000);
+      expect(res.status).toBe(409);
+      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(slot.status).toBe(SlotStatus.IN_PROGRESS);
     } finally {
       await cleanup(f);
     }

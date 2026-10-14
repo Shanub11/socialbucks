@@ -18,6 +18,7 @@ import { prisma } from '@repo/database';
 import { SlotStatus, SocialPlatform } from '@repo/database';
 import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
 import { verifyIsShort } from '@/lib/youtube/analytics';
+import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -115,7 +116,38 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // --- STEP 4: Platform-specific verification ------------------------------
+  // --- STEP 4: Fail-closed platform gate ----------------------------------
+  // Runs before any token decryption or network call.
+
+  if (slot.platform === null) {
+    // A CONTENT_SUBMITTED slot must have a platform (set at submit time).
+    // This is an invariant violation, not a client error.
+    console.error(
+      '[campaigns] slot approve platform null for CONTENT_SUBMITTED slot',
+      { slotId },
+    );
+    return NextResponse.json(
+      { error: 'Slot data is inconsistent' },
+      { status: 500 },
+    );
+  }
+
+  if (!isSettlementSupported(slot.platform)) {
+    console.info('[campaigns] slot approve platform not supported', {
+      slotId,
+      platform: slot.platform,
+    });
+    return NextResponse.json(
+      {
+        error: 'Approval is not yet available for this platform',
+        code: 'PLATFORM_NOT_SUPPORTED',
+        platform: slot.platform,
+      },
+      { status: 422 },
+    );
+  }
+
+  // --- STEP 4b: Platform-specific verification ------------------------------
 
   let isShortValue: boolean | undefined;
   let isShortVerifiedAtValue: Date | undefined;
@@ -197,7 +229,10 @@ export async function POST(
     }
   }
 
-  // Instagram: skip verification entirely. isShort stays null (correct per schema).
+  // Only supported platforms reach here (currently YouTube only).
+  // Instagram and any future unsupported platform were rejected by the
+  // fail-closed gate above. For platforms without a verification step,
+  // isShort stays null.
 
   // --- STEP 5: Write with compare-and-swap ---------------------------------
 

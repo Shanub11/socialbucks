@@ -291,81 +291,102 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
   });
 
   // -------------------------------------------------------------------------
-  // Happy path on every supported URL shape
+  // Happy path: supported URL shapes (YouTube)
   // -------------------------------------------------------------------------
 
-  const contentUrlCases = [
-    {
-      label: 'YouTube Shorts',
-      url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
-      platform: SocialPlatform.YOUTUBE,
-      contentId: 'dQw4w9WgXcQ',
-    },
-    {
-      label: 'YouTube watch',
-      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      platform: SocialPlatform.YOUTUBE,
-      contentId: 'dQw4w9WgXcQ',
-    },
-    {
-      label: 'YouTube youtu.be',
-      url: 'https://youtu.be/dQw4w9WgXcQ',
-      platform: SocialPlatform.YOUTUBE,
-      contentId: 'dQw4w9WgXcQ',
-    },
-    {
-      label: 'Instagram post',
-      url: 'https://www.instagram.com/p/C8q1xL9sK7a/',
-      platform: SocialPlatform.INSTAGRAM,
-      contentId: 'C8q1xL9sK7a',
-    },
-    {
-      label: 'Instagram reel',
-      url: 'https://www.instagram.com/reel/C8q1xL9sK7a/',
-      platform: SocialPlatform.INSTAGRAM,
-      contentId: 'C8q1xL9sK7a',
-    },
-  ];
+  it.each([
+    { label: 'YouTube Shorts', url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ', contentId: 'dQw4w9WgXcQ' },
+    { label: 'YouTube watch', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', contentId: 'dQw4w9WgXcQ' },
+    { label: 'YouTube youtu.be', url: 'https://youtu.be/dQw4w9WgXcQ', contentId: 'dQw4w9WgXcQ' },
+  ]) // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ('happy path: $label URL -> 200 with parsed platform/contentId', async ({ label: _label, url, contentId }) => {
+    const f = await createSlotFixture(prisma, { platform: SocialPlatform.YOUTUBE });
+    try {
+      const req = makeRequest(f.slotId, url);
+      const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
+      const body = await response.json();
 
-  contentUrlCases.forEach(({ label, url, platform, contentId }) => {
-    it(`happy path: ${label} URL -> 200 with parsed platform/contentId`, async () => {
-      const f = await createSlotFixture(prisma, { platform });
-      try {
-        const req = makeRequest(f.slotId, url);
-        const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
-        const body = await response.json();
+      expect(response.status).toBe(200);
+      expect(body).toEqual({
+        id: f.slotId,
+        status: SlotStatus.CONTENT_SUBMITTED,
+        platform: SocialPlatform.YOUTUBE,
+        contentId,
+        submittedAt: body.submittedAt,
+      });
 
-        expect(response.status).toBe(200);
-        expect(body).toEqual({
-          id: f.slotId,
-          status: SlotStatus.CONTENT_SUBMITTED,
-          platform,
-          contentId,
-          submittedAt: body.submittedAt,
-        });
+      const slot = await prisma.campaignCreatorSlot.findUnique({
+        where: { id: f.slotId },
+        select: {
+          contentUrl: true,
+          platform: true,
+          contentId: true,
+          socialAccountId: true,
+          submittedAt: true,
+          status: true,
+        },
+      });
+      expect(slot).not.toBeNull();
+      expect(slot!.contentUrl).toBe(url);
+      expect(slot!.platform).toBe(SocialPlatform.YOUTUBE);
+      expect(slot!.contentId).toBe(contentId);
+      expect(slot!.socialAccountId).toBe(f.socialAccountId);
+      expect(slot!.submittedAt).toBeInstanceOf(Date);
+      expect(slot!.status).toBe(SlotStatus.CONTENT_SUBMITTED);
+    } finally {
+      await cleanSlotFixture(prisma, f);
+    }
+  });
 
-        const slot = await prisma.campaignCreatorSlot.findUnique({
-          where: { id: f.slotId },
-          select: {
-            contentUrl: true,
-            platform: true,
-            contentId: true,
-            socialAccountId: true,
-            submittedAt: true,
-            status: true,
-          },
-        });
-        expect(slot).not.toBeNull();
-        expect(slot!.contentUrl).toBe(url);
-        expect(slot!.platform).toBe(platform);
-        expect(slot!.contentId).toBe(contentId);
-        expect(slot!.socialAccountId).toBe(f.socialAccountId);
-        expect(slot!.submittedAt).toBeInstanceOf(Date);
-        expect(slot!.status).toBe(SlotStatus.CONTENT_SUBMITTED);
-      } finally {
-        await cleanSlotFixture(prisma, f);
-      }
-    });
+  // -------------------------------------------------------------------------
+  // 422: unsupported platform at submit (Instagram)
+  // -------------------------------------------------------------------------
+
+  it.each([
+    { label: 'Instagram post', url: 'https://www.instagram.com/p/C8q1xL9sK7a/' },
+    { label: 'Instagram reel', url: 'https://www.instagram.com/reel/C8q1xL9sK7a/' },
+  ]) // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ('Instagram $label URL -> 422 PLATFORM_NOT_SUPPORTED, slot unchanged', async ({ label: _label, url }) => {
+    const f = await createSlotFixture(prisma, { platform: SocialPlatform.INSTAGRAM });
+    try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: {
+          status: true,
+          contentUrl: true,
+          platform: true,
+          contentId: true,
+          socialAccountId: true,
+          submittedAt: true,
+        },
+      });
+
+      const req = makeRequest(f.slotId, url);
+      const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
+      const body = await response.json();
+
+      expect(response.status).toBe(422);
+      expect(body).toEqual({
+        error: 'Submission is not yet available for this platform',
+        code: 'PLATFORM_NOT_SUPPORTED',
+        platform: SocialPlatform.INSTAGRAM,
+      });
+
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: {
+          status: true,
+          contentUrl: true,
+          platform: true,
+          contentId: true,
+          socialAccountId: true,
+          submittedAt: true,
+        },
+      });
+      expect(after).toEqual(before);
+    } finally {
+      await cleanSlotFixture(prisma, f);
+    }
   });
 
   // -------------------------------------------------------------------------
@@ -375,6 +396,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
   it('403 when slot belongs to another creator — slot unchanged', async () => {
     const f = await createOtherSlotFixture(prisma);
     try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
+      });
+
       const req = makeRequest(f.slotId, 'https://www.youtube.com/shorts/dQw4w9WgXcQ');
       const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
       const body = await response.json();
@@ -382,12 +408,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(response.status).toBe(403);
       expect(body.error).toBe('Forbidden');
 
-      const slot = await prisma.campaignCreatorSlot.findUnique({
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
-        select: { status: true, contentId: true },
+        select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
       });
-      expect(slot!.status).toBe(SlotStatus.ACCEPTED);
-      expect(slot!.contentId).toBeNull();
+      expect(after).toEqual(before);
     } finally {
       await cleanSlotFixture(prisma, f);
     }
@@ -407,6 +432,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
     it(`409 when slot is ${badStatus} (not ACCEPTED) — slot unchanged`, async () => {
       const f = await createSlotFixture(prisma, { status: badStatus });
       try {
+        const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+          where: { id: f.slotId },
+          select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
+        });
+
         const req = makeRequest(f.slotId, 'https://www.youtube.com/shorts/dQw4w9WgXcQ');
         const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
         const body = await response.json();
@@ -415,12 +445,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
         expect(body.error).toBe('Slot not in accepted state');
         expect(body.currentStatus).toBe(badStatus);
 
-        const slot = await prisma.campaignCreatorSlot.findUnique({
+        const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
           where: { id: f.slotId },
-          select: { status: true, contentUrl: true },
+          select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
         });
-        expect(slot!.status).toBe(badStatus);
-        expect(slot!.contentUrl).toBeNull();
+        expect(after).toEqual(before);
       } finally {
         await cleanSlotFixture(prisma, f);
       }
@@ -439,6 +468,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       noSocialAccount: true,
     });
     try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+        select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
+      });
+
       const req = makeRequest(f.slotId, 'https://www.youtube.com/shorts/dQw4w9WgXcQ');
       const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
       const body = await response.json();
@@ -448,12 +482,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(body.platform).toBe(SocialPlatform.YOUTUBE);
       expect(body.message).toContain('Connect your youtube account first');
 
-      const slot = await prisma.campaignCreatorSlot.findUnique({
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
-        select: { status: true, socialAccountId: true },
+        select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
       });
-      expect(slot!.status).toBe(SlotStatus.ACCEPTED);
-      expect(slot!.socialAccountId).toBeNull();
+      expect(after).toEqual(before);
     } finally {
       await cleanSlotFixture(prisma, f);
     }
@@ -477,6 +510,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
     it(`400 for invalid URL: ${badUrl || '(empty)'}`, async () => {
       const f = await createSlotFixture(prisma);
       try {
+        const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+          where: { id: f.slotId },
+          select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
+        });
+
         const req = makeRequest(f.slotId, badUrl);
         const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
         const body = await response.json();
@@ -484,11 +522,11 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
         expect(response.status).toBe(400);
         expect(body.error).toBe(expectedError);
 
-        const slot = await prisma.campaignCreatorSlot.findUnique({
+        const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
           where: { id: f.slotId },
-          select: { status: true },
+          select: { status: true, contentUrl: true, platform: true, contentId: true, socialAccountId: true, submittedAt: true },
         });
-        expect(slot!.status).toBe(SlotStatus.ACCEPTED);
+        expect(after).toEqual(before);
       } finally {
         await cleanSlotFixture(prisma, f);
       }
