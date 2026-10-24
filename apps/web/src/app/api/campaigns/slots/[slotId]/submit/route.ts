@@ -3,12 +3,20 @@
 // POST /api/campaigns/slots/[slotId]/submit
 //
 // A creator submits content for a CampaignCreatorSlot they've accepted.
-// This is the first real route for Campaign/CampaignCreatorSlot in the codebase.
 //
-// Security: this is a creator writing to a financial record. Do not trust any
-// field in the request body except contentUrl — platform, contentId, and
-// socialAccountId are always derived server-side, never accepted from the
-// client.
+// Security: this is a creator writing to a financial record.
+//   - platform, contentId, and socialAccountId are always derived server-side —
+//     never accepted from the client.
+//   - Channel ownership is verified at submit time: the submitted video's
+//     snippet.channelId (from the YouTube Data API videos.list endpoint) must
+//     match the creator's SocialAccount.externalId. A mismatch, missing video,
+//     or any API error is fail-closed: the slot is not updated.
+//
+// Request order:
+//   auth -> provision -> load slot -> slot ownership (403) -> status (409)
+//   -> parse body (400) -> parse URL (400) -> platform gate (422)
+//   -> active SocialAccount lookup (409) -> ownership check (409/422/502)
+//   -> compare-and-swap updateMany (409 if raced) -> 200
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -16,8 +24,11 @@ import { z } from 'zod';
 import { requireAuthApi } from '@/lib/auth/require-auth';
 import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
 import { prisma } from '@repo/database';
-import { SlotStatus } from '@repo/database';
+import { SlotStatus, SocialPlatform } from '@repo/database';
 import { parseContentUrl } from '@/lib/campaigns/parse-content-url';
+import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
+import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
+import { fetchVideoChannel } from '@/lib/youtube/video-ownership';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -122,6 +133,26 @@ export async function POST(
 
   const { platform, contentId } = parsed;
 
+  // --- STEP 2b: Fail-closed platform gate ---------------------------------
+  // Reject content that can never be approved (and thus never settled).
+  // parseContentUrl itself stays unchanged — it is a pure parser and must
+  // keep recognising Instagram URLs.
+
+  if (!isSettlementSupported(platform)) {
+    console.info('[campaigns] slot submit platform not supported', {
+      slotId,
+      platform,
+    });
+    return NextResponse.json(
+      {
+        error: 'Submission is not yet available for this platform',
+        code: 'PLATFORM_NOT_SUPPORTED',
+        platform,
+      },
+      { status: 422 },
+    );
+  }
+
   // --- STEP 3: Find the creator's active SocialAccount for that platform ---
 
   const socialAccount = await prisma.socialAccount.findFirst({
@@ -146,6 +177,103 @@ export async function POST(
       },
       { status: 409 },
     );
+  }
+
+  // --- STEP 3b: Platform-specific content ownership check -----------------
+  //
+  // FAIL CLOSED: this switch must handle every platform we support. If a new
+  // platform is enabled without adding a verifier here, the default branch
+  // returns 500 so the gap is surfaced immediately rather than silently
+  // accepting unverified content.
+  //
+  // This check runs BEFORE the compare-and-swap transaction and OUTSIDE any
+  // database transaction, keeping network I/O out of the DB transaction scope.
+
+  switch (platform) {
+    case SocialPlatform.YOUTUBE: {
+      // Guard: a null ciphertext means the creator never granted offline access
+      // (or the token was wiped). We cannot call the API without a token.
+      if (socialAccount.tokenCiphertext === null) {
+        console.info('[campaigns] slot submit null tokenCiphertext', { slotId });
+        return NextResponse.json(
+          {
+            error: 'YouTube connection needs to be re-authorized',
+            code: 'REAUTH_REQUIRED',
+          },
+          { status: 409 },
+        );
+      }
+
+      let ownershipResult: Awaited<ReturnType<typeof fetchVideoChannel>>;
+      try {
+        const accessToken = await getYoutubeAccessToken(
+          socialAccount.tokenCiphertext,
+        );
+        ownershipResult = await fetchVideoChannel(contentId, accessToken);
+      } catch (err) {
+        // Any error — network, revoked token, malformed response — is fail-closed.
+        // We do NOT distinguish invalid_grant here because throwForStatus sets
+        // providerCode: 'unknown' for Google's flat { error: string } OAuth
+        // envelope (the `error` field is a string, so `error.code` is undefined).
+        // Returning 502 keeps the slot untouched and retryable.
+        const message = err instanceof Error ? err.message : String(err);
+        console.error('[campaigns] slot submit ownership check failed', {
+          slotId,
+          error: message,
+        });
+        return NextResponse.json(
+          {
+            error:
+              'Could not verify video ownership with YouTube. Please try again.',
+          },
+          { status: 502 },
+        );
+      }
+
+      if (!ownershipResult.found) {
+        console.info('[campaigns] slot submit video not found', { slotId });
+        return NextResponse.json(
+          {
+            error: 'Video not found or not accessible',
+            code: 'CONTENT_NOT_FOUND',
+          },
+          { status: 422 },
+        );
+      }
+
+      if (ownershipResult.channelId !== socialAccount.externalId) {
+        // Log slotId only — never log either channel ID.
+        console.info(
+          '[campaigns] slot submit ownership mismatch for content',
+          { slotId },
+        );
+        return NextResponse.json(
+          {
+            error:
+              'This video does not belong to your connected YouTube channel',
+            code: 'CONTENT_OWNERSHIP_MISMATCH',
+          },
+          { status: 422 },
+        );
+      }
+
+      // Ownership confirmed — fall through to the compare-and-swap.
+      break;
+    }
+
+    default: {
+      // A platform that passed the isSettlementSupported gate but has no
+      // ownership verifier configured here. This is a programming error, not
+      // a client error — fail closed so the gap surfaces immediately.
+      console.error(
+        '[campaigns] slot submit no ownership verifier for platform',
+        { slotId, platform },
+      );
+      return NextResponse.json(
+        { error: 'Platform not supported' },
+        { status: 500 },
+      );
+    }
   }
 
   // --- STEP 4: Write in a single transaction (compare-and-swap) -----------

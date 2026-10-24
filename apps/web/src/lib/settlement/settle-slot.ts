@@ -108,13 +108,30 @@ export class SettlementError extends Error {
 // Retry helper for Prisma P2034 (serialization failure)
 // ---------------------------------------------------------------------------
 
-const MAX_TX_RETRIES = 3;
-
-async function withSerializableRetry<T>(
+/**
+ * Internal: Retries a Prisma transaction on serialization failures (P2034).
+ * @internal
+ */
+export async function withSerializableRetry<T>(
   fn: () => Promise<T>,
+  options?: {
+    maxAttempts?: number;
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    sleep?: (ms: number) => Promise<void>;
+    label?: string;
+  },
 ): Promise<T> {
+  const {
+    maxAttempts = 6,
+    baseDelayMs = 50,
+    maxDelayMs = 1000,
+    sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
+    label = 'unknown',
+  } = options ?? {};
+
   let lastError: unknown;
-  for (let attempt = 0; attempt < MAX_TX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await fn();
     } catch (err) {
@@ -126,14 +143,31 @@ async function withSerializableRetry<T>(
         (err as { code: string }).code === 'P2034'
       ) {
         lastError = err;
-        // Jitter: 50–200 ms
-        const jitterMs = 50 + Math.floor(Math.random() * 150);
-        await new Promise((resolve) => setTimeout(resolve, jitterMs));
+        if (attempt === maxAttempts - 1) {
+          // Exhausted retries
+          console.warn(
+            '[settlement] slotId=%s serialization retries exhausted after %d attempts',
+            label,
+            attempt + 1,
+          );
+          throw err;
+        }
+        // Exponential backoff with FULL jitter: random [0, min(maxDelay, base * 2^attempt)]
+        const expDelay = baseDelayMs * 2 ** attempt;
+        const delayMs = Math.floor(Math.random() * Math.min(maxDelayMs, expDelay));
+        console.info(
+          '[settlement] slotId=%s attempt=%d retrying in %dms',
+          label,
+          attempt + 1,
+          delayMs,
+        );
+        await sleep(delayMs);
         continue;
       }
       throw err; // Non-retryable error — rethrow immediately
     }
   }
+  // This point should never be reached due to the check above, but TS needs it
   throw lastError;
 }
 
@@ -301,7 +335,7 @@ export async function settleSlot(
   const capturedPlatform = slot.platform;
   const capturedCurrency = slot.campaign.currency;
 
-  return withSerializableRetry(async () => {
+  const outcome = await withSerializableRetry(async () => {
     return prisma.$transaction(
       async (tx) => {
         // 3a. Re-read slot inside the transaction (a dispute may have arrived)
@@ -357,15 +391,16 @@ export async function settleSlot(
         );
 
         if (newTiers.length === 0) {
-          // No new tiers — update view count cache only
-          await tx.campaignCreatorSlot.update({
-            where: { id: capturedSlotId },
-            data: {
-              currentViewCount: billableViews,
-              lastViewCheckAt: new Date(),
-            },
-          });
-          return { status: 'NO_CHANGE' as const, reason: 'no_new_tiers' as const };
+          // No new tiers — do NOT write inside the Serializable transaction
+          // (concurrent settlement contention). The cache update will be performed
+          // after the transaction commits below, outside the retry loop.
+          return {
+            status: 'NO_CHANGE' as const,
+            reason: 'no_new_tiers' as const,
+            // Carry these values so the caller can update the cache after commit.
+            billableViews,
+            slotId: capturedSlotId,
+          };
         }
 
         // 3d. createMany with skipDuplicates — the @@unique([slotId, tier])
@@ -440,5 +475,28 @@ export async function settleSlot(
         timeout: 30_000,
       },
     );
-  });
+  }, { label: slotId });
+
+  // If NO_CHANGE, update the cache as a best-effort, non-transactional write
+  if (outcome.status === 'NO_CHANGE') {
+    try {
+      // The outcome from the transaction carries billableViews and slotId
+      const { billableViews, slotId } = outcome as {
+        billableViews: number;
+        slotId: string;
+        status: 'NO_CHANGE';
+        reason: 'no_new_tiers';
+      };
+      await prisma.campaignCreatorSlot.updateMany({
+        where: { id: slotId, status: SlotStatus.IN_PROGRESS, deletedAt: null },
+        data: { currentViewCount: billableViews, lastViewCheckAt: new Date() },
+      });
+    } catch (_err) {
+      console.warn('[settlement] slotId=%s view-count cache update failed', slotId);
+      // Cache-write failure must never fail or alter a settlement outcome
+      // Still return NO_CHANGE
+    }
+  }
+
+  return outcome;
 }

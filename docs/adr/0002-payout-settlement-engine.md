@@ -382,6 +382,16 @@ is the right granularity for financial idempotency. Rejected.
 - Adding `socialAccountId` to `CampaignCreatorSlot` requires a migration
   and a one-time backfill for any existing slots.
 
+## Follow-ups
+
+- **Instagram settlement gating (2026-10-08).** `apps/web/src/lib/settlement/adapters/instagram.ts` is still a stub that throws `UnsupportedPlatformError`. Settlement for Instagram slots is therefore gated at both the submit route
+  (`POST /api/campaigns/slots/[slotId]/submit`) and the approve route
+  (`POST /api/campaigns/slots/[slotId]/approve`) via the fail-closed
+  allow-list in `apps/web/src/lib/settlement/supported-platforms.ts`
+  (`INSTAGRAM: false`) until the adapter is implemented. An Instagram slot can
+  no longer be submitted or approved, so escrow cannot be locked for a platform
+  that has no settlement path.
+
 ## Decision Log
 
 Recorded 2026-09-30, implementing the engine in three phases.
@@ -396,3 +406,11 @@ Recorded 2026-09-30, implementing the engine in three phases.
 - **D8** — `settlementJson` stores the raw VideoSettlement snapshot.
 - **D9** — Only the DISPUTED freeze is implemented (settlement skips any slot not IN_PROGRESS). Raising disputes and clawbacks are out of scope.
 - **D10** — The ledger is the source of truth. `paidToDate` and `currentTier` are caches recomputed from the ledger inside the transaction, never incremented. Currency comes from `Campaign.currency`; assert a 2-decimal currency and throw otherwise.
+
+## Security Notes
+
+**Self-approval blocked (2026-10-14).** The `POST /api/campaigns/slots/[slotId]/approve` route now explicitly rejects approval when the requesting user is the slot's creator. The guard runs after org membership authorization (so non-members never see the SELF_APPROVAL_NOT_ALLOWED reason — no information leak) and before the slot status check (so no slot state is leaked). It keys on identity: `slot.creator.userId !== provisioned.userId`. This does not prevent colluding admins and creators in the same org; that remains out of scope and is explicitly deferred.
+
+**Video ownership verified at submit time (2026-10-15).** `POST /api/campaigns/slots/[slotId]/submit` now verifies that the submitted YouTube video belongs to the creator's connected channel before accepting the submission. The check calls the YouTube Data API v3 `videos.list` with `part=snippet&id=<videoId>` and compares `items[0].snippet.channelId` against `SocialAccount.externalId` (the `UC...` channel ID). The verify runs after the active-SocialAccount lookup and before the compare-and-swap transaction, entirely outside any DB transaction. Any API error, network timeout, missing token ciphertext, or channel-ID mismatch is fail-closed: the slot is left untouched and the request returns 422, 409, or 502 depending on the failure mode. Neither channel ID is ever written to logs or returned to the client — the client sees only an opaque error code (`CONTENT_NOT_FOUND`, `CONTENT_OWNERSHIP_MISMATCH`, `REAUTH_REQUIRED`).
+
+**Unverified assumption (2026-10-15).** The real-world behavior of the YouTube Analytics API for a video that does **not** belong to the authenticated channel has not been independently confirmed against a live API response (it is expected to return 403 or an empty result set because the `ids=channel==MINE` filter scopes the query to the caller's own channel). The submit-time ownership check therefore provides defense-in-depth regardless of what the Analytics API does at approve or settlement time.

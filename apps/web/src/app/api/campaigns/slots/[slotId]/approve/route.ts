@@ -18,6 +18,7 @@ import { prisma } from '@repo/database';
 import { SlotStatus, SocialPlatform } from '@repo/database';
 import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
 import { verifyIsShort } from '@/lib/youtube/analytics';
+import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,7 @@ export async function POST(
     where: { id: slotId },
     include: {
       campaign: { select: { organizationId: true } },
+      creator: { select: { userId: true } },
       socialAccount: true,
     },
   });
@@ -80,6 +82,29 @@ export async function POST(
       organizationId: slot.campaign.organizationId,
     });
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // --- STEP 2b: Self-approval guard ------------------------------------------
+  // A creator who is also an OWNER/ADMIN of the campaign's organization must
+  // not approve their own submitted content. This runs *after* the membership
+  // check (so non-members never see the SELF_APPROVAL_NOT_ALLOWED reason —
+  // no information leak on slot ownership) and *before* the status check and
+  // any token decryption, YouTube API call, or DB write, so a blocked request
+  // touches nothing external.
+  // NOTE: this is not a complete fraud-control surface — it does not catch
+  // colluding admins and creators in the same org. See ADR-0002.
+  if (slot.creator.userId === provisioned.userId) {
+    console.warn('[campaigns] slot approve self-approval blocked', {
+      slotId,
+      organizationId: slot.campaign.organizationId,
+    });
+    return NextResponse.json(
+      {
+        error: 'You cannot approve your own content',
+        code: 'SELF_APPROVAL_NOT_ALLOWED',
+      },
+      { status: 403 },
+    );
   }
 
   // --- STEP 3: Status check ------------------------------------------------
@@ -115,7 +140,38 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // --- STEP 4: Platform-specific verification ------------------------------
+  // --- STEP 4: Fail-closed platform gate ----------------------------------
+  // Runs before any token decryption or network call.
+
+  if (slot.platform === null) {
+    // A CONTENT_SUBMITTED slot must have a platform (set at submit time).
+    // This is an invariant violation, not a client error.
+    console.error(
+      '[campaigns] slot approve platform null for CONTENT_SUBMITTED slot',
+      { slotId },
+    );
+    return NextResponse.json(
+      { error: 'Slot data is inconsistent' },
+      { status: 500 },
+    );
+  }
+
+  if (!isSettlementSupported(slot.platform)) {
+    console.info('[campaigns] slot approve platform not supported', {
+      slotId,
+      platform: slot.platform,
+    });
+    return NextResponse.json(
+      {
+        error: 'Approval is not yet available for this platform',
+        code: 'PLATFORM_NOT_SUPPORTED',
+        platform: slot.platform,
+      },
+      { status: 422 },
+    );
+  }
+
+  // --- STEP 4b: Platform-specific verification ------------------------------
 
   let isShortValue: boolean | undefined;
   let isShortVerifiedAtValue: Date | undefined;
@@ -197,7 +253,10 @@ export async function POST(
     }
   }
 
-  // Instagram: skip verification entirely. isShort stays null (correct per schema).
+  // Only supported platforms reach here (currently YouTube only).
+  // Instagram and any future unsupported platform were rejected by the
+  // fail-closed gate above. For platforms without a verification step,
+  // isShort stays null.
 
   // --- STEP 5: Write with compare-and-swap ---------------------------------
 
