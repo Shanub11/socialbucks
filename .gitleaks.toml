@@ -1,0 +1,19 @@
+# Gitleaks configuration for socialbucks CI secret-scan.
+#
+# Minimal allow-list: only obvious dummy test values are ignored. Real
+# credentials must NEVER appear in this repo and must never be allow-listed.
+
+title = "socialbucks"
+
+[[rules]]
+id = "dummy-test-secrets"
+description = "Dummy test values used in fixtures — not real secrets"
+regex = "(pk_test_[a-z_]*|sk_test_[a-z_]*|ya29\\.fake-[a-zA-Z0-9._-]*|UC_[a-zA-Z0-9_]{22})"
+keywords = ["dummy", "fake", "test"]
+
+[[allow]]
+paths = [
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/vitest.config.ts",
+]

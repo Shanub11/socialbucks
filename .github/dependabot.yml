@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # GitHub Actions workflows (.github/workflows/*.yml)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "Monday 09:00"
+    open-pull-requests-limit: 5
+    groups:
+      all-actions:
+        patterns: ["*"]
+
+  # npm / pnpm dependencies (package-lock.json / pnpm-lock.yaml)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "Monday 10:00"
+    open-pull-requests-limit: 5
+    groups:
+      all-npm-packages:
+        patterns: ["*"]
