@@ -1,0 +1,16 @@
+# Gitleaks config for socialbucks.
+# Built-in rules are ON. Only these exact dummy values are ignored (never whole
+# paths), so a real secret pasted into a test file is still reported.
+title = "socialbucks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known dummy values used in tests and CI placeholders"
+regexTarget = "secret"
+regexes = [
+  '''pk_test_dummy''',
+  '''sk_test_dummy''',
+  '''ya29\.fake-[A-Za-z0-9._-]+''',
+]

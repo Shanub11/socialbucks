@@ -1,6 +1,7 @@
 {
   "name": "socialbucks",
   "private": true,
+  "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",

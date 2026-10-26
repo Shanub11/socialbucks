@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: socialbucks_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d socialbucks_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/socialbucks_test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/socialbucks_test
+      DIRECT_URL: postgres://postgres:postgres@localhost:5432/socialbucks_test
+      RUN_DB_TESTS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Guard - database must be a local test database
+        run: node scripts/assert-test-db.mjs
+
+      - name: Apply migrations
+        run: pnpm --filter @repo/database exec prisma migrate deploy
+
+      - name: Generate Next.js types
+        working-directory: apps/web
+        run: pnpm exec next typegen
+
+      - name: Type check
+        working-directory: apps/web
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint
+        working-directory: apps/web
+        run: pnpm exec eslint src
+
+      - name: Tests
+        working-directory: apps/web
+        run: pnpm exec vitest run --reporter=json --outputFile=../../.vitest-results.json
+
+      - name: Assert every test ran and passed
+        if: ${{ !cancelled() }}
+        run: node scripts/ci-assert-tests.mjs .vitest-results.json --min-tests=183
