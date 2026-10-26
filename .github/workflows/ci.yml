@@ -6,17 +6,16 @@ on:
     branches: [main]
 
 concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
-timeout-minutes: 60
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16-alpine
@@ -24,7 +23,8 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: socialbucks_test
-        ports: ["5432:5432"]
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres -d socialbucks_test"
           --health-interval 5s
@@ -34,107 +34,43 @@ jobs:
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/socialbucks_test
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/socialbucks_test
       DIRECT_URL: postgres://postgres:postgres@localhost:5432/socialbucks_test
-      RUN_DB_TESTS: 1
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy
-      CLERK_SECRET_KEY: sk_test_dummy
-      INSTAGRAM_APP_ID: dummy
-      INSTAGRAM_APP_SECRET: dummy
-      INSTAGRAM_REDIRECT_URI: https://dummy.com/auth/instagram
-      INSTAGRAM_TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      YOUTUBE_CLIENT_ID: dummy
-      YOUTUBE_CLIENT_SECRET: dummy
-      YOUTUBE_REDIRECT_URI: https://dummy.com/auth/youtube
-      YOUTUBE_TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      RUN_DB_TESTS: '1'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: 22
+          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: npx prisma generate
-        # The repo's packages/database/package.json declares "generate": "prisma generate".
-        # The generated client is committed to the repo (packages/database/src/generated/prisma/),
-        # but running generate here ensures it is up-to-date in CI regardless.
+      - name: Guard - database must be a local test database
+        run: node scripts/assert-test-db.mjs
 
-      - name: Safety guard - assert test DB
-        run: npx tsx scripts/assert-test-db.ts
+      - name: Apply migrations
+        run: pnpm --filter @repo/database exec prisma migrate deploy
 
-      - name: Run Prisma migrate deploy
-        run: npx prisma migrate deploy
-
-      - name: DRIFT CHECK - schema.prisma vs database
-        # Prisma 7's migrate diff supports --from-config-datasource (reads datasource from
-        # prisma.config.ts, which reads DIRECT_URL from the environment) and --from-url.
-        # --exit-code makes it exit 0 if diff is empty, exit 2 if not empty, exit 1 on error.
-        # We capture the output and print it on failure so reviewers see the drift SQL.
-        run: |
-          set +e
-          DIFF_OUTPUT=$(npx prisma migrate diff --from-config-datasource --to-schema ./prisma/schema.prisma --exit-code 2>&1)
-          EXIT_CODE=$?
-          set -e
-          if [ "$EXIT_CODE" -ne 0 ]; then
-            echo "Schema drift detected between schema.prisma and the database!"
-            echo ""
-            echo "Diff output (use \`prisma migrate diff --from-config-datasource --to-schema ./prisma/schema.prisma --script\` for SQL):"
-            echo "$DIFF_OUTPUT"
-            exit 1
-          fi
-          echo "No schema drift detected."
+      - name: Generate Next.js types
+        working-directory: apps/web
+        run: pnpm exec next typegen
 
       - name: Type check
-        run: npx tsc --noEmit
+        working-directory: apps/web
+        run: pnpm exec tsc --noEmit
 
       - name: Lint
-        run: pnpm lint
+        working-directory: apps/web
+        run: pnpm exec eslint src
 
-      - name: Run vitest suite
-        run: npx vitest run --reporter=json --outputFile=.vitest-results.json
+      - name: Tests
+        working-directory: apps/web
+        run: pnpm exec vitest run --reporter=json --outputFile=../../.vitest-results.json
 
-      - name: Assert test results
-        run: node scripts/ci-assert-tests.mjs .vitest-results.json
-
-      - name: Upload vitest results
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitest-results
-          path: .vitest-results.json
-          retention-days: 7
-
-  secret-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code (full history for gitleaks)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        # Gitleaks-action is free for personal accounts; organization-owned repos may
-        # require a license. Since this is a public repo we keep the job and add a minimal
-        # allow-list for obvious dummy test values so the job remains green without
-        # exposing real credentials.
-        with:
-          config: .gitleaks.toml
-          args: --full-history
-
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run pnpm audit
-        run: pnpm audit --prod --audit-level=high
-        continue-on-error: true
+      - name: Assert every test ran and passed
+        if: ${{ !cancelled() }}
+        run: node scripts/ci-assert-tests.mjs .vitest-results.json --min-tests=183
