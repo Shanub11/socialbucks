@@ -6,7 +6,10 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     globals: true,
+    globalSetup: ['./vitest.global-setup.ts'],
     env: {
+      // Always point the app's prisma client at the test database, whatever the shell has set.
+      ...(process.env.TEST_DATABASE_URL ? { DATABASE_URL: process.env.TEST_DATABASE_URL } : {}),
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_dummy',
       CLERK_SECRET_KEY: 'sk_test_dummy',
       INSTAGRAM_APP_ID: 'dummy',
