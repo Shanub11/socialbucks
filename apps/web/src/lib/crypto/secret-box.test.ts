@@ -205,9 +205,8 @@ describe('secret-box tampering and malformed input', () => {
 });
 
 describe('secret-box key handling', () => {
-  // CHARACTERIZATION: getPlatformKey does not validate key length itself (lib/env
-  // does, at boot), so a bad key currently surfaces as a native error from node:crypto.
-  // It fails closed either way. Step B hardens this to a SecretBoxError.
+  // getPlatformKey now rejects missing or wrong-length keys with a SecretBoxError (see
+  // 'secret-box key validation' below); these two tests stay as a coarse fail-closed check.
   it('fails closed when a platform key is missing', async () => {
     Reflect.deleteProperty(h.env, 'YOUTUBE_TOKEN_ENCRYPTION_KEY');
     const box = await load();
@@ -290,5 +289,40 @@ describe('secret-box legacy low-level API compatibility', () => {
     const box = await load();
     const envelope = box.encryptSecret('ig-long-lived-token', AAD.INSTAGRAM);
     expect(box.decryptToken(envelope, IG)).toBe('ig-long-lived-token');
+  });
+});
+describe('secret-box key validation', () => {
+  const KEY_ERROR = /^Invalid encryption key configuration$/;
+  const INVALID_KEYS = [
+    { name: 'missing', value: undefined },
+    { name: 'empty', value: '' },
+    { name: '16 bytes long', value: Buffer.alloc(16, 7).toString('base64') },
+    { name: '33 bytes long', value: Buffer.alloc(33, 7).toString('base64') },
+  ];
+
+  function setKey(name: string, value: string | undefined): void {
+    if (value === undefined) {
+      Reflect.deleteProperty(h.env, name);
+    } else {
+      h.env[name] = value;
+    }
+  }
+
+  it.each(INVALID_KEYS)('encryptToken rejects a $name Instagram key with a SecretBoxError', async ({ value }) => {
+    setKey('INSTAGRAM_TOKEN_ENCRYPTION_KEY', value);
+    const box = await load();
+    expectSecretBoxError(box, () => box.encryptToken('plaintext-value', IG), KEY_ERROR);
+  });
+
+  it.each(INVALID_KEYS)('encryptToken rejects a $name YouTube key with a SecretBoxError', async ({ value }) => {
+    setKey('YOUTUBE_TOKEN_ENCRYPTION_KEY', value);
+    const box = await load();
+    expectSecretBoxError(box, () => box.encryptToken('plaintext-value', YT), KEY_ERROR);
+  });
+
+  it.each(INVALID_KEYS)('decryptToken rejects a $name Instagram key with a SecretBoxError', async ({ value }) => {
+    setKey('INSTAGRAM_TOKEN_ENCRYPTION_KEY', value);
+    const box = await load();
+    expectSecretBoxError(box, () => box.decryptToken('v1.AAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAA.AAAA', IG), KEY_ERROR);
   });
 });

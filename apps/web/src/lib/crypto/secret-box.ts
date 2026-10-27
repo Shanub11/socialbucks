@@ -33,6 +33,8 @@ const ALGORITHM = 'aes-256-gcm';
  *  the extra internal derivation step other lengths trigger. */
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
+/** AES-256 key length. */
+const KEY_BYTES = 32;
 /** Bump this if the envelope layout changes, so old rows stay decryptable. */
 const FORMAT_VERSION = 'v1';
 
@@ -66,7 +68,16 @@ function getPlatformKey(platform: SocialPlatform): Buffer {
       ? env.INSTAGRAM_TOKEN_ENCRYPTION_KEY
       : env.YOUTUBE_TOKEN_ENCRYPTION_KEY;
 
+  // Fail closed with our own error type: a missing or wrong-length key must never
+  // reach node:crypto (whose native errors are not SecretBoxErrors). The message
+  // deliberately does not echo the configured value.
+  if (typeof raw !== 'string' || raw.length === 0) {
+    throw new SecretBoxError('Invalid encryption key configuration');
+  }
   const key = Buffer.from(raw, 'base64');
+  if (key.length !== KEY_BYTES) {
+    throw new SecretBoxError('Invalid encryption key configuration');
+  }
   keyCache.set(platform, key);
   return key;
 }
@@ -82,7 +93,7 @@ function getMasterKey(): Buffer {
 }
 
 /**
- * Domain-separated subkey off the Instagram master key, so unrelated
+ * Domain-separated subkey off a platform key (Instagram unless told otherwise), so unrelated
  * subsystems never share raw key material. Used by the OAuth state signer —
  * one secret in the environment, distinct keys per purpose.
  *
@@ -90,8 +101,11 @@ function getMasterKey(): Buffer {
  * the same pattern; the signer just needs to be initialised with the right
  * base key.
  */
-export function deriveSubkey(info: string): Buffer {
-  return createHmac('sha256', getMasterKey()).update(info).digest();
+export function deriveSubkey(
+  info: string,
+  platform: SocialPlatform = SocialPlatform.INSTAGRAM,
+): Buffer {
+  return createHmac('sha256', getPlatformKey(platform)).update(info).digest();
 }
 
 // ---------------------------------------------------------------------------
