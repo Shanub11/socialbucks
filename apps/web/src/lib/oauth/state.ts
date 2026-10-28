@@ -21,6 +21,7 @@
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
+import { SocialPlatform } from '@repo/database';
 import { deriveSubkey } from '@/lib/crypto/secret-box';
 
 /** Cookie is scoped to the callback path — it has no business being sent anywhere else. */
@@ -43,7 +44,7 @@ interface StatePayload {
 }
 
 function signBody(body: string): string {
-  return createHmac('sha256', deriveSubkey(STATE_KEY_INFO, 'YOUTUBE'))
+  return createHmac('sha256', deriveSubkey(STATE_KEY_INFO, SocialPlatform.YOUTUBE))
     .update(body)
     .digest('base64url');
 }

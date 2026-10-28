@@ -103,7 +103,7 @@ describe('OAuth state signing keys', () => {
 describe('deriveSubkey', () => {
   it('defaults to the Instagram key', async () => {
     const { box } = await loadModules();
-    expect(box.deriveSubkey('purpose')).toEqual(hmac(KEY_IG, 'purpose'));
+    expect(box.deriveSubkey('purpose', h.platform.INSTAGRAM)).toEqual(hmac(KEY_IG, 'purpose'));
   });
 
   it('uses the YouTube key when asked', async () => {

@@ -93,7 +93,7 @@ function getMasterKey(): Buffer {
 }
 
 /**
- * Domain-separated subkey off a platform key (Instagram unless told otherwise), so unrelated
+ * Domain-separated subkey off the given platform's key, so unrelated
  * subsystems never share raw key material. Used by the OAuth state signer —
  * one secret in the environment, distinct keys per purpose.
  *
@@ -103,7 +103,7 @@ function getMasterKey(): Buffer {
  */
 export function deriveSubkey(
   info: string,
-  platform: SocialPlatform = SocialPlatform.INSTAGRAM,
+  platform: SocialPlatform,
 ): Buffer {
   return createHmac('sha256', getPlatformKey(platform)).update(info).digest();
 }
