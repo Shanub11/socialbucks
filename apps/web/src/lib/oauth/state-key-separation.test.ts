@@ -101,7 +101,7 @@ describe('OAuth state signing keys', () => {
 });
 
 describe('deriveSubkey', () => {
-  it('defaults to the Instagram key', async () => {
+  it('uses the Instagram key when asked', async () => {
     const { box } = await loadModules();
     expect(box.deriveSubkey('purpose', h.platform.INSTAGRAM)).toEqual(hmac(KEY_IG, 'purpose'));
   });

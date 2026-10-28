@@ -82,7 +82,7 @@ function getPlatformKey(platform: SocialPlatform): Buffer {
   return key;
 }
 
-// Backward-compatible shim used by deriveSubkey and the existing
+// Backward-compatible shim used by the existing
 // encryptSecret/decryptSecret low-level API (both callers still pass
 // TOKEN_ENCRYPTION_CONTEXT from instagram/constants.ts until Step 4
 // migrates them to encryptToken/decryptToken).
@@ -97,8 +97,8 @@ function getMasterKey(): Buffer {
  * subsystems never share raw key material. Used by the OAuth state signer —
  * one secret in the environment, distinct keys per purpose.
  *
- * YouTube OAuth state can derive its own subkey from the YouTube key using
- * the same pattern; the signer just needs to be initialised with the right
+ * Callers must pass the platform explicitly: there is no default, so a new caller
+ * cannot silently use a different platform key. The signer must be given the right
  * base key.
  */
 export function deriveSubkey(
