@@ -19,7 +19,8 @@ export default defineConfig({
       YOUTUBE_CLIENT_ID: 'dummy',
       YOUTUBE_CLIENT_SECRET: 'dummy',
       YOUTUBE_REDIRECT_URI: 'https://dummy.com/auth/youtube',
-      YOUTUBE_TOKEN_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+      // Distinct from the Instagram key on purpose: the app refuses to run with both platforms on one key.
+      YOUTUBE_TOKEN_ENCRYPTION_KEY: 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
     },
     // Allow testing internal (non-exported) functions if needed
     // passWithNoTests: true,

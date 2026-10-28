@@ -78,6 +78,17 @@ function getPlatformKey(platform: SocialPlatform): Buffer {
   if (key.length !== KEY_BYTES) {
     throw new SecretBoxError('Invalid encryption key configuration');
   }
+  // Separation guard: both platforms sharing one key would make a leak or rotation on one
+  // silently affect the other. Fail closed instead of running in that configuration.
+  const otherRaw =
+    platform === SocialPlatform.INSTAGRAM
+      ? env.YOUTUBE_TOKEN_ENCRYPTION_KEY
+      : env.INSTAGRAM_TOKEN_ENCRYPTION_KEY;
+  if (typeof otherRaw === 'string' && otherRaw.length > 0) {
+    if (Buffer.from(otherRaw, 'base64').equals(key)) {
+      throw new SecretBoxError('Platform encryption keys must be different');
+    }
+  }
   keyCache.set(platform, key);
   return key;
 }

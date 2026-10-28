@@ -158,11 +158,11 @@ describe('secret-box platform and context isolation', () => {
     expectSecretBoxError(box, () => box.decryptToken(envelope, IG), DECRYPTION_FAILED);
   });
 
-  it('platform contexts alone isolate ciphertexts even when both platforms share a key', async () => {
+  it('refuses to encrypt when both platforms share one key', async () => {
     h.env.YOUTUBE_TOKEN_ENCRYPTION_KEY = KEY_IG.toString('base64');
     const box = await load();
-    const envelope = box.encryptToken('ig-secret', IG);
-    expectSecretBoxError(box, () => box.decryptToken(envelope, YT), DECRYPTION_FAILED);
+    expectSecretBoxError(box, () => box.encryptToken('ig-secret', IG), /^Platform encryption keys must be different$/);
+    expectSecretBoxError(box, () => box.encryptToken('yt-secret', YT), /^Platform encryption keys must be different$/);
   });
 
   it('decryptSecret fails under a different context', async () => {

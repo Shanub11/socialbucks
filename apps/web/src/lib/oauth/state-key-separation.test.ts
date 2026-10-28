@@ -116,3 +116,33 @@ describe('deriveSubkey', () => {
     expect(box.deriveSubkey('purpose', h.platform.INSTAGRAM)).not.toEqual(box.deriveSubkey('purpose', h.platform.YOUTUBE));
   });
 });
+
+describe('platform key separation guard', () => {
+  it('refuses to derive a subkey for either platform when both use the same key', async () => {
+    setKeys(KEY_IG, KEY_IG);
+    const { box } = await loadModules();
+    expect(() => box.deriveSubkey('purpose', h.platform.INSTAGRAM)).toThrow(box.SecretBoxError);
+    expect(() => box.deriveSubkey('purpose', h.platform.YOUTUBE)).toThrow(box.SecretBoxError);
+  });
+
+  it('refuses to create an OAuth state on either platform when both use the same key', async () => {
+    setKeys(KEY_YT, KEY_YT);
+    const { generic, instagram, box } = await loadModules();
+    expect(() => generic.createOAuthState(USER)).toThrow(box.SecretBoxError);
+    expect(() => instagram.createOAuthState(USER)).toThrow(box.SecretBoxError);
+  });
+
+  it('does not put key material in the error message', async () => {
+    setKeys(KEY_IG, KEY_IG);
+    const { box } = await loadModules();
+    let message = '';
+    try {
+      box.deriveSubkey('purpose', h.platform.YOUTUBE);
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).not.toBe('');
+    expect(message).not.toContain(KEY_IG.toString('base64'));
+    expect(message).not.toContain(KEY_IG.toString('hex'));
+  });
+});
