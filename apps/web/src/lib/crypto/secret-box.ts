@@ -33,6 +33,8 @@ const ALGORITHM = 'aes-256-gcm';
  *  the extra internal derivation step other lengths trigger. */
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
+/** AES-256 key length. */
+const KEY_BYTES = 32;
 /** Bump this if the envelope layout changes, so old rows stay decryptable. */
 const FORMAT_VERSION = 'v1';
 
@@ -66,12 +68,32 @@ function getPlatformKey(platform: SocialPlatform): Buffer {
       ? env.INSTAGRAM_TOKEN_ENCRYPTION_KEY
       : env.YOUTUBE_TOKEN_ENCRYPTION_KEY;
 
+  // Fail closed with our own error type: a missing or wrong-length key must never
+  // reach node:crypto (whose native errors are not SecretBoxErrors). The message
+  // deliberately does not echo the configured value.
+  if (typeof raw !== 'string' || raw.length === 0) {
+    throw new SecretBoxError('Invalid encryption key configuration');
+  }
   const key = Buffer.from(raw, 'base64');
+  if (key.length !== KEY_BYTES) {
+    throw new SecretBoxError('Invalid encryption key configuration');
+  }
+  // Separation guard: both platforms sharing one key would make a leak or rotation on one
+  // silently affect the other. Fail closed instead of running in that configuration.
+  const otherRaw =
+    platform === SocialPlatform.INSTAGRAM
+      ? env.YOUTUBE_TOKEN_ENCRYPTION_KEY
+      : env.INSTAGRAM_TOKEN_ENCRYPTION_KEY;
+  if (typeof otherRaw === 'string' && otherRaw.length > 0) {
+    if (Buffer.from(otherRaw, 'base64').equals(key)) {
+      throw new SecretBoxError('Platform encryption keys must be different');
+    }
+  }
   keyCache.set(platform, key);
   return key;
 }
 
-// Backward-compatible shim used by deriveSubkey and the existing
+// Backward-compatible shim used by the existing
 // encryptSecret/decryptSecret low-level API (both callers still pass
 // TOKEN_ENCRYPTION_CONTEXT from instagram/constants.ts until Step 4
 // migrates them to encryptToken/decryptToken).
@@ -82,16 +104,19 @@ function getMasterKey(): Buffer {
 }
 
 /**
- * Domain-separated subkey off the Instagram master key, so unrelated
+ * Domain-separated subkey off the given platform's key, so unrelated
  * subsystems never share raw key material. Used by the OAuth state signer —
  * one secret in the environment, distinct keys per purpose.
  *
- * YouTube OAuth state can derive its own subkey from the YouTube key using
- * the same pattern; the signer just needs to be initialised with the right
+ * Callers must pass the platform explicitly: there is no default, so a new caller
+ * cannot silently use a different platform key. The signer must be given the right
  * base key.
  */
-export function deriveSubkey(info: string): Buffer {
-  return createHmac('sha256', getMasterKey()).update(info).digest();
+export function deriveSubkey(
+  info: string,
+  platform: SocialPlatform,
+): Buffer {
+  return createHmac('sha256', getPlatformKey(platform)).update(info).digest();
 }
 
 // ---------------------------------------------------------------------------

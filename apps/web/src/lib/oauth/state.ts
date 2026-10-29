@@ -3,7 +3,7 @@
 // CSRF protection for the OAuth connect flow, plus a defence against
 // account-grafting.
 //
-// Shared between Instagram and YouTube. See instagram/oauth-state.ts
+// YouTube flow only (Instagram has its own copy, with its own key and cookie). See instagram/oauth-state.ts
 // for the security analysis.
 //
 // The plain CSRF case is the usual double-submit: a random nonce goes
@@ -21,6 +21,7 @@
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
+import { SocialPlatform } from '@repo/database';
 import { deriveSubkey } from '@/lib/crypto/secret-box';
 
 /** Cookie is scoped to the callback path — it has no business being sent anywhere else. */
@@ -28,6 +29,9 @@ export const OAUTH_NONCE_COOKIE = 'oauth_nonce';
 export const OAUTH_COOKIE_PATH = '/api/auth';
 
 const STATE_TTL_MS = 10 * 60 * 1000;
+// This module serves the YouTube connect flow, so it signs with a key derived from the
+// YouTube token key (Instagram has its own module and key). Rotating that key
+// invalidates in-flight states, which live about 10 minutes: acceptable.
 const STATE_KEY_INFO = 'socialbucks:oauth-state:v1';
 
 interface StatePayload {
@@ -40,7 +44,7 @@ interface StatePayload {
 }
 
 function signBody(body: string): string {
-  return createHmac('sha256', deriveSubkey(STATE_KEY_INFO))
+  return createHmac('sha256', deriveSubkey(STATE_KEY_INFO, SocialPlatform.YOUTUBE))
     .update(body)
     .digest('base64url');
 }

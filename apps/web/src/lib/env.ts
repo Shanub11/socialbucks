@@ -88,7 +88,19 @@ const envSchema = z.object({
       (value) => isBase64OfExactBytes(value, 32),
       'YOUTUBE_TOKEN_ENCRYPTION_KEY must be base64 decoding to exactly 32 bytes (openssl rand -base64 32)',
     ),
-});
+})
+  .superRefine((value, ctx) => {
+    // Both platforms on one key would let a leak or a rotation on one silently affect the other.
+    const instagramKey = Buffer.from(value.INSTAGRAM_TOKEN_ENCRYPTION_KEY, 'base64');
+    const youtubeKey = Buffer.from(value.YOUTUBE_TOKEN_ENCRYPTION_KEY, 'base64');
+    if (instagramKey.equals(youtubeKey)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['YOUTUBE_TOKEN_ENCRYPTION_KEY'],
+        message: 'YOUTUBE_TOKEN_ENCRYPTION_KEY must differ from INSTAGRAM_TOKEN_ENCRYPTION_KEY (one key per platform)',
+      });
+    }
+  });
 
 export const env = envSchema.parse({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
