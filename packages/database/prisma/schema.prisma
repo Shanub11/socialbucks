@@ -184,6 +184,7 @@ model Campaign {
 
   totalBudget Decimal @db.Decimal(12, 2)
   currency    String  @default("USD")
+  submissionDeadline DateTime? // per ADR-0003 D4: required before campaign can be activated
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -198,15 +199,22 @@ model Campaign {
 
 // ---------- Per-creator escrow / submission / approval state ----------
 
+// Slot status enum — DAY 5 ADDS `DECLINED` and `EXPIRED`.
+// `CONTENT_APPROVED` is KEPT per Postgres's inability to drop enum values
+// cheaply, but it is DEPRECATED and UNUSED: the approve flow advances
+// CONTENT_SUBMITTED -> IN_PROGRESS directly, and nothing transitions
+// into or writes this value. See ADR-0003 D1.
 enum SlotStatus {
   INVITED
   ACCEPTED
   CONTENT_SUBMITTED
-  CONTENT_APPROVED
+  CONTENT_APPROVED // DEPRECATED: unused; see D1 in ADR-0003
   IN_PROGRESS
   COMPLETED
   DISPUTED
   CANCELLED
+  DECLINED // creator declined the invite
+  EXPIRED // worker expired the invite due to window close
 }
 
 enum MilestoneTier {
@@ -263,6 +271,18 @@ model CampaignCreatorSlot {
   /// <= 0 target never settles (threshold algorithm is skipped).
   viewTarget Int?
 
+  // D5: immutable terms set at INVITED. EscrowAmount and metric are added by Day 5 migration.
+  metric        String?
+  invitedAt     DateTime  @default(now())
+  inviteExpiresAt DateTime?
+  acceptedAt    DateTime?
+  declinedAt    DateTime?
+  reviewDueAt   DateTime?
+  rejectedAt    DateTime?
+  rejectionReason String?
+  settlementEndsAt DateTime?
+  cancelledAt   DateTime?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -275,6 +295,9 @@ model CampaignCreatorSlot {
   @@index([campaignId])
   @@index([creatorId])
   @@index([status])
+  @@index([status, inviteExpiresAt])
+  @@index([status, reviewDueAt])
+  @@index([status, settlementEndsAt])
 }
 
 /// Immutable audit ledger for every escrow release. A PayoutEvent row means
@@ -282,15 +305,20 @@ model CampaignCreatorSlot {
 /// its own (no payment rail in this pass). Append-only: no delete path exists
 /// anywhere in the codebase. The @@unique([slotId, tier]) constraint is the
 /// database-level idempotency guarantee.
+///
+/// billableViews, billableMetric and thresholdViews are nullable only for
+/// the BASELINE release written at approval, which has no analytics behind it
+/// (ADR-0003 D1). A CHECK constraint enforces that every non-BASELINE row
+/// carries all three. See migration `20261029100000_slot_lifecycle_and_db_guards`.
 model PayoutEvent {
   id               String   @id @default(cuid())
   slotId           String
   tier             MilestoneTier
   amount           Decimal  @db.Decimal(12, 2)
   currency         String   @default("USD")
-  billableViews    Int
-  billableMetric   String
-  thresholdViews   Int
+  billableViews    Int?
+  billableMetric   String?
+  thresholdViews   Int?
   /// Raw VideoSettlement snapshot at trigger time (D8: raw JSON).
   settlementJson   Json
   disbursementStatus DisbursementStatus @default(PENDING)

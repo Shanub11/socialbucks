@@ -23,10 +23,9 @@ import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// viewTarget must be a positive integer
-const ApproveBodySchema = z.object({
-  viewTarget: z.number().int().positive(),
-});
+// Body must be empty or {}. viewTarget is now read from the slot (ADR-0003 D2).
+// Unknown keys are rejected to fail-closed on malformed requests.
+const ApproveBodySchema = z.object({}).strict();
 
 type RouteParams = Promise<{ slotId: string }>;
 
@@ -125,11 +124,27 @@ export async function POST(
   }
 
   // --- STEP 0: Parse and validate request body -----------------------------
-
-  let body: z.infer<typeof ApproveBodySchema>;
+  // Per ADR-0003 D2: viewTarget is read from the slot, not the body. Strict()
+  // rejects unknown keys (including `viewTarget`), so {} and an empty body are
+  // accepted; any other shape returns 400. Not stored — later checks read the
+  // slot row instead.
   try {
-    const raw = await _req.json();
-    body = ApproveBodySchema.parse(raw);
+    let raw: unknown = {};
+    const text = await _req.text();
+    if (!text || text.trim().length === 0) {
+      // Empty or whitespace-only body -> treat as {} (approve call with no body still works).
+      raw = {};
+    } else {
+      // Non-empty text -> parse JSON; if throws, reject with 400.
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+      }
+      raw = parsed;
+    }
+    ApproveBodySchema.parse(raw);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -137,7 +152,18 @@ export async function POST(
         { status: 400 },
       );
     }
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    // Unexpected non-Zod error from schema validation - should not happen.
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+
+  // --- viewTarget from slot, not body (ADR-0003 D2) --------------------
+  // The viewTarget must have been set at invite time; if it is null or <= 0,
+  // the slot cannot settle — respond 409 with opaque error code.
+  if (slot.viewTarget == null || slot.viewTarget <= 0) {
+    return NextResponse.json(
+      { error: 'Slot terms are missing or invalid', code: 'SLOT_TERMS_MISSING' },
+      { status: 409 },
+    );
   }
 
   // --- STEP 4: Fail-closed platform gate ----------------------------------
@@ -267,7 +293,8 @@ export async function POST(
         status: SlotStatus.CONTENT_SUBMITTED,
       },
       data: {
-        viewTarget: body.viewTarget,
+        // viewTarget is read-only from the slot (ADR-0003 D2); it was set at
+        // invite and cannot be changed after acceptance.
         approvedAt: new Date(),
         status: SlotStatus.IN_PROGRESS,
         // For YouTube: set isShort and isShortVerifiedAt

@@ -19,6 +19,7 @@ type Decimal = Prisma.Decimal;;
 import { settleSlot, type MetricsProvider, type SettleOutcome } from './settle-slot';
 import { instagramMetricsProvider } from './adapters/instagram';
 import { OAuthHttpError } from '@/lib/oauth/request';
+import { resetTestDatabase } from '@/test/reset-test-db';
 
 vi.mock('@/lib/crypto/secret-box', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/crypto/secret-box')>();
@@ -225,18 +226,15 @@ const failingMetrics: MetricsProvider = {
 };
 
 // ---------------------------------------------------------------------------
-// Cleanup helper — deletes all test rows for a slot fixture
+// Cleanup helper — deletes test rows for a slot fixture (except PayoutEvent,
+// which is append-only and protected by a DB trigger; the global
+// resetTestDatabase handles it)
 // ---------------------------------------------------------------------------
 
-async function cleanSlotFixture(db: PrismaClient, f: SlotFixture): Promise<void> {
-  // Delete in FK-safe order
-  await db.payoutEvent.deleteMany({ where: { slotId: f.slotId } });
-  await db.campaignCreatorSlot.deleteMany({ where: { id: f.slotId } });
-  await db.campaign.deleteMany({ where: { id: f.campaignId } });
-  await db.socialAccount.deleteMany({ where: { id: f.socialAccountId } });
-  await db.creator.deleteMany({ where: { id: f.creatorId } });
-  await db.user.deleteMany({ where: { id: f.userId } });
-  await db.organization.deleteMany({ where: { id: f.orgId } });
+async function cleanSlotFixture(db: PrismaClient): Promise<void> {
+  // Use the shared resetTestDatabase helper to clean PayoutEvent ledger rows
+  // The helper already includes a database name guard and runs global truncate.
+  await resetTestDatabase(db);
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +260,12 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
     await prisma.$disconnect();
   });
 
+  beforeEach(async () => {
+    // Reset the entire test database before each test to avoid parallel test interference
+    // and to clean the append-only PayoutEvent ledger.
+    await resetTestDatabase(prisma);
+  });
+
   // -------------------------------------------------------------------------
   // Single-tier advance
   // -------------------------------------------------------------------------
@@ -269,7 +273,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('single-tier advance', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { viewTarget: 100000 }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('advances to BASELINE when views >= 20000', async () => {
       const result = await settleSlot(f.slotId, prisma, makeFakeMetrics(20000));
@@ -293,7 +297,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('skipped tiers', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { viewTarget: 100000 }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('75% of target creates BASELINE+TIER_40+TIER_70 in one call', async () => {
       const result = await settleSlot(f.slotId, prisma, makeFakeMetrics(75000));
@@ -325,7 +329,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('idempotent sequential run', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { viewTarget: 100000 }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('second run with same views returns NO_CHANGE without touching the ledger', async () => {
       await settleSlot(f.slotId, prisma, makeFakeMetrics(20000));
@@ -346,7 +350,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('concurrent idempotency', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { viewTarget: 100000, escrowAmount: '1000.00' }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('5 concurrent settleSlot calls leave exactly one row per tier', async () => {
       const results = await Promise.allSettled(
@@ -473,7 +477,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
           viewCount += 20000; // rising views for next round
         } finally {
           // cleanup — always runs, even if an assertion throws above
-          await cleanSlotFixture(prisma, slotFixture);
+          await cleanSlotFixture(prisma);
         }
       }
     });
@@ -486,7 +490,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('downward view revision', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { viewTarget: 100000 }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('lower view count after first advance returns NO_CHANGE, ledger unchanged', async () => {
       await settleSlot(f.slotId, prisma, makeFakeMetrics(40000)); // BASELINE + TIER_40
@@ -508,7 +512,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('DISPUTED slot', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { status: SlotStatus.DISPUTED }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('returns SKIPPED_NOT_ELIGIBLE, writes nothing', async () => {
       const result = await settleSlot(f.slotId, prisma, makeFakeMetrics(100000));
@@ -536,7 +540,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
         const events = await prisma.payoutEvent.count({ where: { slotId: f.slotId } });
         expect(events).toBe(0);
       } finally {
-        await cleanSlotFixture(prisma, f);
+        await cleanSlotFixture(prisma);
       }
     });
 
@@ -550,7 +554,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
         const events = await prisma.payoutEvent.count({ where: { slotId: f.slotId } });
         expect(events).toBe(0);
       } finally {
-        await cleanSlotFixture(prisma, f);
+        await cleanSlotFixture(prisma);
       }
     });
   });
@@ -562,7 +566,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('TIER_100 → COMPLETED', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma, { viewTarget: 100, escrowAmount: '1000.00' }); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('100 views → COMPLETED with paidToDate == escrowAmount exactly', async () => {
       const result = await settleSlot(f.slotId, prisma, makeFakeMetrics(100));
@@ -590,7 +594,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('DB-level idempotency constraint', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('direct duplicate (slotId, tier) insert is rejected by the database', async () => {
       // First insert — should succeed
@@ -632,7 +636,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
   describe('provider failure', () => {
     let f: SlotFixture;
     beforeEach(async () => { f = await createSlotFixture(prisma); });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('throws and leaves zero writes when analytics provider fails', async () => {
       await expect(
@@ -660,7 +664,7 @@ describeIf(RUN_DB_TESTS)('settleSlot — real DB', () => {
     beforeEach(async () => {
       f = await createSlotFixture(prisma, { platform: SocialPlatform.INSTAGRAM });
     });
-    afterAll(async () => { if (f) await cleanSlotFixture(prisma, f); });
+    afterAll(async () => { if (f) await cleanSlotFixture(prisma); });
 
     it('returns SKIPPED_NOT_ELIGIBLE with platform_not_supported, zero writes', async () => {
       const result = await settleSlot(f.slotId, prisma, instagramMetricsProvider);

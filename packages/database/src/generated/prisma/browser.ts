@@ -59,5 +59,10 @@ export type CampaignCreatorSlot = Prisma.CampaignCreatorSlotModel
  * its own (no payment rail in this pass). Append-only: no delete path exists
  * anywhere in the codebase. The @@unique([slotId, tier]) constraint is the
  * database-level idempotency guarantee.
+ * 
+ * billableViews, billableMetric and thresholdViews are nullable only for
+ * the BASELINE release written at approval, which has no analytics behind it
+ * (ADR-0003 D1). A CHECK constraint enforces that every non-BASELINE row
+ * carries all three. See migration `20261029100000_slot_lifecycle_and_db_guards`.
  */
 export type PayoutEvent = Prisma.PayoutEventModel

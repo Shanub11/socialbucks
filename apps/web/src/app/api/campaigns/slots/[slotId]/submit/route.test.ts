@@ -19,6 +19,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 import { PrismaClient, MilestoneTier, SlotStatus, SocialPlatform, Prisma } from '@repo/database';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { resetTestDatabase } from '@/test/reset-test-db';
 
 // ---------------------------------------------------------------------------
 // Mock Clerk auth and ensureUserProvisioned BEFORE importing the route handler.
@@ -287,14 +288,10 @@ async function createOtherSlotFixture(db: PrismaClient): Promise<SlotFixture> {
   };
 }
 
-async function cleanSlotFixture(db: PrismaClient, f: SlotFixture): Promise<void> {
-  await db.payoutEvent.deleteMany({ where: { slotId: f.slotId } });
-  await db.campaignCreatorSlot.deleteMany({ where: { id: f.slotId } });
-  await db.campaign.deleteMany({ where: { id: f.campaignId } });
-  await db.socialAccount.deleteMany({ where: { id: f.socialAccountId } });
-  await db.creator.deleteMany({ where: { id: f.creatorId } });
-  await db.user.deleteMany({ where: { id: f.userId } });
-  await db.organization.deleteMany({ where: { id: f.orgId } });
+async function cleanSlotFixture(db: PrismaClient): Promise<void> {
+  // Use the shared resetTestDatabase helper to clean PayoutEvent ledger rows.
+  // resetTestDatabase already includes a _test-database guard and FK-safe truncation.
+  await resetTestDatabase(db);
 }
 
 // ---------------------------------------------------------------------------
@@ -485,7 +482,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(slot!.submittedAt).toBeInstanceOf(Date);
       expect(slot!.status).toBe(SlotStatus.CONTENT_SUBMITTED);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -516,7 +513,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -539,7 +536,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -570,7 +567,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
         const after = await snapshotSlot(prisma, f.slotId);
         expect(after).toEqual(before);
       } finally {
-        await cleanSlotFixture(prisma, f);
+        await cleanSlotFixture(prisma);
       }
     });
   });
@@ -601,7 +598,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -635,7 +632,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
         const after = await snapshotSlot(prisma, f.slotId);
         expect(after).toEqual(before);
       } finally {
-        await cleanSlotFixture(prisma, f);
+        await cleanSlotFixture(prisma);
       }
     });
   });
@@ -693,7 +690,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(slot!.contentId).toMatch(/^[a-zA-Z0-9_-]{11}$/);
       expect(urls).toContain(slot!.contentUrl);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -724,7 +721,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
       expect(response.status).toBe(400);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -763,7 +760,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expectNoSecretsInBody(body, f);
       expectNoSecretsLogged(f);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -797,7 +794,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expectNoSecretsInBody(body, f);
       expectNoSecretsLogged(f);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -829,7 +826,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expectNoSecretsInBody(body, f);
       expectNoSecretsLogged(f);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -879,7 +876,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
       expect(slot.contentId).toBe('dQw4w9WgXcQ');
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -914,7 +911,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expectNoSecretsInBody(body, f);
       expectNoSecretsLogged(f);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -947,7 +944,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -976,7 +973,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -1009,7 +1006,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 
@@ -1042,7 +1039,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(slot.status).toBe(SlotStatus.ACCEPTED);
       expect(slot).toEqual(before);
     } finally {
-      await cleanSlotFixture(prisma, f);
+      await cleanSlotFixture(prisma);
     }
   });
 });
