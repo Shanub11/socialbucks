@@ -31,6 +31,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
 import { verifyIsShort } from '@/lib/youtube/analytics';
 import { POST } from './route';
+import { resetTestDatabase } from '@/test/reset-test-db';
 
 if (process.env.RUN_DB_TESTS !== '1') {
   console.warn('RUN_DB_TESTS != 1 — approve route tests are SKIPPED, not passing.');
@@ -50,11 +51,13 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     await prisma.$disconnect();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: MOCK_USER_CLERK_ID } as never);
     vi.mocked(getYoutubeAccessToken).mockResolvedValue('fake-access-token-123');
     vi.mocked(verifyIsShort).mockResolvedValue(true);
+    // Reset the test database before each test to clean the append-only PayoutEvent ledger
+    await resetTestDatabase(prisma);
   });
 
   interface Fixture {
@@ -67,7 +70,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
   }
 
   async function createFixture(
-    overrides: { platform?: SocialPlatform; status?: SlotStatus; revoked?: boolean } = {},
+    overrides: { platform?: SocialPlatform; status?: SlotStatus; revoked?: boolean; viewTarget?: number | null } = {},
   ): Promise<Fixture> {
     const suffix = Math.random().toString(36).slice(2, 10);
 
@@ -137,6 +140,8 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
           platform: overrides.platform ?? SocialPlatform.YOUTUBE,
           contentId: 'vid_abcd12345',
           socialAccountId: socialAccount.id,
+          // FIX: use `'viewTarget' in overrides` so an explicit null reaches the DB
+          viewTarget: 'viewTarget' in overrides ? overrides.viewTarget : 100000,
         },
         select: { id: true },
       });
@@ -168,23 +173,17 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     await prisma.organizationMember.create({ data: { organizationId, userId, role } });
   }
 
-  async function cleanup(f: Fixture) {
-    await prisma.payoutEvent.deleteMany({ where: { slotId: f.slotId } });
-    await prisma.campaignCreatorSlot.delete({ where: { id: f.slotId } }).catch(() => {});
-    await prisma.socialAccount.delete({ where: { id: f.socialAccountId } }).catch(() => {});
-    await prisma.organizationMember.deleteMany({ where: { organizationId: f.organizationId } });
-    await prisma.campaign.deleteMany({ where: { organizationId: f.organizationId } });
-    await prisma.organization.delete({ where: { id: f.organizationId } }).catch(() => {});
-    await prisma.creator.delete({ where: { id: f.creatorId } }).catch(() => {});
-    await prisma.user.deleteMany({ where: { id: f.userId } });
-    const creatorUser = await prisma.creator.findUnique({ where: { id: f.creatorId } }).then(c => c?.userId);
-    if (creatorUser) await prisma.user.delete({ where: { id: creatorUser } }).catch(() => {});
+  async function cleanup() {
+    // The global reset also clears the append-only PayoutEvent table.
+    await resetTestDatabase(prisma);
   }
 
-  function callRoute(slotId: string, viewTarget: unknown) {
+  function callRoute(slotId: string, body: unknown = {}) {
+    // Per ADR-0003 D2: viewTarget is read from the slot, not the body.
+    // Pass an empty body {} so the strict schema accepts.
     const req = new Request(`http://localhost/api/campaigns/slots/${slotId}/approve`, {
       method: 'POST',
-      body: JSON.stringify({ viewTarget }),
+      body: JSON.stringify(body),
       headers: { 'content-type': 'application/json' },
     });
     return POST(req, { params: Promise.resolve({ slotId }) });
@@ -194,7 +193,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture();
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -209,7 +208,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(slot.status).toBe(SlotStatus.IN_PROGRESS);
       expect(slot.isShort).toBe(true);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -217,7 +216,11 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, 50000);
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(422);
@@ -229,14 +232,12 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
       expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
 
-      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
       });
-      expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
-      expect(slot.approvedAt).toBeNull();
-      expect(slot.viewTarget).toBeNull();
+      expect(after).toEqual(before);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -248,7 +249,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         select: { status: true },
       });
 
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(403);
 
       const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
@@ -257,7 +258,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       });
       expect(after).toEqual(before);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -270,7 +271,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         select: { status: true },
       });
 
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(403);
 
       const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
@@ -279,7 +280,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       });
       expect(after).toEqual(before);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -287,12 +288,12 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture({ status: SlotStatus.ACCEPTED });
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(409);
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
       expect(slot.status).toBe(SlotStatus.ACCEPTED);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -300,7 +301,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
     // Do NOT add a membership — the auth mock user has no role in this org.
     try {
-      const res = await callRoute(f.slotId, 50000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(403);
       expect((await res.json()).error).toBe('Forbidden');
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
@@ -308,7 +309,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       });
       expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -316,11 +317,11 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
     await addMember(f.organizationId, f.userId, 'MEMBER');
     try {
-      const res = await callRoute(f.slotId, 50000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(403);
       expect((await res.json()).error).toBe('Forbidden');
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -335,21 +336,23 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     });
 
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(500);
       const body = await res.json();
       expect(body.error).toBe('Slot data is inconsistent');
       expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
       expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
 
-      const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
       });
-      expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
-      expect(slot.approvedAt).toBeNull();
-      expect(slot.viewTarget).toBeNull();
+      expect(after).toEqual(before);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -360,14 +363,14 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     });
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(409);
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
       });
       expect(slot.status).toBe(SlotStatus.IN_PROGRESS);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -375,10 +378,10 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture({ status: SlotStatus.IN_PROGRESS });
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(409);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -387,13 +390,13 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     await addMember(f.organizationId, f.userId, 'OWNER');
     vi.mocked(verifyIsShort).mockResolvedValue(false);
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(422);
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
       expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
       expect(slot.isShort).toBeNull();
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -401,21 +404,66 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture({ revoked: true });
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(409);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
-  it.each([0, -5, 3.5])('invalid viewTarget (%s) -> 400, unchanged', async (invalid) => {
+  it('invalid body key (viewTarget) -> 400 because strict() rejects unknown keys', async () => {
     const f = await createFixture();
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const res = await callRoute(f.slotId, invalid);
+      const res = await callRoute(f.slotId, { viewTarget: 200000 });
+      const body = await res.json();
       expect(res.status).toBe(400);
+      expect((body as { error?: string; code?: string }).error ?? '').toBe('Invalid request body');
+      expect(body).not.toHaveProperty('code'); // zod flatten doesn't include code
     } finally {
-      await cleanup(f);
+      await cleanup();
+    }
+  });
+
+  it('slot with null viewTarget -> 409 SLOT_TERMS_MISSING, slot unchanged, no PayoutEvent', async () => {
+    // Create the slot directly in CONTENT_SUBMITTED with viewTarget: null via INSERT.
+    // Never UPDATE terms on a non-INVITED slot in a test (the slot-terms trigger
+    // only applies to updates, not inserts, but we follow the rule to test the
+    // exact code path the route handles: a slot that was seeded with null viewTarget).
+    const f = await createFixture({ viewTarget: null });
+    await addMember(f.organizationId, f.userId, 'OWNER');
+    try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      const res = await callRoute(f.slotId);
+      const body = await res.json();
+      expect(res.status).toBe(409);
+      expect(body.code).toBe('SLOT_TERMS_MISSING');
+      // Row must be unchanged
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(after).toEqual(before);
+      // No PayoutEvent row should exist for the slot
+      const events = await prisma.payoutEvent.findMany({ where: { slotId: f.slotId } });
+      expect(events).toHaveLength(0);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('no body (default {}) -> happy path succeeds', async () => {
+    const f = await createFixture();
+    await addMember(f.organizationId, f.userId, 'OWNER');
+    try {
+      const res = await callRoute(f.slotId);
+      const body = await res.json();
+      expect(res.status).toBe(200);
+      expect(body.status).toBe(SlotStatus.IN_PROGRESS);
+      expect(body.viewTarget).toBe(100000);
+    } finally {
+      await cleanup();
     }
   });
 
@@ -424,12 +472,12 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     await addMember(f.organizationId, f.userId, 'OWNER');
     vi.mocked(verifyIsShort).mockRejectedValue(new Error('network blip'));
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       expect(res.status).toBe(502);
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
       expect(slot.status).toBe(SlotStatus.CONTENT_SUBMITTED);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -437,15 +485,15 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createFixture();
     await addMember(f.organizationId, f.userId, 'OWNER');
     try {
-      const [r1, r2] = await Promise.all([callRoute(f.slotId, 100000), callRoute(f.slotId, 150000)]);
+      const [r1, r2] = await Promise.all([callRoute(f.slotId), callRoute(f.slotId)]);
       const statuses = [r1.status, r2.status].sort((a, b) => a - b);
       expect(statuses).toEqual([200, 409]);
 
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({ where: { id: f.slotId } });
       expect(slot.status).toBe(SlotStatus.IN_PROGRESS);
-      expect([100000, 150000]).toContain(slot.viewTarget);
+      expect(slot.viewTarget).toBe(100000);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -539,20 +587,9 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     }
   }
 
-  async function cleanupDualRole(f: DualRoleFixture) {
-    // FK-safe order (all relations here are onDelete: Restrict except
-    // OrganizationMember, which Cascade-deletes under its org/user):
-    //   PayoutEvent -> Slot -> SocialAccount -> Campaign -> Org -> Creator -> User
-    // Errors are NOT swallowed here; the caller wraps this in .catch() so a
-    // cleanup failure is logged instead of masking a body assertion error.
-    await prisma.payoutEvent.deleteMany({ where: { slotId: f.slotId } });
-    await prisma.campaignCreatorSlot.delete({ where: { id: f.slotId } });
-    await prisma.socialAccount.delete({ where: { id: f.socialAccountId } });
-    await prisma.organizationMember.deleteMany({ where: { organizationId: f.organizationId } });
-    await prisma.campaign.deleteMany({ where: { organizationId: f.organizationId } });
-    await prisma.organization.delete({ where: { id: f.organizationId } });
-    await prisma.creator.delete({ where: { id: f.creatorId } });
-    await prisma.user.delete({ where: { id: f.userId } });
+  async function cleanupDualRole() {
+    // The global reset also clears the append-only PayoutEvent table.
+    await resetTestDatabase(prisma);
   }
 
   // ----- Test 1: Dual-role ADMIN approves own slot -> 403 -----
@@ -564,7 +601,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         where: { id: f.slotId },
       });
 
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(403);
@@ -581,9 +618,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
       expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
     } finally {
-      await cleanupDualRole(f).catch((e) =>
-        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
-      );
+      await cleanupDualRole();
     }
   });
 
@@ -596,7 +631,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         where: { id: f.slotId },
       });
 
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(403);
@@ -613,18 +648,16 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(vi.mocked(getYoutubeAccessToken)).not.toHaveBeenCalled();
       expect(vi.mocked(verifyIsShort)).not.toHaveBeenCalled();
     } finally {
-      await cleanupDualRole(f).catch((e) =>
-        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
-      );
+      await cleanupDualRole();
     }
   });
 
   // ----- Test 3: Positive control: different ADMIN of same org approves another creator slot -> 200 -----
   it('positive control: different ADMIN of same org approves another creator slot -> 200 IN_PROGRESS with approvedAt and viewTarget', async () => {
-    const f = await createFixture();
+    const f = await createFixture({ viewTarget: 100000 });
     await addMember(f.organizationId, f.userId, 'ADMIN');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -637,7 +670,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(slot.approvedAt).not.toBeNull();
       expect(slot.viewTarget).toBe(100000);
     } finally {
-      await cleanup(f);
+      await cleanup();
     }
   });
 
@@ -646,9 +679,6 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const dualF = await createDualRoleFixture();
     const otherSuffix = Math.random().toString(36).slice(2, 10);
 
-    let otherUserId = '';
-    let otherCreatorId = '';
-    let otherSocialAccountId = '';
     let otherSlotId = '';
 
     try {
@@ -656,10 +686,8 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         data: { clerkId: `clerk_other_${otherSuffix}`, email: `other_${otherSuffix}@test.local` },
         select: { id: true, clerkId: true },
       });
-      otherUserId = otherUser.id;
 
       const otherCreator = await prisma.creator.create({ data: { userId: otherUser.id } });
-      otherCreatorId = otherCreator.id;
 
       const otherSocialAccount = await prisma.socialAccount.create({
         data: {
@@ -673,7 +701,6 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         },
         select: { id: true },
       });
-      otherSocialAccountId = otherSocialAccount.id;
 
       const otherCampaign = await prisma.campaign.create({
         data: { organizationId: dualF.organizationId, title: `Other Campaign ${otherSuffix}`, totalBudget: 1000, currency: 'USD' },
@@ -688,6 +715,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
           platform: SocialPlatform.YOUTUBE,
           contentId: `vid_efgh${otherSuffix}`,
           socialAccountId: otherSocialAccount.id,
+          viewTarget: 100000, // set at invitation
         },
         select: { id: true },
       });
@@ -697,7 +725,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       await addMember(dualF.organizationId, dualF.userId, 'ADMIN');
       vi.mocked(auth).mockResolvedValue({ userId: dualF.clerkId } as never);
 
-      const res = await callRoute(otherSlotId, 100000);
+      const res = await callRoute(otherSlotId);
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -716,20 +744,8 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(ownSlot.approvedAt).toBeNull();
       expect(ownSlot.viewTarget).toBeNull();
     } finally {
-      // FK-safe order (all relations here are onDelete: Restrict except
-      // OrganizationMember, which Cascade-deletes under its org/user):
-      //   PayoutEvent -> Slot -> SocialAccount -> Campaign -> Org -> Creator -> User
-      // Both campaigns live in dualF's org, so delete BOTH slots before the
-      // org's campaigns. Errors are logged, never swallowed, so a cleanup
-      // failure cannot mask a body assertion error.
-      await prisma.payoutEvent.deleteMany({ where: { slotId: otherSlotId } }).catch(() => {});
-      await prisma.campaignCreatorSlot.delete({ where: { id: otherSlotId } }).catch(() => {});
-      await prisma.socialAccount.delete({ where: { id: otherSocialAccountId } }).catch(() => {});
-      await cleanupDualRole(dualF).catch((e) =>
-        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
-      );
-      await prisma.creator.delete({ where: { id: otherCreatorId } }).catch(() => {});
-      await prisma.user.delete({ where: { id: otherUserId } }).catch(() => {});
+      // Global TRUNCATE via the shared helper handles all tables.
+      await resetTestDatabase(prisma);
     }
   });
 
@@ -738,7 +754,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     const f = await createDualRoleFixture({ status: SlotStatus.ACCEPTED });
     await addMember(f.organizationId, f.userId, 'ADMIN');
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(403);
@@ -747,9 +763,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
         code: 'SELF_APPROVAL_NOT_ALLOWED',
       });
     } finally {
-      await cleanupDualRole(f).catch((e) =>
-        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
-      );
+      await cleanupDualRole();
     }
   });
 
@@ -759,16 +773,14 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     // No membership added — the user is a creator but not an org member.
     vi.mocked(auth).mockResolvedValue({ userId: f.clerkId } as never);
     try {
-      const res = await callRoute(f.slotId, 100000);
+      const res = await callRoute(f.slotId);
       const body = await res.json();
 
       expect(res.status).toBe(403);
       expect(body).toEqual({ error: 'Forbidden' });
       expect(body.code).toBeUndefined();
     } finally {
-      await cleanupDualRole(f).catch((e) =>
-        console.warn('[test cleanup failed]', e instanceof Error ? e.message : e),
-      );
+      await cleanupDualRole();
     }
   });
 

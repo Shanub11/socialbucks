@@ -406,6 +406,12 @@ export async function settleSlot(
         // 3d. createMany with skipDuplicates — the @@unique([slotId, tier])
         // constraint is the real guard; skipDuplicates is the application-layer
         // companion that lets retries succeed without throwing.
+        //
+        // Per ADR-0003 D1: non-BASELINE rows carry all three (billableViews,
+        // billableMetric, thresholdViews) — they are populated by computeNewTiers()
+        // from metricsResult. If a caller inserts a PayoutEvent directly, the CHECK
+        // on the DB enforces that non-BASELINE rows carry all three, so nulls are
+        // accepted at storage but rejected at validation (unless BASELINE).
         await tx.payoutEvent.createMany({
           data: newTiers.map((t) => ({
             slotId: capturedSlotId,

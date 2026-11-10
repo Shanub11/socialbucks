@@ -7,6 +7,7 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     globals: true,
     globalSetup: ['./vitest.global-setup.ts'],
+    fileParallelism: false, // shared database + global TRUNCATE cannot run in parallel
     env: {
       // Always point the app's prisma client at the test database, whatever the shell has set.
       ...(process.env.TEST_DATABASE_URL ? { DATABASE_URL: process.env.TEST_DATABASE_URL } : {}),
