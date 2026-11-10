@@ -407,11 +407,12 @@ export async function settleSlot(
         // constraint is the real guard; skipDuplicates is the application-layer
         // companion that lets retries succeed without throwing.
         //
-        // Per ADR-0003 D1: non-BASELINE rows carry all three (billableViews,
-        // billableMetric, thresholdViews) — they are populated by computeNewTiers()
-        // from metricsResult. If a caller inserts a PayoutEvent directly, the CHECK
-        // on the DB enforces that non-BASELINE rows carry all three, so nulls are
-        // accepted at storage but rejected at validation (unless BASELINE).
+        // Per ADR-0003 D1 and the payout_event_trigger_shape CHECK: every row
+        // written here carries all three of billableViews, billableMetric and
+        // thresholdViews (from computeNewTiers() and the metrics result),
+        // including BASELINE when it is paid by view threshold. Only a BASELINE
+        // row released at approval may have all three NULL; that path does not
+        // go through this function. The database CHECK rejects any other shape.
         await tx.payoutEvent.createMany({
           data: newTiers.map((t) => ({
             slotId: capturedSlotId,

@@ -130,10 +130,19 @@ export async function POST(
   // slot row instead.
   try {
     let raw: unknown = {};
-    try {
-      raw = await _req.json();
-    } catch {
-      // Empty body or unparseable JSON - treat as {} (no fields to validate).
+    const text = await _req.text();
+    if (!text || text.trim().length === 0) {
+      // Empty or whitespace-only body -> treat as {} (approve call with no body still works).
+      raw = {};
+    } else {
+      // Non-empty text -> parse JSON; if throws, reject with 400.
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+      }
+      raw = parsed;
     }
     ApproveBodySchema.parse(raw);
   } catch (error) {

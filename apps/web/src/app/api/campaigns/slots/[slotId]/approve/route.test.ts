@@ -189,6 +189,15 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     return POST(req, { params: Promise.resolve({ slotId }) });
   }
 
+  function callRouteRaw(slotId: string, rawBody: string) {
+    const req = new Request(`http://localhost/api/campaigns/slots/${slotId}/approve`, {
+      method: 'POST',
+      body: rawBody,
+      headers: { 'content-type': 'application/json' },
+    });
+    return POST(req, { params: Promise.resolve({ slotId }) });
+  }
+
   it('YOUTUBE happy path: OWNER approves CONTENT_SUBMITTED, verifyIsShort true -> 200, IN_PROGRESS', async () => {
     const f = await createFixture();
     await addMember(f.organizationId, f.userId, 'OWNER');
@@ -420,6 +429,32 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       expect(res.status).toBe(400);
       expect((body as { error?: string; code?: string }).error ?? '').toBe('Invalid request body');
       expect(body).not.toHaveProperty('code'); // zod flatten doesn't include code
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('malformed JSON body -> 400 Invalid JSON, slot unchanged, no PayoutEvent', async () => {
+    const f = await createFixture();
+    await addMember(f.organizationId, f.userId, 'OWNER');
+    try {
+      const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+
+      const res = await callRouteRaw(f.slotId, '{not json');
+      const body = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(body.error).toBe('Invalid JSON');
+
+      const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
+        where: { id: f.slotId },
+      });
+      expect(after).toEqual(before);
+
+      const events = await prisma.payoutEvent.findMany({ where: { slotId: f.slotId } });
+      expect(events).toHaveLength(0);
     } finally {
       await cleanup();
     }
