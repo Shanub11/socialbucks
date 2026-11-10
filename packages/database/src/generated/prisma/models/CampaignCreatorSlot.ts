@@ -59,6 +59,16 @@ export type CampaignCreatorSlotMinAggregateOutputType = {
   isShort: boolean | null
   isShortVerifiedAt: Date | null
   viewTarget: number | null
+  metric: string | null
+  invitedAt: Date | null
+  inviteExpiresAt: Date | null
+  acceptedAt: Date | null
+  declinedAt: Date | null
+  reviewDueAt: Date | null
+  rejectedAt: Date | null
+  rejectionReason: string | null
+  settlementEndsAt: Date | null
+  cancelledAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -83,6 +93,16 @@ export type CampaignCreatorSlotMaxAggregateOutputType = {
   isShort: boolean | null
   isShortVerifiedAt: Date | null
   viewTarget: number | null
+  metric: string | null
+  invitedAt: Date | null
+  inviteExpiresAt: Date | null
+  acceptedAt: Date | null
+  declinedAt: Date | null
+  reviewDueAt: Date | null
+  rejectedAt: Date | null
+  rejectionReason: string | null
+  settlementEndsAt: Date | null
+  cancelledAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -107,6 +127,16 @@ export type CampaignCreatorSlotCountAggregateOutputType = {
   isShort: number
   isShortVerifiedAt: number
   viewTarget: number
+  metric: number
+  invitedAt: number
+  inviteExpiresAt: number
+  acceptedAt: number
+  declinedAt: number
+  reviewDueAt: number
+  rejectedAt: number
+  rejectionReason: number
+  settlementEndsAt: number
+  cancelledAt: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -147,6 +177,16 @@ export type CampaignCreatorSlotMinAggregateInputType = {
   isShort?: true
   isShortVerifiedAt?: true
   viewTarget?: true
+  metric?: true
+  invitedAt?: true
+  inviteExpiresAt?: true
+  acceptedAt?: true
+  declinedAt?: true
+  reviewDueAt?: true
+  rejectedAt?: true
+  rejectionReason?: true
+  settlementEndsAt?: true
+  cancelledAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -171,6 +211,16 @@ export type CampaignCreatorSlotMaxAggregateInputType = {
   isShort?: true
   isShortVerifiedAt?: true
   viewTarget?: true
+  metric?: true
+  invitedAt?: true
+  inviteExpiresAt?: true
+  acceptedAt?: true
+  declinedAt?: true
+  reviewDueAt?: true
+  rejectedAt?: true
+  rejectionReason?: true
+  settlementEndsAt?: true
+  cancelledAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -195,6 +245,16 @@ export type CampaignCreatorSlotCountAggregateInputType = {
   isShort?: true
   isShortVerifiedAt?: true
   viewTarget?: true
+  metric?: true
+  invitedAt?: true
+  inviteExpiresAt?: true
+  acceptedAt?: true
+  declinedAt?: true
+  reviewDueAt?: true
+  rejectedAt?: true
+  rejectionReason?: true
+  settlementEndsAt?: true
+  cancelledAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -306,6 +366,16 @@ export type CampaignCreatorSlotGroupByOutputType = {
   isShort: boolean | null
   isShortVerifiedAt: Date | null
   viewTarget: number | null
+  metric: string | null
+  invitedAt: Date
+  inviteExpiresAt: Date | null
+  acceptedAt: Date | null
+  declinedAt: Date | null
+  reviewDueAt: Date | null
+  rejectedAt: Date | null
+  rejectionReason: string | null
+  settlementEndsAt: Date | null
+  cancelledAt: Date | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -353,6 +423,16 @@ export type CampaignCreatorSlotWhereInput = {
   isShort?: Prisma.BoolNullableFilter<"CampaignCreatorSlot"> | boolean | null
   isShortVerifiedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   viewTarget?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
+  metric?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  invitedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
+  inviteExpiresAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  declinedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  reviewDueAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  settlementEndsAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
@@ -381,6 +461,16 @@ export type CampaignCreatorSlotOrderByWithRelationInput = {
   isShort?: Prisma.SortOrderInput | Prisma.SortOrder
   isShortVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   viewTarget?: Prisma.SortOrderInput | Prisma.SortOrder
+  metric?: Prisma.SortOrderInput | Prisma.SortOrder
+  invitedAt?: Prisma.SortOrder
+  inviteExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  declinedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewDueAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  settlementEndsAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -413,6 +503,16 @@ export type CampaignCreatorSlotWhereUniqueInput = Prisma.AtLeast<{
   isShort?: Prisma.BoolNullableFilter<"CampaignCreatorSlot"> | boolean | null
   isShortVerifiedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   viewTarget?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
+  metric?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  invitedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
+  inviteExpiresAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  declinedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  reviewDueAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  settlementEndsAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
@@ -441,6 +541,16 @@ export type CampaignCreatorSlotOrderByWithAggregationInput = {
   isShort?: Prisma.SortOrderInput | Prisma.SortOrder
   isShortVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   viewTarget?: Prisma.SortOrderInput | Prisma.SortOrder
+  metric?: Prisma.SortOrderInput | Prisma.SortOrder
+  invitedAt?: Prisma.SortOrder
+  inviteExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  declinedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewDueAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  settlementEndsAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -473,6 +583,16 @@ export type CampaignCreatorSlotScalarWhereWithAggregatesInput = {
   isShort?: Prisma.BoolNullableWithAggregatesFilter<"CampaignCreatorSlot"> | boolean | null
   isShortVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
   viewTarget?: Prisma.IntNullableWithAggregatesFilter<"CampaignCreatorSlot"> | number | null
+  metric?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
+  invitedAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
+  inviteExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  declinedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  reviewDueAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
+  settlementEndsAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
@@ -494,6 +614,16 @@ export type CampaignCreatorSlotCreateInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -522,6 +652,16 @@ export type CampaignCreatorSlotUncheckedCreateInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -544,6 +684,16 @@ export type CampaignCreatorSlotUpdateInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -572,6 +722,16 @@ export type CampaignCreatorSlotUncheckedUpdateInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -597,6 +757,16 @@ export type CampaignCreatorSlotCreateManyInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -618,6 +788,16 @@ export type CampaignCreatorSlotUpdateManyMutationInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -642,6 +822,16 @@ export type CampaignCreatorSlotUncheckedUpdateManyInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -681,6 +871,16 @@ export type CampaignCreatorSlotCountOrderByAggregateInput = {
   isShort?: Prisma.SortOrder
   isShortVerifiedAt?: Prisma.SortOrder
   viewTarget?: Prisma.SortOrder
+  metric?: Prisma.SortOrder
+  invitedAt?: Prisma.SortOrder
+  inviteExpiresAt?: Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrder
+  declinedAt?: Prisma.SortOrder
+  reviewDueAt?: Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  settlementEndsAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -712,6 +912,16 @@ export type CampaignCreatorSlotMaxOrderByAggregateInput = {
   isShort?: Prisma.SortOrder
   isShortVerifiedAt?: Prisma.SortOrder
   viewTarget?: Prisma.SortOrder
+  metric?: Prisma.SortOrder
+  invitedAt?: Prisma.SortOrder
+  inviteExpiresAt?: Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrder
+  declinedAt?: Prisma.SortOrder
+  reviewDueAt?: Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  settlementEndsAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -736,6 +946,16 @@ export type CampaignCreatorSlotMinOrderByAggregateInput = {
   isShort?: Prisma.SortOrder
   isShortVerifiedAt?: Prisma.SortOrder
   viewTarget?: Prisma.SortOrder
+  metric?: Prisma.SortOrder
+  invitedAt?: Prisma.SortOrder
+  inviteExpiresAt?: Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrder
+  declinedAt?: Prisma.SortOrder
+  reviewDueAt?: Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  settlementEndsAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -933,6 +1153,16 @@ export type CampaignCreatorSlotCreateWithoutCreatorInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -959,6 +1189,16 @@ export type CampaignCreatorSlotUncheckedCreateWithoutCreatorInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1013,6 +1253,16 @@ export type CampaignCreatorSlotScalarWhereInput = {
   isShort?: Prisma.BoolNullableFilter<"CampaignCreatorSlot"> | boolean | null
   isShortVerifiedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   viewTarget?: Prisma.IntNullableFilter<"CampaignCreatorSlot"> | number | null
+  metric?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  invitedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
+  inviteExpiresAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  declinedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  reviewDueAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  settlementEndsAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
@@ -1034,6 +1284,16 @@ export type CampaignCreatorSlotCreateWithoutSocialAccountInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1060,6 +1320,16 @@ export type CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1108,6 +1378,16 @@ export type CampaignCreatorSlotCreateWithoutCampaignInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1134,6 +1414,16 @@ export type CampaignCreatorSlotUncheckedCreateWithoutCampaignInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1182,6 +1472,16 @@ export type CampaignCreatorSlotCreateWithoutPayoutEventsInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1209,6 +1509,16 @@ export type CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1246,6 +1556,16 @@ export type CampaignCreatorSlotUpdateWithoutPayoutEventsInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1273,6 +1593,16 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1296,6 +1626,16 @@ export type CampaignCreatorSlotCreateManyCreatorInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1317,6 +1657,16 @@ export type CampaignCreatorSlotUpdateWithoutCreatorInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1343,6 +1693,16 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1367,6 +1727,16 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1390,6 +1760,16 @@ export type CampaignCreatorSlotCreateManySocialAccountInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1411,6 +1791,16 @@ export type CampaignCreatorSlotUpdateWithoutSocialAccountInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1437,6 +1827,16 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutSocialAccountInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1461,6 +1861,16 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1484,6 +1894,16 @@ export type CampaignCreatorSlotCreateManyCampaignInput = {
   isShort?: boolean | null
   isShortVerifiedAt?: Date | string | null
   viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1505,6 +1925,16 @@ export type CampaignCreatorSlotUpdateWithoutCampaignInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1531,6 +1961,16 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutCampaignInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1555,6 +1995,16 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCampaignInput = {
   isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1610,6 +2060,16 @@ export type CampaignCreatorSlotSelect<ExtArgs extends runtime.Types.Extensions.I
   isShort?: boolean
   isShortVerifiedAt?: boolean
   viewTarget?: boolean
+  metric?: boolean
+  invitedAt?: boolean
+  inviteExpiresAt?: boolean
+  acceptedAt?: boolean
+  declinedAt?: boolean
+  reviewDueAt?: boolean
+  rejectedAt?: boolean
+  rejectionReason?: boolean
+  settlementEndsAt?: boolean
+  cancelledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1639,6 +2099,16 @@ export type CampaignCreatorSlotSelectCreateManyAndReturn<ExtArgs extends runtime
   isShort?: boolean
   isShortVerifiedAt?: boolean
   viewTarget?: boolean
+  metric?: boolean
+  invitedAt?: boolean
+  inviteExpiresAt?: boolean
+  acceptedAt?: boolean
+  declinedAt?: boolean
+  reviewDueAt?: boolean
+  rejectedAt?: boolean
+  rejectionReason?: boolean
+  settlementEndsAt?: boolean
+  cancelledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1666,6 +2136,16 @@ export type CampaignCreatorSlotSelectUpdateManyAndReturn<ExtArgs extends runtime
   isShort?: boolean
   isShortVerifiedAt?: boolean
   viewTarget?: boolean
+  metric?: boolean
+  invitedAt?: boolean
+  inviteExpiresAt?: boolean
+  acceptedAt?: boolean
+  declinedAt?: boolean
+  reviewDueAt?: boolean
+  rejectedAt?: boolean
+  rejectionReason?: boolean
+  settlementEndsAt?: boolean
+  cancelledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1693,12 +2173,22 @@ export type CampaignCreatorSlotSelectScalar = {
   isShort?: boolean
   isShortVerifiedAt?: boolean
   viewTarget?: boolean
+  metric?: boolean
+  invitedAt?: boolean
+  inviteExpiresAt?: boolean
+  acceptedAt?: boolean
+  declinedAt?: boolean
+  reviewDueAt?: boolean
+  rejectedAt?: boolean
+  rejectionReason?: boolean
+  settlementEndsAt?: boolean
+  cancelledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type CampaignCreatorSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "campaignId" | "creatorId" | "status" | "escrowAmount" | "currentTier" | "paidToDate" | "contentUrl" | "submittedAt" | "approvedAt" | "currentViewCount" | "lastViewCheckAt" | "platform" | "contentId" | "socialAccountId" | "isShort" | "isShortVerifiedAt" | "viewTarget" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaignCreatorSlot"]>
+export type CampaignCreatorSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "campaignId" | "creatorId" | "status" | "escrowAmount" | "currentTier" | "paidToDate" | "contentUrl" | "submittedAt" | "approvedAt" | "currentViewCount" | "lastViewCheckAt" | "platform" | "contentId" | "socialAccountId" | "isShort" | "isShortVerifiedAt" | "viewTarget" | "metric" | "invitedAt" | "inviteExpiresAt" | "acceptedAt" | "declinedAt" | "reviewDueAt" | "rejectedAt" | "rejectionReason" | "settlementEndsAt" | "cancelledAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaignCreatorSlot"]>
 export type CampaignCreatorSlotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
@@ -1768,6 +2258,16 @@ export type $CampaignCreatorSlotPayload<ExtArgs extends runtime.Types.Extensions
      * <= 0 target never settles (threshold algorithm is skipped).
      */
     viewTarget: number | null
+    metric: string | null
+    invitedAt: Date
+    inviteExpiresAt: Date | null
+    acceptedAt: Date | null
+    declinedAt: Date | null
+    reviewDueAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    settlementEndsAt: Date | null
+    cancelledAt: Date | null
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
@@ -2216,6 +2716,16 @@ export interface CampaignCreatorSlotFieldRefs {
   readonly isShort: Prisma.FieldRef<"CampaignCreatorSlot", 'Boolean'>
   readonly isShortVerifiedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly viewTarget: Prisma.FieldRef<"CampaignCreatorSlot", 'Int'>
+  readonly metric: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
+  readonly invitedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly inviteExpiresAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly acceptedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly declinedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly reviewDueAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly rejectedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly rejectionReason: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
+  readonly settlementEndsAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly cancelledAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
