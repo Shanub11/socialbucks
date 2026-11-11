@@ -14,7 +14,7 @@ import { prisma, OrganizationRole } from '@repo/database';
 import { NextResponse } from 'next/server';
 import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
 
-export const ORG_MANAGER_ROLES = [OrganizationRole.OWNER, OrganizationRole.ADMIN];
+export const ORG_MANAGER_ROLES: readonly OrganizationRole[] = [OrganizationRole.OWNER, OrganizationRole.ADMIN];
 
 /** User resolved as a member of a live organization, with their real role. */
 export type OrgAccessGranted = {
