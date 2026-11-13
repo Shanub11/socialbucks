@@ -17,7 +17,7 @@
 // silently mismatching.
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
-import { PrismaClient, MilestoneTier, SlotStatus, SocialPlatform, Prisma } from '@repo/database';
+import { CampaignStatus, PrismaClient, MilestoneTier, SlotStatus, SocialPlatform, Prisma } from '@repo/database';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { resetTestDatabase } from '@/test/reset-test-db';
 
@@ -26,18 +26,19 @@ import { resetTestDatabase } from '@/test/reset-test-db';
 // vitest hoists vi.mock calls, so this runs before any imports below.
 // ---------------------------------------------------------------------------
 
-const MOCK_CLERK_USER_ID = 'clerk_test_submit_abc123';
 const MOCK_OTHER_CLERK_USER_ID = 'clerk_test_submit_xyz789';
 
+const provisioned = vi.hoisted(() => ({ userId: '', clerkUserId: 'clerk_test_submit_abc123' }));
+
 vi.mock('@clerk/nextjs/server', () => ({
-  auth: vi.fn().mockResolvedValue({ userId: 'clerk_test_submit_abc123', sessionClaims: null }),
+  auth: vi.fn().mockResolvedValue({ userId: provisioned.clerkUserId, sessionClaims: null }),
 }));
 
 vi.mock('@/lib/auth/ensure-user', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/auth/ensure-user')>();
   return {
     ...actual,
-    ensureUserProvisioned: vi.fn().mockResolvedValue({ ok: true, userId: MOCK_CLERK_USER_ID, created: false }),
+    ensureUserProvisioned: vi.fn(async () => ({ ok: true as const, userId: provisioned.userId, created: false })),
   };
 });
 
@@ -138,6 +139,9 @@ async function createSlotFixture(
   // This fixture's creator must match the mocked authenticated user.
   vi.mocked(auth).mockResolvedValue({ userId: user.clerkId, sessionClaims: null } as never);
 
+  // Provisioned userId must be the internal User.id (cuid), not the Clerk ID.
+  provisioned.userId = user.id;
+
   const org = await db.organization.create({
     data: { name: `Test Org ${suffix}` },
     select: { id: true },
@@ -179,6 +183,8 @@ async function createSlotFixture(
       title: `Test Campaign ${suffix}`,
       totalBudget: new Prisma.Decimal(overrides.escrowAmount ?? '1000.00'),
       currency: 'USD',
+      status: CampaignStatus.ACTIVE,
+      submissionDeadline: new Date(Date.now() + 30 * 86_400_000),
     },
     select: { id: true },
   });
@@ -212,8 +218,12 @@ async function createSlotFixture(
 async function createOtherSlotFixture(db: PrismaClient): Promise<SlotFixture> {
   // Creates a slot owned by a DIFFERENT clerk user (MOCK_OTHER_CLERK_USER_ID)
   // so we can test the 403 ownership check.
+  // A SEPARATE caller (newUser + newCreator) is created distinct from the slot
+  // owner, so the test proves ownership scoping (slot belongs to another creator),
+  // not "caller has no creator profile."
   const suffix = Math.random().toString(36).slice(2, 8);
 
+  // --- Slot owner (unchanged): otherUser owns the slot being tested ---
   const otherUser = await db.user.create({
     data: {
       clerkId: `${MOCK_OTHER_CLERK_USER_ID}_${suffix}`,
@@ -227,16 +237,28 @@ async function createOtherSlotFixture(db: PrismaClient): Promise<SlotFixture> {
     select: { id: true },
   });
 
-  const creator = await db.creator.create({
+  const ownerCreator = await db.creator.create({
     data: { userId: otherUser.id },
     select: { id: true },
   });
+
+  // --- SEPARATE caller: new user + new creator, distinct from the slot owner ---
+  const callerUser = await db.user.create({
+    data: {
+      clerkId: `clerk_test_other_${suffix}`,
+      email: `caller_${suffix}@example.com`,
+    },
+    select: { id: true, clerkId: true },
+  });
+
+  // Creator for the caller user (distinct from the slot owner's creator).
+  await db.creator.create({ data: { userId: callerUser.id } });
 
   const externalId = `ext_other_${suffix}`;
   const tokenCiphertext = `v1.fake_iv.fake_tag.fake_ct_${suffix}`;
   const sa = await db.socialAccount.create({
     data: {
-      creatorId: creator.id,
+      creatorId: ownerCreator.id,
       platform: SocialPlatform.YOUTUBE,
       externalId,
       tokenCiphertext,
@@ -252,6 +274,8 @@ async function createOtherSlotFixture(db: PrismaClient): Promise<SlotFixture> {
       title: `Test Campaign ${suffix}`,
       totalBudget: new Prisma.Decimal('1000.00'),
       currency: 'USD',
+      status: CampaignStatus.ACTIVE,
+      submissionDeadline: new Date(Date.now() + 30 * 86_400_000),
     },
     select: { id: true },
   });
@@ -259,7 +283,7 @@ async function createOtherSlotFixture(db: PrismaClient): Promise<SlotFixture> {
   const slot = await db.campaignCreatorSlot.create({
     data: {
       campaignId: campaign.id,
-      creatorId: creator.id,
+      creatorId: ownerCreator.id,
       status: SlotStatus.ACCEPTED,
       escrowAmount: new Prisma.Decimal('1000.00'),
       currentTier: MilestoneTier.BASELINE,
@@ -270,16 +294,21 @@ async function createOtherSlotFixture(db: PrismaClient): Promise<SlotFixture> {
     select: { id: true },
   });
 
-  // Per STEP 2: this fixture creates a slot owned by otherUser, but we want to
-  // authenticate as the MOCKED CLERK user to test the 403 ownership check.
-  // Override auth to return MOCK_CLERK_USER_ID so the authenticated request
-  // differs from the slot's real creator.
-  vi.mocked(auth).mockResolvedValue({ userId: MOCK_CLERK_USER_ID, sessionClaims: null } as never);
+  // Authenticate as the SEPARATE caller (not the slot owner).
+  // The mocked Clerk session returns the caller's clerkId.
+  vi.mocked(auth).mockResolvedValue({ userId: callerUser.clerkId, sessionClaims: null } as never);
+
+  // Route resolves the caller via ensureUserProvisioned -> getCreatorIdForUser,
+  // which takes the INTERNAL User.id. The separate caller owns their own creator
+  // profile (callerCreator was created above); point the provisioned holder at the
+  // caller's internal id so the ownership check (slot belongs to otherUser) proves
+  // scoping rather than falling through to the "no creator" 404.
+  provisioned.userId = callerUser.id;
 
   return {
     orgId: org.id,
     userId: otherUser.id,
-    creatorId: creator.id,
+    creatorId: ownerCreator.id,
     campaignId: campaign.id,
     socialAccountId: sa.id,
     slotId: slot.id,
@@ -422,6 +451,9 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       new Error('fetchVideoChannel mock not configured for this test'),
     );
 
+    // Reset provisioned userId for auth mocks
+    provisioned.userId = '';
+
     // Console hygiene spies — swallowed output, restored in afterEach.
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'info').mockImplementation(() => {});
@@ -521,7 +553,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
   // 403: slot belongs to a different creator (slot exists, but not mine)
   // -------------------------------------------------------------------------
 
-  it('403 when slot belongs to another creator — slot unchanged', async () => {
+  it('404 when slot belongs to another creator — slot unchanged', async () => {
     const f = await createOtherSlotFixture(prisma);
     try {
       const before = await snapshotSlot(prisma, f.slotId);
@@ -530,8 +562,8 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       const response = await POST(req, { params: Promise.resolve({ slotId: f.slotId }) });
       const body = await response.json();
 
-      expect(response.status).toBe(403);
-      expect(body.error).toBe('Forbidden');
+      expect(response.status).toBe(404);
+      expect(body).toEqual({ error: 'Not found' });
 
       const after = await snapshotSlot(prisma, f.slotId);
       expect(after).toEqual(before);
@@ -666,8 +698,12 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
       expect(winnerBody.status).toBe(SlotStatus.CONTENT_SUBMITTED);
       expect(winnerBody.platform).toBe(SocialPlatform.YOUTUBE);
 
-      // fetchVideoChannel was consulted for both requests, at most once each.
-      expect(vi.mocked(fetchVideoChannel)).toHaveBeenCalledTimes(2);
+      // Depending on interleaving, the loser either passes the status check (and verifies
+      // ownership before losing the compare-and-swap) or sees CONTENT_SUBMITTED and returns
+      // 409 before any YouTube call. Both are correct; the invariant is one winner.
+      const verifyCalls = vi.mocked(fetchVideoChannel).mock.calls.length;
+      expect(verifyCalls).toBeGreaterThanOrEqual(1);
+      expect(verifyCalls).toBeLessThanOrEqual(2);
 
       // Verify the slot has exactly one set of values (the winner's)
       const slot = await prisma.campaignCreatorSlot.findUnique({
@@ -703,7 +739,7 @@ describeIf(RUN_DB_TESTS)('POST /api/campaigns/slots/[slotId]/submit — real DB'
     const response = await POST(req, { params: Promise.resolve({ slotId: 'does-not-exist-123456' }) });
     const body = await response.json();
     expect(response.status).toBe(404);
-    expect(body.error).toBe('Slot not found');
+    expect(body).toEqual({ error: 'Not found' });
   });
 
   // -------------------------------------------------------------------------

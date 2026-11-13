@@ -8,14 +8,28 @@
 //
 // Security: this is a financial approval path. Only OWNER or ADMIN members
 // can approve - MEMBERS must not be able to escalate privileges.
+//
+// Request order: auth -> provision -> slot id (404) -> slot load (404) ->
+// org access/role (404/403) -> self-approval guard (403) -> campaign active
+// (409) -> slot status (409) -> body (400) -> view target (409) -> platform
+// gate (422/500) -> YouTube verification (409/422/502) -> compare-and-swap
+// (409) -> 200.
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { requireAuthApi } from '@/lib/auth/require-auth';
-import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
+import {
+  ORG_MANAGER_ROLES,
+  getOrgAccess,
+  orgAccessErrorResponse,
+  provisionedUserOrResponse,
+  requireOrgRole,
+} from '@/lib/auth/org-access';
+import { noStoreJson } from '@/lib/http/json';
+import { SlotIdParamSchema } from '@/lib/slots/schemas';
 import { prisma } from '@repo/database';
-import { SlotStatus, SocialPlatform } from '@repo/database';
+import { CampaignStatus, SlotStatus, SocialPlatform } from '@repo/database';
 import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
 import { verifyIsShort } from '@/lib/youtube/analytics';
 import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
@@ -40,47 +54,46 @@ export async function POST(
     return authResult.response;
   }
 
-  const provisioned = await ensureUserProvisioned(authResult.userId);
-  if (!provisioned.ok) {
-    return NextResponse.json(
-      { error: 'User not provisioned', reason: provisioned.reason },
-      { status: 500 },
-    );
+  const user = await provisionedUserOrResponse(authResult.userId);
+  if (!user.ok) {
+    return user.response;
   }
 
-  const { slotId } = await params;
+  const parsedSlotId = SlotIdParamSchema.safeParse((await params).slotId);
+  if (!parsedSlotId.success) {
+    return noStoreJson({ error: 'Not found' }, 404);
+  }
+  const slotId = parsedSlotId.data;
 
-  // Load slot with campaign (for orgId) and socialAccount (for token)
+  // Load the slot with its campaign (org id + campaign state) and the
+  // socialAccount (for the YouTube token).
   const slot = await prisma.campaignCreatorSlot.findUnique({
     where: { id: slotId },
     include: {
-      campaign: { select: { organizationId: true } },
+      campaign: {
+        select: { organizationId: true, status: true, deletedAt: true },
+      },
       creator: { select: { userId: true } },
       socialAccount: true,
     },
   });
 
   if (!slot || slot.deletedAt) {
-    return NextResponse.json({ error: 'Slot not found' }, { status: 404 });
+    return noStoreJson({ error: 'Not found' }, 404);
   }
 
   // --- STEP 2: Authorization - org OWNER or ADMIN only ---------------------
 
-  const membership = await prisma.organizationMember.findFirst({
-    where: {
-      organizationId: slot.campaign.organizationId,
-      userId: provisioned.userId,
-      role: { in: ['OWNER', 'ADMIN'] },
-    },
-  });
+  // A non-member, a member of a soft-deleted org and an unknown slot all get
+  // the same 404; a MEMBER-role caller gets 403.
+  const access = await getOrgAccess(user.userId, slot.campaign.organizationId);
+  if (!access.ok) {
+    return orgAccessErrorResponse(access.reason);
+  }
 
-  if (!membership) {
-    console.info('[campaigns] slot approve insufficient permissions', {
-      slotId,
-      clerkUserId: authResult.userId,
-      organizationId: slot.campaign.organizationId,
-    });
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const allowed = requireOrgRole(access, ORG_MANAGER_ROLES);
+  if (!allowed.ok) {
+    return orgAccessErrorResponse(allowed.reason);
   }
 
   // --- STEP 2b: Self-approval guard ------------------------------------------
@@ -92,7 +105,7 @@ export async function POST(
   // touches nothing external.
   // NOTE: this is not a complete fraud-control surface — it does not catch
   // colluding admins and creators in the same org. See ADR-0002.
-  if (slot.creator.userId === provisioned.userId) {
+  if (slot.creator.userId === user.userId) {
     console.warn('[campaigns] slot approve self-approval blocked', {
       slotId,
       organizationId: slot.campaign.organizationId,
@@ -107,6 +120,19 @@ export async function POST(
   }
 
   // --- STEP 3: Status check ------------------------------------------------
+
+  // Campaign state is an invariant of the transition (ADR-0003 invariant 5)
+  // and must be checked before the status check and before any token
+  // decryption or network call.
+  if (
+    slot.campaign.deletedAt !== null ||
+    slot.campaign.status !== CampaignStatus.ACTIVE
+  ) {
+    return noStoreJson(
+      { error: 'Campaign is not active', code: 'CAMPAIGN_NOT_ACTIVE' },
+      409,
+    );
+  }
 
   if (slot.status !== SlotStatus.CONTENT_SUBMITTED) {
     console.info('[campaigns] slot approve wrong status', {
@@ -290,6 +316,7 @@ export async function POST(
     const result = await tx.campaignCreatorSlot.updateMany({
       where: {
         id: slotId,
+        deletedAt: null,
         status: SlotStatus.CONTENT_SUBMITTED,
       },
       data: {

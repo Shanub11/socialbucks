@@ -13,8 +13,9 @@
 //     or any API error is fail-closed: the slot is not updated.
 //
 // Request order:
-//   auth -> provision -> load slot -> slot ownership (403) -> status (409)
-//   -> parse body (400) -> parse URL (400) -> platform gate (422)
+//   auth -> provision -> slot id (404) -> creator (404) -> slot lookup scoped
+//   to the creator (404) -> status (409) -> campaign active (409) -> deadline
+//   (409) -> parse body (400) -> parse URL (400) -> platform gate (422)
 //   -> active SocialAccount lookup (409) -> ownership check (409/422/502)
 //   -> compare-and-swap updateMany (409 if raced) -> 200
 
@@ -22,9 +23,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { requireAuthApi } from '@/lib/auth/require-auth';
-import { ensureUserProvisioned } from '@/lib/auth/ensure-user';
+import { provisionedUserOrResponse } from '@/lib/auth/org-access';
+import { noStoreJson } from '@/lib/http/json';
+import { getCreatorIdForUser } from '@/lib/slots/creator-access';
+import { SlotIdParamSchema } from '@/lib/slots/schemas';
 import { prisma } from '@repo/database';
-import { SlotStatus, SocialPlatform } from '@repo/database';
+import { CampaignStatus, SlotStatus, SocialPlatform } from '@repo/database';
 import { parseContentUrl } from '@/lib/campaigns/parse-content-url';
 import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
 import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
@@ -33,8 +37,8 @@ import { fetchVideoChannel } from '@/lib/youtube/video-ownership';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SubmitBodySchema = z.object({
-  contentUrl: z.string().min(1),
+const SubmitBodySchema = z.strictObject({
+  contentUrl: z.string().min(1).max(2048),
 });
 
 type RouteParams = Promise<{ slotId: string }>;
@@ -50,35 +54,42 @@ export async function POST(
     return authResult.response;
   }
 
-  const provisioned = await ensureUserProvisioned(authResult.userId);
-  if (!provisioned.ok) {
-    return NextResponse.json(
-      { error: 'User not provisioned', reason: provisioned.reason },
-      { status: 500 },
-    );
+  const user = await provisionedUserOrResponse(authResult.userId);
+  if (!user.ok) {
+    return user.response;
   }
 
-  // Load the slot with creator -> user relation for ownership check
-  const { slotId } = await params;
-  const slot = await prisma.campaignCreatorSlot.findUnique({
-    where: { id: slotId },
-    include: { creator: { include: { user: true } } },
+  const parsedSlotId = SlotIdParamSchema.safeParse((await params).slotId);
+  if (!parsedSlotId.success) {
+    return noStoreJson({ error: 'Not found' }, 404);
+  }
+  const slotId = parsedSlotId.data;
+
+  const creatorId = await getCreatorIdForUser(user.userId);
+  if (creatorId === null) {
+    return noStoreJson({ error: 'Not found' }, 404);
+  }
+
+  // Ownership is part of the query: a slot that does not exist, is
+  // soft-deleted, belongs to another creator, or is requested by a user with
+  // no creator profile all produce the identical 404.
+  const slot = await prisma.campaignCreatorSlot.findFirst({
+    where: { id: slotId, creatorId, deletedAt: null },
+    include: {
+      campaign: {
+        select: {
+          id: true,
+          status: true,
+          deletedAt: true,
+          submissionDeadline: true,
+          organization: { select: { deletedAt: true } },
+        },
+      },
+    },
   });
 
-  if (!slot || slot.deletedAt) {
-    return NextResponse.json({ error: 'Slot not found' }, { status: 404 });
-  }
-
-  // Authorization: the slot's creator.user.clerkId must equal the authenticated clerk userId.
-  // Return 403 (not 404) on ownership mismatch — the creator already knows their
-  // own slot IDs from their dashboard, so a clear 403 is better than leaking existence.
-  if (slot.creator.user.clerkId !== authResult.userId) {
-    console.info('[campaigns] slot submit ownership mismatch', {
-      slotId,
-      expectedClerkId: slot.creator.user.clerkId,
-      actualClerkId: authResult.userId,
-    });
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!slot) {
+    return noStoreJson({ error: 'Not found' }, 404);
   }
 
   // Status check: slot must be ACCEPTED. Any other status -> 409 Conflict.
@@ -99,6 +110,33 @@ export async function POST(
   }
 
   // --- STEP 2: Parse & validate request body -------------------------------
+
+  // Campaign state and the submission deadline are invariant preconditions
+  // (ADR-0003). They are checked before the body is parsed and before any
+  // network call.
+  if (
+    slot.campaign.deletedAt !== null ||
+    slot.campaign.organization.deletedAt !== null ||
+    slot.campaign.status !== CampaignStatus.ACTIVE
+  ) {
+    return noStoreJson(
+      { error: 'Campaign is not active', code: 'CAMPAIGN_NOT_ACTIVE' },
+      409,
+    );
+  }
+
+  if (
+    slot.campaign.submissionDeadline === null ||
+    slot.campaign.submissionDeadline.getTime() <= Date.now()
+  ) {
+    return noStoreJson(
+      {
+        error: 'The submission deadline has passed',
+        code: 'SUBMISSION_DEADLINE_PASSED',
+      },
+      409,
+    );
+  }
 
   let body: z.infer<typeof SubmitBodySchema>;
   try {
@@ -284,6 +322,8 @@ export async function POST(
     const result = await tx.campaignCreatorSlot.updateMany({
       where: {
         id: slotId,
+        creatorId: slot.creatorId,
+        deletedAt: null,
         status: SlotStatus.ACCEPTED,
       },
       data: {

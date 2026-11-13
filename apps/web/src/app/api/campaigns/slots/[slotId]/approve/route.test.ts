@@ -8,7 +8,7 @@
 // nothing about the database itself is faked.
 
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PrismaClient, SlotStatus, SocialPlatform } from '@repo/database';
+import { CampaignStatus, PrismaClient, SlotStatus, SocialPlatform } from '@repo/database';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 const MOCK_USER_CLERK_ID = 'clerk_test_approve_owner';
@@ -107,7 +107,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       organizationId = organization.id;
 
       const campaign = await prisma.campaign.create({
-        data: { organizationId: organization.id, title: `Test Campaign ${suffix}`, totalBudget: 1000, currency: 'USD' },
+        data: { organizationId: organization.id, title: `Test Campaign ${suffix}`, totalBudget: 1000, currency: 'USD', status: CampaignStatus.ACTIVE, submissionDeadline: new Date(Date.now() + 30 * 86_400_000) },
       });
       campaignId = campaign.id;
 
@@ -250,7 +250,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     }
   });
 
-  it('non-member -> 403, slot unchanged', async () => {
+  it('non-member -> 404, slot unchanged', async () => {
     const f = await createFixture();
     try {
       const before = await prisma.campaignCreatorSlot.findUniqueOrThrow({
@@ -259,7 +259,8 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       });
 
       const res = await callRoute(f.slotId);
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: 'Not found' });
 
       const after = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
@@ -306,13 +307,13 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
     }
   });
 
-  it('INSTAGRAM slot, non-member caller -> 403 (authorization precedes platform gate)', async () => {
+  it('INSTAGRAM slot, non-member caller -> 404 (authorization precedes platform gate)', async () => {
     const f = await createFixture({ platform: SocialPlatform.INSTAGRAM });
     // Do NOT add a membership — the auth mock user has no role in this org.
     try {
       const res = await callRoute(f.slotId);
-      expect(res.status).toBe(403);
-      expect((await res.json()).error).toBe('Forbidden');
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: 'Not found' });
       const slot = await prisma.campaignCreatorSlot.findUniqueOrThrow({
         where: { id: f.slotId },
       });
@@ -568,7 +569,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       organizationId = organization.id;
 
       const campaign = await prisma.campaign.create({
-        data: { organizationId: organization.id, title: `Dual Campaign ${suffix}`, totalBudget: 1000, currency: 'USD' },
+        data: { organizationId: organization.id, title: `Dual Campaign ${suffix}`, totalBudget: 1000, currency: 'USD', status: CampaignStatus.ACTIVE, submissionDeadline: new Date(Date.now() + 30 * 86_400_000) },
       });
       campaignId = campaign.id;
 
@@ -738,7 +739,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       });
 
       const otherCampaign = await prisma.campaign.create({
-        data: { organizationId: dualF.organizationId, title: `Other Campaign ${otherSuffix}`, totalBudget: 1000, currency: 'USD' },
+        data: { organizationId: dualF.organizationId, title: `Other Campaign ${otherSuffix}`, totalBudget: 1000, currency: 'USD', status: CampaignStatus.ACTIVE, submissionDeadline: new Date(Date.now() + 30 * 86_400_000) },
       });
 
       const otherSlot = await prisma.campaignCreatorSlot.create({
@@ -803,7 +804,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
   });
 
   // ----- Test 6: Creator with no org membership -> 403 Forbidden, no code field -----
-  it('creator with no org membership approving own slot -> 403 Forbidden, no code field (authorization precedes guard)', async () => {
+  it('creator with no org membership approving own slot -> 404 Not found, no code field (authorization precedes guard)', async () => {
     const f = await createDualRoleFixture();
     // No membership added — the user is a creator but not an org member.
     vi.mocked(auth).mockResolvedValue({ userId: f.clerkId } as never);
@@ -811,8 +812,8 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve', () => {
       const res = await callRoute(f.slotId);
       const body = await res.json();
 
-      expect(res.status).toBe(403);
-      expect(body).toEqual({ error: 'Forbidden' });
+      expect(res.status).toBe(404);
+      expect(body).toEqual({ error: 'Not found' });
       expect(body.code).toBeUndefined();
     } finally {
       await cleanupDualRole();
