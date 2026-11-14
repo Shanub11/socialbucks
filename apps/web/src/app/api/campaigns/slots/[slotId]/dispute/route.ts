@@ -133,10 +133,9 @@ export async function POST(
         disputedAt: now,
         disputeReason: body.data.reason,
         disputeRaisedByUserId: user.userId,
-        // disputeResolvedAt: null is REQUIRED: a slot disputed before still carries
-        // the earlier dispute's disputeResolvedAt, and the slot_dispute_resolved_order
-        // CHECK ties it to disputedAt; setting it null here proves that transition
-        // to DISPUTED does not yet resolve any earlier dispute.
+        // disputeResolvedAt: null is REQUIRED: a slot disputed before still carries the
+        // earlier dispute's disputeResolvedAt, and the slot_dispute_resolved_order CHECK
+        // ties it to disputedAt, so it must be cleared for the new dispute.
         disputeResolvedAt: null,
       },
     });
