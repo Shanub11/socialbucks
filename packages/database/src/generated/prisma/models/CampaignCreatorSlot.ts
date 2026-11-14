@@ -69,6 +69,11 @@ export type CampaignCreatorSlotMinAggregateOutputType = {
   rejectionReason: string | null
   settlementEndsAt: Date | null
   cancelledAt: Date | null
+  closedAt: Date | null
+  disputedAt: Date | null
+  disputeReason: string | null
+  disputeRaisedByUserId: string | null
+  disputeResolvedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -103,6 +108,11 @@ export type CampaignCreatorSlotMaxAggregateOutputType = {
   rejectionReason: string | null
   settlementEndsAt: Date | null
   cancelledAt: Date | null
+  closedAt: Date | null
+  disputedAt: Date | null
+  disputeReason: string | null
+  disputeRaisedByUserId: string | null
+  disputeResolvedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -137,6 +147,11 @@ export type CampaignCreatorSlotCountAggregateOutputType = {
   rejectionReason: number
   settlementEndsAt: number
   cancelledAt: number
+  closedAt: number
+  disputedAt: number
+  disputeReason: number
+  disputeRaisedByUserId: number
+  disputeResolvedAt: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -187,6 +202,11 @@ export type CampaignCreatorSlotMinAggregateInputType = {
   rejectionReason?: true
   settlementEndsAt?: true
   cancelledAt?: true
+  closedAt?: true
+  disputedAt?: true
+  disputeReason?: true
+  disputeRaisedByUserId?: true
+  disputeResolvedAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -221,6 +241,11 @@ export type CampaignCreatorSlotMaxAggregateInputType = {
   rejectionReason?: true
   settlementEndsAt?: true
   cancelledAt?: true
+  closedAt?: true
+  disputedAt?: true
+  disputeReason?: true
+  disputeRaisedByUserId?: true
+  disputeResolvedAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -255,6 +280,11 @@ export type CampaignCreatorSlotCountAggregateInputType = {
   rejectionReason?: true
   settlementEndsAt?: true
   cancelledAt?: true
+  closedAt?: true
+  disputedAt?: true
+  disputeReason?: true
+  disputeRaisedByUserId?: true
+  disputeResolvedAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -376,6 +406,11 @@ export type CampaignCreatorSlotGroupByOutputType = {
   rejectionReason: string | null
   settlementEndsAt: Date | null
   cancelledAt: Date | null
+  closedAt: Date | null
+  disputedAt: Date | null
+  disputeReason: string | null
+  disputeRaisedByUserId: string | null
+  disputeResolvedAt: Date | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -433,10 +468,16 @@ export type CampaignCreatorSlotWhereInput = {
   rejectionReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
   settlementEndsAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  closedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputeReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  disputeRaisedByUserId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  disputeResolvedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   socialAccount?: Prisma.XOR<Prisma.SocialAccountNullableScalarRelationFilter, Prisma.SocialAccountWhereInput> | null
+  disputeRaisedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   campaign?: Prisma.XOR<Prisma.CampaignScalarRelationFilter, Prisma.CampaignWhereInput>
   creator?: Prisma.XOR<Prisma.CreatorScalarRelationFilter, Prisma.CreatorWhereInput>
   payoutEvents?: Prisma.PayoutEventListRelationFilter
@@ -471,10 +512,16 @@ export type CampaignCreatorSlotOrderByWithRelationInput = {
   rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   settlementEndsAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputeReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputeRaisedByUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputeResolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   socialAccount?: Prisma.SocialAccountOrderByWithRelationInput
+  disputeRaisedBy?: Prisma.UserOrderByWithRelationInput
   campaign?: Prisma.CampaignOrderByWithRelationInput
   creator?: Prisma.CreatorOrderByWithRelationInput
   payoutEvents?: Prisma.PayoutEventOrderByRelationAggregateInput
@@ -513,10 +560,16 @@ export type CampaignCreatorSlotWhereUniqueInput = Prisma.AtLeast<{
   rejectionReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
   settlementEndsAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  closedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputeReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  disputeRaisedByUserId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  disputeResolvedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   socialAccount?: Prisma.XOR<Prisma.SocialAccountNullableScalarRelationFilter, Prisma.SocialAccountWhereInput> | null
+  disputeRaisedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   campaign?: Prisma.XOR<Prisma.CampaignScalarRelationFilter, Prisma.CampaignWhereInput>
   creator?: Prisma.XOR<Prisma.CreatorScalarRelationFilter, Prisma.CreatorWhereInput>
   payoutEvents?: Prisma.PayoutEventListRelationFilter
@@ -551,6 +604,11 @@ export type CampaignCreatorSlotOrderByWithAggregationInput = {
   rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   settlementEndsAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputeReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputeRaisedByUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  disputeResolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -593,6 +651,11 @@ export type CampaignCreatorSlotScalarWhereWithAggregatesInput = {
   rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
   settlementEndsAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  closedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputeReason?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
+  disputeRaisedByUserId?: Prisma.StringNullableWithAggregatesFilter<"CampaignCreatorSlot"> | string | null
+  disputeResolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CampaignCreatorSlot"> | Date | string | null
@@ -624,10 +687,15 @@ export type CampaignCreatorSlotCreateInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
+  disputeRaisedBy?: Prisma.UserCreateNestedOneWithoutSlotDisputesRaisedInput
   campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
   creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
   payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
@@ -662,6 +730,11 @@ export type CampaignCreatorSlotUncheckedCreateInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -694,10 +767,15 @@ export type CampaignCreatorSlotUpdateInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
+  disputeRaisedBy?: Prisma.UserUpdateOneWithoutSlotDisputesRaisedNestedInput
   campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
   payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
@@ -732,6 +810,11 @@ export type CampaignCreatorSlotUncheckedUpdateInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -767,6 +850,11 @@ export type CampaignCreatorSlotCreateManyInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -798,6 +886,10 @@ export type CampaignCreatorSlotUpdateManyMutationInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -832,6 +924,11 @@ export type CampaignCreatorSlotUncheckedUpdateManyInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -881,6 +978,11 @@ export type CampaignCreatorSlotCountOrderByAggregateInput = {
   rejectionReason?: Prisma.SortOrder
   settlementEndsAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  disputedAt?: Prisma.SortOrder
+  disputeReason?: Prisma.SortOrder
+  disputeRaisedByUserId?: Prisma.SortOrder
+  disputeResolvedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -922,6 +1024,11 @@ export type CampaignCreatorSlotMaxOrderByAggregateInput = {
   rejectionReason?: Prisma.SortOrder
   settlementEndsAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  disputedAt?: Prisma.SortOrder
+  disputeReason?: Prisma.SortOrder
+  disputeRaisedByUserId?: Prisma.SortOrder
+  disputeResolvedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -956,6 +1063,11 @@ export type CampaignCreatorSlotMinOrderByAggregateInput = {
   rejectionReason?: Prisma.SortOrder
   settlementEndsAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  disputedAt?: Prisma.SortOrder
+  disputeReason?: Prisma.SortOrder
+  disputeRaisedByUserId?: Prisma.SortOrder
+  disputeResolvedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -971,6 +1083,48 @@ export type CampaignCreatorSlotSumOrderByAggregateInput = {
 export type CampaignCreatorSlotScalarRelationFilter = {
   is?: Prisma.CampaignCreatorSlotWhereInput
   isNot?: Prisma.CampaignCreatorSlotWhereInput
+}
+
+export type CampaignCreatorSlotCreateNestedManyWithoutDisputeRaisedByInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput> | Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManyDisputeRaisedByInputEnvelope
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+}
+
+export type CampaignCreatorSlotUncheckedCreateNestedManyWithoutDisputeRaisedByInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput> | Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManyDisputeRaisedByInputEnvelope
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+}
+
+export type CampaignCreatorSlotUpdateManyWithoutDisputeRaisedByNestedInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput> | Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput[]
+  upsert?: Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutDisputeRaisedByInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManyDisputeRaisedByInputEnvelope
+  set?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  disconnect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  delete?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  update?: Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutDisputeRaisedByInput[]
+  updateMany?: Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutDisputeRaisedByInput[]
+  deleteMany?: Prisma.CampaignCreatorSlotScalarWhereInput | Prisma.CampaignCreatorSlotScalarWhereInput[]
+}
+
+export type CampaignCreatorSlotUncheckedUpdateManyWithoutDisputeRaisedByNestedInput = {
+  create?: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput> | Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput[] | Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput[]
+  connectOrCreate?: Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput[]
+  upsert?: Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotUpsertWithWhereUniqueWithoutDisputeRaisedByInput[]
+  createMany?: Prisma.CampaignCreatorSlotCreateManyDisputeRaisedByInputEnvelope
+  set?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  disconnect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  delete?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  connect?: Prisma.CampaignCreatorSlotWhereUniqueInput | Prisma.CampaignCreatorSlotWhereUniqueInput[]
+  update?: Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotUpdateWithWhereUniqueWithoutDisputeRaisedByInput[]
+  updateMany?: Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutDisputeRaisedByInput | Prisma.CampaignCreatorSlotUpdateManyWithWhereWithoutDisputeRaisedByInput[]
+  deleteMany?: Prisma.CampaignCreatorSlotScalarWhereInput | Prisma.CampaignCreatorSlotScalarWhereInput[]
 }
 
 export type CampaignCreatorSlotCreateNestedManyWithoutCreatorInput = {
@@ -1137,7 +1291,7 @@ export type CampaignCreatorSlotUpdateOneRequiredWithoutPayoutEventsNestedInput =
   update?: Prisma.XOR<Prisma.XOR<Prisma.CampaignCreatorSlotUpdateToOneWithWhereWithoutPayoutEventsInput, Prisma.CampaignCreatorSlotUpdateWithoutPayoutEventsInput>, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput>
 }
 
-export type CampaignCreatorSlotCreateWithoutCreatorInput = {
+export type CampaignCreatorSlotCreateWithoutDisputeRaisedByInput = {
   id?: string
   status?: $Enums.SlotStatus
   escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1163,17 +1317,23 @@ export type CampaignCreatorSlotCreateWithoutCreatorInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
   campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
+  creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
   payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
 }
 
-export type CampaignCreatorSlotUncheckedCreateWithoutCreatorInput = {
+export type CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput = {
   id?: string
   campaignId: string
+  creatorId: string
   status?: $Enums.SlotStatus
   escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currentTier?: $Enums.MilestoneTier | null
@@ -1199,36 +1359,40 @@ export type CampaignCreatorSlotUncheckedCreateWithoutCreatorInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   payoutEvents?: Prisma.PayoutEventUncheckedCreateNestedManyWithoutSlotInput
 }
 
-export type CampaignCreatorSlotCreateOrConnectWithoutCreatorInput = {
+export type CampaignCreatorSlotCreateOrConnectWithoutDisputeRaisedByInput = {
   where: Prisma.CampaignCreatorSlotWhereUniqueInput
-  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutCreatorInput>
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput>
 }
 
-export type CampaignCreatorSlotCreateManyCreatorInputEnvelope = {
-  data: Prisma.CampaignCreatorSlotCreateManyCreatorInput | Prisma.CampaignCreatorSlotCreateManyCreatorInput[]
+export type CampaignCreatorSlotCreateManyDisputeRaisedByInputEnvelope = {
+  data: Prisma.CampaignCreatorSlotCreateManyDisputeRaisedByInput | Prisma.CampaignCreatorSlotCreateManyDisputeRaisedByInput[]
   skipDuplicates?: boolean
 }
 
-export type CampaignCreatorSlotUpsertWithWhereUniqueWithoutCreatorInput = {
+export type CampaignCreatorSlotUpsertWithWhereUniqueWithoutDisputeRaisedByInput = {
   where: Prisma.CampaignCreatorSlotWhereUniqueInput
-  update: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput>
-  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutCreatorInput>
+  update: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutDisputeRaisedByInput>
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutDisputeRaisedByInput>
 }
 
-export type CampaignCreatorSlotUpdateWithWhereUniqueWithoutCreatorInput = {
+export type CampaignCreatorSlotUpdateWithWhereUniqueWithoutDisputeRaisedByInput = {
   where: Prisma.CampaignCreatorSlotWhereUniqueInput
-  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput>
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutDisputeRaisedByInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutDisputeRaisedByInput>
 }
 
-export type CampaignCreatorSlotUpdateManyWithWhereWithoutCreatorInput = {
+export type CampaignCreatorSlotUpdateManyWithWhereWithoutDisputeRaisedByInput = {
   where: Prisma.CampaignCreatorSlotScalarWhereInput
-  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateManyMutationInput, Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorInput>
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateManyMutationInput, Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutDisputeRaisedByInput>
 }
 
 export type CampaignCreatorSlotScalarWhereInput = {
@@ -1263,9 +1427,118 @@ export type CampaignCreatorSlotScalarWhereInput = {
   rejectionReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
   settlementEndsAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  closedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+  disputeReason?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  disputeRaisedByUserId?: Prisma.StringNullableFilter<"CampaignCreatorSlot"> | string | null
+  disputeResolvedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CampaignCreatorSlot"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"CampaignCreatorSlot"> | Date | string | null
+}
+
+export type CampaignCreatorSlotCreateWithoutCreatorInput = {
+  id?: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
+  disputeRaisedBy?: Prisma.UserCreateNestedOneWithoutSlotDisputesRaisedInput
+  campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
+  payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
+}
+
+export type CampaignCreatorSlotUncheckedCreateWithoutCreatorInput = {
+  id?: string
+  campaignId: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedCreateNestedManyWithoutSlotInput
+}
+
+export type CampaignCreatorSlotCreateOrConnectWithoutCreatorInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutCreatorInput>
+}
+
+export type CampaignCreatorSlotCreateManyCreatorInputEnvelope = {
+  data: Prisma.CampaignCreatorSlotCreateManyCreatorInput | Prisma.CampaignCreatorSlotCreateManyCreatorInput[]
+  skipDuplicates?: boolean
+}
+
+export type CampaignCreatorSlotUpsertWithWhereUniqueWithoutCreatorInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  update: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput>
+  create: Prisma.XOR<Prisma.CampaignCreatorSlotCreateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedCreateWithoutCreatorInput>
+}
+
+export type CampaignCreatorSlotUpdateWithWhereUniqueWithoutCreatorInput = {
+  where: Prisma.CampaignCreatorSlotWhereUniqueInput
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateWithoutCreatorInput, Prisma.CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput>
+}
+
+export type CampaignCreatorSlotUpdateManyWithWhereWithoutCreatorInput = {
+  where: Prisma.CampaignCreatorSlotScalarWhereInput
+  data: Prisma.XOR<Prisma.CampaignCreatorSlotUpdateManyMutationInput, Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorInput>
 }
 
 export type CampaignCreatorSlotCreateWithoutSocialAccountInput = {
@@ -1294,9 +1567,14 @@ export type CampaignCreatorSlotCreateWithoutSocialAccountInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  disputeRaisedBy?: Prisma.UserCreateNestedOneWithoutSlotDisputesRaisedInput
   campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
   creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
   payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
@@ -1330,6 +1608,11 @@ export type CampaignCreatorSlotUncheckedCreateWithoutSocialAccountInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1388,10 +1671,15 @@ export type CampaignCreatorSlotCreateWithoutCampaignInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
+  disputeRaisedBy?: Prisma.UserCreateNestedOneWithoutSlotDisputesRaisedInput
   creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
   payoutEvents?: Prisma.PayoutEventCreateNestedManyWithoutSlotInput
 }
@@ -1424,6 +1712,11 @@ export type CampaignCreatorSlotUncheckedCreateWithoutCampaignInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1482,10 +1775,15 @@ export type CampaignCreatorSlotCreateWithoutPayoutEventsInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   socialAccount?: Prisma.SocialAccountCreateNestedOneWithoutSlotsInput
+  disputeRaisedBy?: Prisma.UserCreateNestedOneWithoutSlotDisputesRaisedInput
   campaign: Prisma.CampaignCreateNestedOneWithoutSlotsInput
   creator: Prisma.CreatorCreateNestedOneWithoutSlotsInput
 }
@@ -1519,6 +1817,11 @@ export type CampaignCreatorSlotUncheckedCreateWithoutPayoutEventsInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1566,10 +1869,15 @@ export type CampaignCreatorSlotUpdateWithoutPayoutEventsInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
+  disputeRaisedBy?: Prisma.UserUpdateOneWithoutSlotDisputesRaisedNestedInput
   campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
 }
@@ -1603,6 +1911,165 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutPayoutEventsInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type CampaignCreatorSlotCreateManyDisputeRaisedByInput = {
+  id?: string
+  campaignId: string
+  creatorId: string
+  status?: $Enums.SlotStatus
+  escrowAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: $Enums.MilestoneTier | null
+  paidToDate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  currentViewCount?: number | null
+  lastViewCheckAt?: Date | string | null
+  platform?: $Enums.SocialPlatform | null
+  contentId?: string | null
+  socialAccountId?: string | null
+  isShort?: boolean | null
+  isShortVerifiedAt?: Date | string | null
+  viewTarget?: number | null
+  metric?: string | null
+  invitedAt?: Date | string
+  inviteExpiresAt?: Date | string | null
+  acceptedAt?: Date | string | null
+  declinedAt?: Date | string | null
+  reviewDueAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectionReason?: string | null
+  settlementEndsAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeResolvedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type CampaignCreatorSlotUpdateWithoutDisputeRaisedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
+  campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
+  creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
+  payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
+}
+
+export type CampaignCreatorSlotUncheckedUpdateWithoutDisputeRaisedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  campaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  payoutEvents?: Prisma.PayoutEventUncheckedUpdateManyWithoutSlotNestedInput
+}
+
+export type CampaignCreatorSlotUncheckedUpdateManyWithoutDisputeRaisedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  campaignId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumSlotStatusFieldUpdateOperationsInput | $Enums.SlotStatus
+  escrowAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentTier?: Prisma.NullableEnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier | null
+  paidToDate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  contentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  currentViewCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastViewCheckAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  platform?: Prisma.NullableEnumSocialPlatformFieldUpdateOperationsInput | $Enums.SocialPlatform | null
+  contentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isShort?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  isShortVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewTarget?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  invitedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inviteExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  declinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reviewDueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1636,6 +2103,11 @@ export type CampaignCreatorSlotCreateManyCreatorInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1667,10 +2139,15 @@ export type CampaignCreatorSlotUpdateWithoutCreatorInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
+  disputeRaisedBy?: Prisma.UserUpdateOneWithoutSlotDisputesRaisedNestedInput
   campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
   payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
 }
@@ -1703,6 +2180,11 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutCreatorInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1737,6 +2219,11 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCreatorInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1770,6 +2257,11 @@ export type CampaignCreatorSlotCreateManySocialAccountInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1801,9 +2293,14 @@ export type CampaignCreatorSlotUpdateWithoutSocialAccountInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeRaisedBy?: Prisma.UserUpdateOneWithoutSlotDisputesRaisedNestedInput
   campaign?: Prisma.CampaignUpdateOneRequiredWithoutSlotsNestedInput
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
   payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
@@ -1837,6 +2334,11 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutSocialAccountInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1871,6 +2373,11 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutSocialAccountInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1904,6 +2411,11 @@ export type CampaignCreatorSlotCreateManyCampaignInput = {
   rejectionReason?: string | null
   settlementEndsAt?: Date | string | null
   cancelledAt?: Date | string | null
+  closedAt?: Date | string | null
+  disputedAt?: Date | string | null
+  disputeReason?: string | null
+  disputeRaisedByUserId?: string | null
+  disputeResolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1935,10 +2447,15 @@ export type CampaignCreatorSlotUpdateWithoutCampaignInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   socialAccount?: Prisma.SocialAccountUpdateOneWithoutSlotsNestedInput
+  disputeRaisedBy?: Prisma.UserUpdateOneWithoutSlotDisputesRaisedNestedInput
   creator?: Prisma.CreatorUpdateOneRequiredWithoutSlotsNestedInput
   payoutEvents?: Prisma.PayoutEventUpdateManyWithoutSlotNestedInput
 }
@@ -1971,6 +2488,11 @@ export type CampaignCreatorSlotUncheckedUpdateWithoutCampaignInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2005,6 +2527,11 @@ export type CampaignCreatorSlotUncheckedUpdateManyWithoutCampaignInput = {
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   settlementEndsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  disputeReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeRaisedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disputeResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2070,10 +2597,16 @@ export type CampaignCreatorSlotSelect<ExtArgs extends runtime.Types.Extensions.I
   rejectionReason?: boolean
   settlementEndsAt?: boolean
   cancelledAt?: boolean
+  closedAt?: boolean
+  disputedAt?: boolean
+  disputeReason?: boolean
+  disputeRaisedByUserId?: boolean
+  disputeResolvedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
+  disputeRaisedBy?: boolean | Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
   payoutEvents?: boolean | Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs>
@@ -2109,10 +2642,16 @@ export type CampaignCreatorSlotSelectCreateManyAndReturn<ExtArgs extends runtime
   rejectionReason?: boolean
   settlementEndsAt?: boolean
   cancelledAt?: boolean
+  closedAt?: boolean
+  disputedAt?: boolean
+  disputeReason?: boolean
+  disputeRaisedByUserId?: boolean
+  disputeResolvedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
+  disputeRaisedBy?: boolean | Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["campaignCreatorSlot"]>
@@ -2146,10 +2685,16 @@ export type CampaignCreatorSlotSelectUpdateManyAndReturn<ExtArgs extends runtime
   rejectionReason?: boolean
   settlementEndsAt?: boolean
   cancelledAt?: boolean
+  closedAt?: boolean
+  disputedAt?: boolean
+  disputeReason?: boolean
+  disputeRaisedByUserId?: boolean
+  disputeResolvedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
+  disputeRaisedBy?: boolean | Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["campaignCreatorSlot"]>
@@ -2183,14 +2728,20 @@ export type CampaignCreatorSlotSelectScalar = {
   rejectionReason?: boolean
   settlementEndsAt?: boolean
   cancelledAt?: boolean
+  closedAt?: boolean
+  disputedAt?: boolean
+  disputeReason?: boolean
+  disputeRaisedByUserId?: boolean
+  disputeResolvedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type CampaignCreatorSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "campaignId" | "creatorId" | "status" | "escrowAmount" | "currentTier" | "paidToDate" | "contentUrl" | "submittedAt" | "approvedAt" | "currentViewCount" | "lastViewCheckAt" | "platform" | "contentId" | "socialAccountId" | "isShort" | "isShortVerifiedAt" | "viewTarget" | "metric" | "invitedAt" | "inviteExpiresAt" | "acceptedAt" | "declinedAt" | "reviewDueAt" | "rejectedAt" | "rejectionReason" | "settlementEndsAt" | "cancelledAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaignCreatorSlot"]>
+export type CampaignCreatorSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "campaignId" | "creatorId" | "status" | "escrowAmount" | "currentTier" | "paidToDate" | "contentUrl" | "submittedAt" | "approvedAt" | "currentViewCount" | "lastViewCheckAt" | "platform" | "contentId" | "socialAccountId" | "isShort" | "isShortVerifiedAt" | "viewTarget" | "metric" | "invitedAt" | "inviteExpiresAt" | "acceptedAt" | "declinedAt" | "reviewDueAt" | "rejectedAt" | "rejectionReason" | "settlementEndsAt" | "cancelledAt" | "closedAt" | "disputedAt" | "disputeReason" | "disputeRaisedByUserId" | "disputeResolvedAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaignCreatorSlot"]>
 export type CampaignCreatorSlotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
+  disputeRaisedBy?: boolean | Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
   payoutEvents?: boolean | Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs>
@@ -2198,11 +2749,13 @@ export type CampaignCreatorSlotInclude<ExtArgs extends runtime.Types.Extensions.
 }
 export type CampaignCreatorSlotIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
+  disputeRaisedBy?: boolean | Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }
 export type CampaignCreatorSlotIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   socialAccount?: boolean | Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>
+  disputeRaisedBy?: boolean | Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>
   campaign?: boolean | Prisma.CampaignDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.CreatorDefaultArgs<ExtArgs>
 }
@@ -2211,6 +2764,7 @@ export type $CampaignCreatorSlotPayload<ExtArgs extends runtime.Types.Extensions
   name: "CampaignCreatorSlot"
   objects: {
     socialAccount: Prisma.$SocialAccountPayload<ExtArgs> | null
+    disputeRaisedBy: Prisma.$UserPayload<ExtArgs> | null
     campaign: Prisma.$CampaignPayload<ExtArgs>
     creator: Prisma.$CreatorPayload<ExtArgs>
     payoutEvents: Prisma.$PayoutEventPayload<ExtArgs>[]
@@ -2268,6 +2822,16 @@ export type $CampaignCreatorSlotPayload<ExtArgs extends runtime.Types.Extensions
     rejectionReason: string | null
     settlementEndsAt: Date | null
     cancelledAt: Date | null
+    /**
+     * Closure and dispute record (ADR-0004). Only the LATEST dispute is kept on
+     * this row: an earlier dispute's reason and timestamps live in the logs until
+     * a dispute-history table is justified.
+     */
+    closedAt: Date | null
+    disputedAt: Date | null
+    disputeReason: string | null
+    disputeRaisedByUserId: string | null
+    disputeResolvedAt: Date | null
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
@@ -2666,6 +3230,7 @@ readonly fields: CampaignCreatorSlotFieldRefs;
 export interface Prisma__CampaignCreatorSlotClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   socialAccount<T extends Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignCreatorSlot$socialAccountArgs<ExtArgs>>): Prisma.Prisma__SocialAccountClient<runtime.Types.Result.GetResult<Prisma.$SocialAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  disputeRaisedBy<T extends Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   campaign<T extends Prisma.CampaignDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignDefaultArgs<ExtArgs>>): Prisma.Prisma__CampaignClient<runtime.Types.Result.GetResult<Prisma.$CampaignPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   creator<T extends Prisma.CreatorDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CreatorDefaultArgs<ExtArgs>>): Prisma.Prisma__CreatorClient<runtime.Types.Result.GetResult<Prisma.$CreatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   payoutEvents<T extends Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CampaignCreatorSlot$payoutEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PayoutEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2726,6 +3291,11 @@ export interface CampaignCreatorSlotFieldRefs {
   readonly rejectionReason: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
   readonly settlementEndsAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly cancelledAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly closedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly disputedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
+  readonly disputeReason: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
+  readonly disputeRaisedByUserId: Prisma.FieldRef<"CampaignCreatorSlot", 'String'>
+  readonly disputeResolvedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"CampaignCreatorSlot", 'DateTime'>
@@ -3146,6 +3716,25 @@ export type CampaignCreatorSlot$socialAccountArgs<ExtArgs extends runtime.Types.
    */
   include?: Prisma.SocialAccountInclude<ExtArgs> | null
   where?: Prisma.SocialAccountWhereInput
+}
+
+/**
+ * CampaignCreatorSlot.disputeRaisedBy
+ */
+export type CampaignCreatorSlot$disputeRaisedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

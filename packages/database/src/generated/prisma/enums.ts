@@ -56,7 +56,8 @@ export const SlotStatus = {
   DISPUTED: 'DISPUTED',
   CANCELLED: 'CANCELLED',
   DECLINED: 'DECLINED',
-  EXPIRED: 'EXPIRED'
+  EXPIRED: 'EXPIRED',
+  CLOSED: 'CLOSED'
 } as const
 
 export type SlotStatus = (typeof SlotStatus)[keyof typeof SlotStatus]

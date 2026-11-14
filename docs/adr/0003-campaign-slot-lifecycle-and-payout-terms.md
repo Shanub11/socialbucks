@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-26
 - Amends: ADR-0002 (D4, timing of the BASELINE release)
+- Amended by: ADR-0004 (state machine, D4, OQ-1, OQ-4)
 - Related: ADR-0001, ADR-0002
 
 ## Context
@@ -127,11 +128,12 @@ approval. It can only be disputed.
 
 - OQ-1. Is any part of the baseline clawed back if approved content is later
   removed? This is for a later ADR, and it matters before real money moves.
+  Resolved in ADR-0004.
 - OQ-2. Is the baseline always 20 % of escrow, or set per campaign?
 - OQ-3. What sanity bounds apply to `viewTarget` relative to `escrowAmount`, so a
   brand cannot set a target no creator could reach?
 - OQ-4. What is the status name for a slot that closes at the end of the settlement
-  window with unreleased escrow?
+  window with unreleased escrow? Resolved in ADR-0004.
 - OQ-5. Which host runs the worker (Railway, Fly, Render or another)?
 - OQ-6. Which currencies are supported at launch, and who resolves disputes?
 

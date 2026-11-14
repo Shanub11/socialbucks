@@ -28,8 +28,9 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  memberships OrganizationMember[]
-  creator     Creator?
+  memberships        OrganizationMember[]
+  creator            Creator?
+  slotDisputesRaised CampaignCreatorSlot[] @relation("SlotDisputeRaiser")
 
   @@index([clerkId])
 }
@@ -215,6 +216,7 @@ enum SlotStatus {
   CANCELLED
   DECLINED // creator declined the invite
   EXPIRED // worker expired the invite due to window close
+  CLOSED // settlement window ended with unreleased escrow (ADR-0004 D2)
 }
 
 enum MilestoneTier {
@@ -282,6 +284,16 @@ model CampaignCreatorSlot {
   rejectionReason String?
   settlementEndsAt DateTime?
   cancelledAt   DateTime?
+
+  /// Closure and dispute record (ADR-0004). Only the LATEST dispute is kept on
+  /// this row: an earlier dispute's reason and timestamps live in the logs until
+  /// a dispute-history table is justified.
+  closedAt              DateTime?
+  disputedAt            DateTime?
+  disputeReason         String?
+  disputeRaisedByUserId String?
+  disputeResolvedAt     DateTime?
+  disputeRaisedBy       User?     @relation("SlotDisputeRaiser", fields: [disputeRaisedByUserId], references: [id], onDelete: Restrict)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
