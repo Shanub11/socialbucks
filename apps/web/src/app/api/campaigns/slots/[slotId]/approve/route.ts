@@ -2,9 +2,12 @@
 //
 // POST /api/campaigns/slots/[slotId]/approve
 //
-// A brand/org member approves submitted content, setting the view target
-// and (for YouTube) verifying the Shorts classification before the slot
-// becomes eligible for settleSlot().
+// A brand/org member approves submitted content. Approval moves the slot from
+// CONTENT_SUBMITTED to IN_PROGRESS and, in the same database transaction,
+// releases the BASELINE tier (20% of escrow) as one PayoutEvent row and starts
+// the settlement window: approvedAt, settlementEndsAt, currentTier = BASELINE
+// and paidToDate = baseline (ADR-0003 D1, D4). The view target is read from the
+// slot, and for YouTube the Shorts classification is verified before any write.
 //
 // Security: this is a financial approval path. Only OWNER or ADMIN members
 // can approve - MEMBERS must not be able to escalate privileges.
@@ -13,7 +16,7 @@
 // org access/role (404/403) -> self-approval guard (403) -> campaign active
 // (409) -> slot status (409) -> body (400) -> view target (409) -> platform
 // gate (422/500) -> YouTube verification (409/422/502) -> compare-and-swap
-// (409) -> 200.
+// plus baseline release, one transaction (409/500) -> 200.
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -29,10 +32,17 @@ import {
 import { noStoreJson } from '@/lib/http/json';
 import { SlotIdParamSchema } from '@/lib/slots/schemas';
 import { prisma } from '@repo/database';
-import { CampaignStatus, SlotStatus, SocialPlatform } from '@repo/database';
+import {
+  CampaignStatus,
+  MilestoneTier,
+  SlotStatus,
+  SocialPlatform,
+} from '@repo/database';
 import { getYoutubeAccessToken } from '@/lib/youtube/get-access-token';
 import { verifyIsShort } from '@/lib/youtube/analytics';
 import { isSettlementSupported } from '@/lib/settlement/supported-platforms';
+import { baselineAmount } from '@/lib/settlement/tiers';
+import { settlementEndsAtFrom } from '@/lib/slots/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,6 +52,18 @@ export const dynamic = 'force-dynamic';
 const ApproveBodySchema = z.object({}).strict();
 
 type RouteParams = Promise<{ slotId: string }>;
+
+/**
+ * Extracts a Prisma error code for logging only. The response body never
+ * carries a code, a message, SQL or any ledger value.
+ */
+function errorCode(error: unknown): string {
+  if (error !== null && typeof error === 'object' && 'code' in error) {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === 'string') return code;
+  }
+  return 'UNKNOWN';
+}
 
 export async function POST(
   _req: Request,
@@ -71,7 +93,13 @@ export async function POST(
     where: { id: slotId },
     include: {
       campaign: {
-        select: { organizationId: true, status: true, deletedAt: true },
+        select: {
+          organizationId: true,
+          status: true,
+          deletedAt: true,
+          // The released baseline is denominated in the campaign's currency.
+          currency: true,
+        },
       },
       creator: { select: { userId: true } },
       socialAccount: true,
@@ -312,42 +340,95 @@ export async function POST(
 
   // --- STEP 5: Write with compare-and-swap ---------------------------------
 
-  const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.campaignCreatorSlot.updateMany({
-      where: {
-        id: slotId,
-        deletedAt: null,
-        status: SlotStatus.CONTENT_SUBMITTED,
-      },
-      data: {
-        // viewTarget is read-only from the slot (ADR-0003 D2); it was set at
-        // invite and cannot be changed after acceptance.
-        approvedAt: new Date(),
-        status: SlotStatus.IN_PROGRESS,
-        // For YouTube: set isShort and isShortVerifiedAt
-        // For Instagram: leave these null (they stay undefined in Prisma)
-        ...(isShortValue !== undefined
-          ? { isShort: isShortValue, isShortVerifiedAt: isShortVerifiedAtValue }
-          : {}),
-      },
+  // The released BASELINE amount (ADR-0003 D1). Reading the loaded escrowAmount
+  // is safe: the slot is CONTENT_SUBMITTED, and the slot_terms_guard trigger
+  // makes escrowAmount immutable once the slot left INVITED (ADR-0003 D2).
+  const baseline = baselineAmount(slot.escrowAmount);
+
+  // ONE timestamp for the whole approval: approvedAt, the end of the settlement
+  // window and the ledger row all describe the same instant (ADR-0003 D4).
+  const approvedAt = new Date();
+  const settlementEndsAt = settlementEndsAtFrom(approvedAt);
+
+  const writeApproval = () =>
+    prisma.$transaction(async (tx) => {
+      const result = await tx.campaignCreatorSlot.updateMany({
+        where: {
+          id: slotId,
+          deletedAt: null,
+          status: SlotStatus.CONTENT_SUBMITTED,
+        },
+        data: {
+          // viewTarget is read-only from the slot (ADR-0003 D2); it was set at
+          // invite and cannot be changed after acceptance.
+          approvedAt,
+          settlementEndsAt,
+          status: SlotStatus.IN_PROGRESS,
+          // The baseline is paid by this approval, so the slot's money cache
+          // moves forward in the same write that advances the status.
+          currentTier: MilestoneTier.BASELINE,
+          paidToDate: baseline,
+          // For YouTube: set isShort and isShortVerifiedAt
+          // For Instagram: leave these null (they stay undefined in Prisma)
+          ...(isShortValue !== undefined
+            ? { isShort: isShortValue, isShortVerifiedAt: isShortVerifiedAtValue }
+            : {}),
+        },
+      });
+
+      if (result.count === 0) {
+        return null; // Race: another request already changed the slot
+      }
+
+      // Exactly one BASELINE ledger row, created rather than skipped: a
+      // duplicate here means the slot cache and the ledger disagree, which is a
+      // ledger inconsistency and must fail the whole approval loudly.
+      // ADR-0003 D1 + the payout_event_trigger_shape CHECK: a BASELINE row
+      // released at approval carries billableViews / billableMetric /
+      // thresholdViews as NULL, since no analytics call backs it.
+      // disbursementStatus keeps its PENDING default.
+      await tx.payoutEvent.create({
+        data: {
+          slotId,
+          tier: MilestoneTier.BASELINE,
+          amount: baseline,
+          currency: slot.campaign.currency,
+          settlementJson: {
+            kind: 'BASELINE_AT_APPROVAL',
+            approvedAt: approvedAt.toISOString(),
+          },
+        },
+      });
+
+      return tx.campaignCreatorSlot.findUnique({
+        where: { id: slotId },
+        select: {
+          id: true,
+          status: true,
+          viewTarget: true,
+          approvedAt: true,
+          settlementEndsAt: true,
+          currentTier: true,
+          paidToDate: true,
+          isShort: true,
+          isShortVerifiedAt: true,
+        },
+      });
     });
 
-    if (result.count === 0) {
-      return null; // Race: another request already changed the slot
-    }
-
-    return tx.campaignCreatorSlot.findUnique({
-      where: { id: slotId },
-      select: {
-        id: true,
-        status: true,
-        viewTarget: true,
-        approvedAt: true,
-        isShort: true,
-        isShortVerifiedAt: true,
-      },
+  let updated: Awaited<ReturnType<typeof writeApproval>>;
+  try {
+    updated = await writeApproval();
+  } catch (error) {
+    // A failed baseline insert (P2002 on (slotId, tier), or any other error)
+    // rolled the slot back to CONTENT_SUBMITTED. Log the code only: never the
+    // message, the SQL, or any amount/token/email.
+    console.error('[campaigns] slot approve baseline release failed', {
+      slotId,
+      code: errorCode(error),
     });
-  });
+    return noStoreJson({ error: 'Internal server error' }, 500);
+  }
 
   if (!updated) {
     return NextResponse.json(
@@ -363,6 +444,10 @@ export async function POST(
     status: updated.status,
     viewTarget: updated.viewTarget,
     approvedAt: updated.approvedAt,
+    settlementEndsAt: updated.settlementEndsAt,
+    currentTier: updated.currentTier,
+    // Money is serialized as a 2dp string, exactly like lib/slots/serialize.ts.
+    paidToDate: updated.paidToDate.toFixed(2),
     ...(updated.isShort !== undefined ? { isShort: updated.isShort } : {}),
     ...(updated.isShortVerifiedAt ? { isShortVerifiedAt: updated.isShortVerifiedAt } : {}),
   });

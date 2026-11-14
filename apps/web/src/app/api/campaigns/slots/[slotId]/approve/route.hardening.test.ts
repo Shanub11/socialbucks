@@ -9,7 +9,13 @@
 // auth holder is set to the caller's clerkId (not the database UUID).
 
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CampaignStatus, PrismaClient, SlotStatus, SocialPlatform } from '@repo/database';
+import {
+  CampaignStatus,
+  MilestoneTier,
+  PrismaClient,
+  SlotStatus,
+  SocialPlatform,
+} from '@repo/database';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 // Module-level mutable holder for the Clerk auth mock — reset in beforeEach.
@@ -646,7 +652,9 @@ describeDb('POST /api/campaigns/slots/[slotId]/approve — hardening', () => {
         const events = await prisma.payoutEvent.findMany({
           where: { slotId },
         });
-        expect(events).toHaveLength(0);
+        // Two simultaneous approvals: only the compare-and-swap winner writes the ledger.
+        expect(events).toHaveLength(1);
+        expect(events[0]?.tier).toBe(MilestoneTier.BASELINE);
 
         const verifyCalls = vi.mocked(verifyIsShort).mock.calls.length;
         expect(verifyCalls).toBeGreaterThanOrEqual(1);
