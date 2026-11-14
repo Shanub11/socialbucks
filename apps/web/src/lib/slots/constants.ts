@@ -4,6 +4,8 @@
 // (the approve route writes them, the settlement worker honours them), so the
 // written value and the enforced window cannot drift apart.
 
+import { SlotStatus } from '@repo/database';
+
 /**
  * How long a slot keeps settling after the brand approves its content. At
  * expiry the settlement worker runs once and closes the slot (ADR-0003 D4).
@@ -23,3 +25,17 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export function settlementEndsAtFrom(approvedAt: Date): Date {
   return new Date(approvedAt.getTime() + SETTLEMENT_WINDOW_DAYS * MS_PER_DAY);
 }
+
+/**
+ * The slot states a brand may cancel, per the ADR-0003 state machine:
+ * INVITED or ACCEPTED -> CANCELLED, by an org OWNER or ADMIN.
+ *
+ * A slot cannot be cancelled once content is submitted: the brand rejects the
+ * submission instead, which returns the slot to ACCEPTED for a resubmission.
+ * It cannot be cancelled after approval either, because the BASELINE has
+ * already been paid by then - the only remaining exit is a dispute.
+ */
+export const CANCELLABLE_SLOT_STATUSES = [
+  SlotStatus.INVITED,
+  SlotStatus.ACCEPTED,
+] as const;
