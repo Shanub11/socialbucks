@@ -184,6 +184,15 @@ async function createSlotFixture(
       isShort: overrides.isShort !== undefined ? overrides.isShort : true,
       viewTarget: overrides.viewTarget !== undefined ? overrides.viewTarget : 100000,
       approvedAt: overrides.approvedAt !== undefined ? overrides.approvedAt : new Date('2026-01-01T00:00:00Z'),
+      // ADR-0004: slot_disputed_requires_record is a CHECK, so a row inserted
+      // in DISPUTED must carry its dispute record.
+      ...(overrides.status === SlotStatus.DISPUTED
+        ? {
+            disputedAt: new Date('2026-01-02T00:00:00Z'),
+            disputeReason: 'Fixture dispute',
+            disputeRaisedByUserId: user.id,
+          }
+        : {}),
     },
     select: { id: true },
   });

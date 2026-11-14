@@ -196,6 +196,11 @@ export const CampaignCreatorSlotScalarFieldEnum = {
   rejectionReason: 'rejectionReason',
   settlementEndsAt: 'settlementEndsAt',
   cancelledAt: 'cancelledAt',
+  closedAt: 'closedAt',
+  disputedAt: 'disputedAt',
+  disputeReason: 'disputeReason',
+  disputeRaisedByUserId: 'disputeRaisedByUserId',
+  disputeResolvedAt: 'disputeResolvedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'

@@ -45,6 +45,11 @@ export const INVITE_METRIC = 'engagedViews' as const;
  * slot has released its escrow, so it is excluded from the committed total.
  * Every other status still counts, including soft-deleted slots: money may
  * already have moved against them.
+ *
+ * CLOSED is deliberately NOT in this list (ADR-0004 D2): a closed slot ended
+ * with escrow still unreleased, so it keeps counting its full escrowAmount
+ * until return handling exists. Counting it is the conservative direction and
+ * can never overspend a budget.
  */
 export const FREED_ESCROW_STATUSES = [
   SlotStatus.DECLINED,

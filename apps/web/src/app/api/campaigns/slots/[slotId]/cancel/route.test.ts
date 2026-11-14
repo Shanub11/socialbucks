@@ -210,6 +210,18 @@ describeDb('POST /api/campaigns/slots/[slotId]/cancel', () => {
         cancelledAt: options.cancelledAt ?? null,
         rejectedAt: options.rejectedAt ?? null,
         rejectionReason: options.rejectionReason ?? null,
+        // ADR-0004: DISPUTED rows must carry their dispute record and CLOSED
+        // rows must carry closedAt (both are CHECK constraints).
+        ...(options.slotStatus === SlotStatus.DISPUTED
+          ? {
+              disputedAt: new Date(),
+              disputeReason: 'Fixture dispute',
+              disputeRaisedByUserId: creatorUser.id,
+            }
+          : {}),
+        ...(options.slotStatus === SlotStatus.CLOSED
+          ? { closedAt: new Date() }
+          : {}),
       },
       select: { id: true },
     });
@@ -479,6 +491,7 @@ describeDb('POST /api/campaigns/slots/[slotId]/cancel', () => {
     SlotStatus.DECLINED,
     SlotStatus.EXPIRED,
     SlotStatus.CANCELLED,
+    SlotStatus.CLOSED,
   ];
 
   it.each(NON_CANCELLABLE_STATUSES)(

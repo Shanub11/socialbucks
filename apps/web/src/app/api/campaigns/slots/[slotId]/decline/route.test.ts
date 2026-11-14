@@ -192,6 +192,22 @@ describeDb('api/campaigns/slots/[slotId]/decline', () => {
       deletedAt?: Date | null;
     } = {},
   ) {
+    // ADR-0004: slot_disputed_requires_record is a CHECK, so a row inserted in
+    // DISPUTED must carry a dispute record naming a real user.
+    const disputeRecord =
+      overrides.status === SlotStatus.DISPUTED
+        ? {
+            disputedAt: new Date(),
+            disputeReason: 'Fixture dispute',
+            disputeRaisedByUserId: (
+              await prisma.creator.findUniqueOrThrow({
+                where: { id: creatorId },
+                select: { userId: true },
+              })
+            ).userId,
+          }
+        : {};
+
     return prisma.campaignCreatorSlot.create({
       data: {
         campaignId,
@@ -206,6 +222,7 @@ describeDb('api/campaigns/slots/[slotId]/decline', () => {
             ? new Date(Date.now() + 7 * MS_PER_DAY)
             : overrides.inviteExpiresAt,
         deletedAt: overrides.deletedAt ?? null,
+        ...disputeRecord,
       },
       select: { id: true },
     });

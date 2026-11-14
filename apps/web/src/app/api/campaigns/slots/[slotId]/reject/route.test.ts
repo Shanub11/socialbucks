@@ -241,6 +241,15 @@ describeDb('api/campaigns/slots/[slotId]/reject', () => {
         socialAccountId: social.id,
         acceptedAt: new Date(),
         deletedAt: options.deletedSlot ? new Date() : null,
+        // ADR-0004: slot_disputed_requires_record is a CHECK, so a row inserted
+        // in DISPUTED must carry its dispute record.
+        ...(options.slotStatus === SlotStatus.DISPUTED
+          ? {
+              disputedAt: new Date(),
+              disputeReason: 'Fixture dispute',
+              disputeRaisedByUserId: creatorUser.id,
+            }
+          : {}),
       },
       select: { id: true },
     });

@@ -226,6 +226,22 @@ describeDb('api/orgs/[orgId]/campaigns/[campaignId]/invites POST', () => {
     creatorId: string,
     overrides: { status?: SlotStatus; escrowAmount?: string } = {},
   ) {
+    // ADR-0004: slot_disputed_requires_record is a CHECK, so a row inserted in
+    // DISPUTED must carry a dispute record naming a real user.
+    const disputeRecord =
+      overrides.status === SlotStatus.DISPUTED
+        ? {
+            disputedAt: new Date(),
+            disputeReason: 'Fixture dispute',
+            disputeRaisedByUserId: (
+              await prisma.creator.findUniqueOrThrow({
+                where: { id: creatorId },
+                select: { userId: true },
+              })
+            ).userId,
+          }
+        : {};
+
     return prisma.campaignCreatorSlot.create({
       data: {
         campaignId,
@@ -235,6 +251,7 @@ describeDb('api/orgs/[orgId]/campaigns/[campaignId]/invites POST', () => {
         viewTarget: 100_000,
         metric: 'engagedViews',
         invitedAt: new Date(),
+        ...disputeRecord,
       },
       select: { id: true },
     });
