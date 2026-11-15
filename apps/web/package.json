@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "resolve-dispute": "tsx scripts/resolve-dispute.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.7.8",
@@ -30,6 +31,7 @@
     "eslint-config-next": "16.4.3",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
+    "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.2"
   },
