@@ -1,13 +1,31 @@
 // apps/worker/src/main.ts
 //
-// Entry point for the settlement worker host (ADR-0003 D5, ADR-0005).
+// Entry point for the settlement worker host (ADR-0003 D5, ADR-0005, ADR-0006).
 //
-// Stage 1 is host plumbing only: configuration, structured logging, the pg-boss
-// connection and graceful shutdown. There is deliberately no business logic, no
-// HTTP server and no listening port - the process consumes work and its health is
-// observed through the platform and the logs.
+// Startup order is a decision, not an accident (ADR-0006 D6, R10):
+//
+//   1. configuration  - exit 2 on a bad environment, before anything reads it;
+//   2. logger         - so every later failure can be reported structurally;
+//   3. database       - dynamically imported, then proven with `SELECT 1`;
+//   4. dependencies   - dynamically imported; Stage 2's environment preflight
+//                       happens here and fails with exit 2;
+//   5. pg-boss        - start the host, then register the queues and handlers.
+//
+// The database and the web modules read process.env as they are *imported*, so
+// importing either one any earlier reports the wrong error (or, in Stage 2, a
+// missing variable that is not actually missing). That is the reason the imports
+// are dynamic - and it has a second benefit: the static graph of this file stays
+// free of @repo/database, of everything under apps/web and of jobs/deps.ts, which
+// is exactly what the startup-graph test asserts.
+//
+// There is no HTTP server and no listening port: the process consumes work, and
+// its health is observed through the platform and the logs.
+
+import type { PrismaClient } from '@repo/database';
 
 import { ConfigError, loadConfig, type WorkerConfig } from './config';
+import { describeError } from './errors';
+import type { JobContext, JobDeps } from './jobs/context';
 import { createLogger, type Logger } from './logger';
 import { startWorker, type WorkerHandle } from './worker';
 
@@ -17,6 +35,13 @@ const EXIT_FATAL = 1;
 
 /** Slack on top of the graceful-stop timeout before the process is forced down. */
 const HARD_EXIT_BUFFER_MS = 5_000;
+
+/**
+ * One fixed message for both halves of database startup. The reason (a missing
+ * variable, a wrong host, a refused connection) is in the error name and code;
+ * the message is not repeated because it can quote the connection string.
+ */
+const DATABASE_INIT_FAILED = 'database client failed to initialise';
 
 /**
  * Reads configuration without ever printing a stack or a value: a wrong
@@ -36,18 +61,19 @@ function readConfig(): WorkerConfig {
 }
 
 /**
- * Last resort for failures outside the request/shutdown paths. The platform
+ * Last resort for failures outside the job and shutdown paths. The platform
  * restarts the service, so the only job here is to exit non-zero with a line
- * that says what happened.
+ * that says what happened - and the line carries the error's name, never its
+ * message (R6: a message can quote the environment).
  */
 function installFatalHandlers(logger: Logger): void {
   process.on('uncaughtException', (error: Error) => {
-    logger.error('uncaught exception', { error });
+    logger.error('uncaught exception', { ...describeError(error) });
     process.exit(EXIT_FATAL);
   });
 
   process.on('unhandledRejection', (reason: unknown) => {
-    logger.error('unhandled rejection', { error: reason });
+    logger.error('unhandled rejection', { ...describeError(reason) });
     process.exit(EXIT_FATAL);
   });
 }
@@ -58,11 +84,49 @@ async function main(): Promise<void> {
 
   installFatalHandlers(logger);
 
+  // Step 3a: create the client. The module builds its connection from
+  // DATABASE_URL as it is imported, which is why it happens only now.
+  let db: PrismaClient;
+  try {
+    const database = await import('@repo/database');
+    db = database.prisma;
+  } catch (error) {
+    logger.error(DATABASE_INIT_FAILED, { ...describeError(error) });
+    process.exit(EXIT_FATAL);
+  }
+
+  // Step 3b: prove the connection. A failure here is not retried by this
+  // process - a worker that cannot reach its database should not hold a pg-boss
+  // pool open waiting for a fix it cannot make; the platform restarts it.
+  try {
+    await db.$queryRaw`SELECT 1`;
+  } catch (error) {
+    logger.error(DATABASE_INIT_FAILED, { ...describeError(error) });
+    process.exit(EXIT_FATAL);
+  }
+
+  // Step 4: bind the web app's code (ADR-0006 D7). Stage 1 binds nothing, but
+  // the call stays here so Stage 2 only has to change deps.ts.
+  let deps: JobDeps;
+  try {
+    const depsModule = await import('./jobs/deps.js');
+    deps = depsModule.buildDeps();
+  } catch (error) {
+    logger.error('job dependencies failed to initialise', { ...describeError(error) });
+    process.exit(EXIT_FATAL);
+  }
+
+  const ctx: JobContext = { db, logger, now: () => new Date() };
+
+  // Step 5: start the host and hand it the queues. register.ts value-imports the
+  // database client through expire-invites.ts, so it is imported dynamically for
+  // the same reason as step 3.
   let worker: WorkerHandle;
   try {
-    worker = await startWorker(config, logger);
+    const { registerJobs } = await import('./jobs/register.js');
+    worker = await startWorker(config, logger, undefined, (boss) => registerJobs(boss, ctx, deps));
   } catch (error) {
-    logger.error('worker failed to start', { error });
+    logger.error('worker failed to start', { ...describeError(error) });
     process.exit(EXIT_FATAL);
   }
 
@@ -94,13 +158,11 @@ async function main(): Promise<void> {
 
     try {
       await worker.stop();
-      // Imported here rather than at module load: the Prisma singleton reads
-      // process.env.DATABASE_URL as it is created, so configuration has to be
-      // validated (and the logger ready) before anything imports it.
-      const { prisma } = await import('@repo/database');
-      await prisma.$disconnect();
+      // The client started in step 3a is the one to close: nothing else created
+      // one, and the pool has to be released before the process exits.
+      await db.$disconnect();
     } catch (error) {
-      logger.error('shutdown failed', { error });
+      logger.error('shutdown failed', { ...describeError(error) });
       clearTimeout(watchdog);
       process.exit(EXIT_FATAL);
     }

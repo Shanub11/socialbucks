@@ -30,6 +30,16 @@ export interface WorkerHandle {
 /** Builds the pg-boss instance. Injectable so tests do not need a database. */
 export type PgBossFactory = (config: WorkerConfig) => PgBoss;
 
+/**
+ * Registers the business queues and handlers on a started instance
+ * (ADR-0006 D2). Optional so the host can be tested - and started - with no
+ * business jobs at all; the worker's own tests never pass it.
+ *
+ * It is a fourth positional parameter rather than an options object so that
+ * every existing call site (and every existing test) keeps working unchanged.
+ */
+export type RegisterJobs = (boss: PgBoss) => Promise<void>;
+
 export function createPgBoss(config: WorkerConfig): PgBoss {
   return new PgBoss({
     connectionString: config.databaseUrl,
@@ -47,11 +57,13 @@ export function createPgBoss(config: WorkerConfig): PgBoss {
  * "the worker never runs migrations".
  *
  * @param createBoss - factory override for tests; defaults to the real PgBoss.
+ * @param registerJobs - business queues and handlers; called after start().
  */
 export async function startWorker(
   config: WorkerConfig,
   logger: Logger,
   createBoss: PgBossFactory = createPgBoss,
+  registerJobs?: RegisterJobs,
 ): Promise<WorkerHandle> {
   const boss = createBoss(config);
 
@@ -73,6 +85,12 @@ export async function startWorker(
       // Debug level on purpose: a ping is expected, not news.
       logger.debug('ping', { jobs: jobs.length });
     });
+
+    // Last, so a business queue that fails to register fails the whole start()
+    // instead of leaving a host that is running but deaf.
+    if (registerJobs !== undefined) {
+      await registerJobs(boss);
+    }
   } catch (error) {
     // A half-started instance would keep its pool open and hold the process up.
     await boss.stop({ graceful: false }).catch(() => {
