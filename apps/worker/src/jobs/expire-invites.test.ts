@@ -69,24 +69,44 @@ function laterInSeconds(seconds: number): Date {
 // Row comparison, for the "nothing else changed" assertion
 // ---------------------------------------------------------------------------
 
-function sameValue(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
-  if (a !== null && b !== null && typeof a === 'object' && typeof b === 'object') {
-    // Decimal and bigint carry toJSON; two rows of the same shape compare equal.
-    return JSON.stringify(a) === JSON.stringify(b);
+/**
+ * One comparable string per value, so a Date, a Decimal and a plain string can
+ * never compare equal by accident:
+ *
+ *   - Date     -> its epoch milliseconds (a fresh Date object is still equal);
+ *   - Decimal  -> its string form (Prisma hands back Decimal objects, and
+ *                 `120.00` vs `120` are the same number but different strings,
+ *                 which is what we want: the column is exact);
+ *   - null     -> 'null', and stays distinguishable from the string 'null'.
+ */
+function comparable(value: unknown): string {
+  if (value === null || value === undefined) return 'null';
+  if (value instanceof Date) return `date:${value.getTime()}`;
+  if (typeof value === 'object' && typeof (value as { toFixed?: unknown }).toFixed === 'function') {
+    return `decimal:${(value as { toString(): string }).toString()}`;
   }
-  return false;
+  return `${typeof value}:${String(value)}`;
 }
 
+/** The two columns an expiry is allowed to write. */
 const EXPECTED_CHANGES = new Set(['status', 'updatedAt']);
 
+/**
+ * Every key of both rows, except the two above, whose value differs. The key
+ * list is derived from the rows rather than written out, so a column added to
+ * the schema later is compared without editing this file.
+ */
 function changedColumns(
   before: Record<string, unknown>,
   after: Record<string, unknown>,
 ): string[] {
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
-  return [...keys].filter((key) => !EXPECTED_CHANGES.has(key) && !sameValue(before[key], after[key]));
+  return [...keys].filter((key) => !EXPECTED_CHANGES.has(key) && comparable(before[key]) !== comparable(after[key]));
+}
+
+/** The columns that are still null (or missing) in a row. */
+function nullColumns(row: Record<string, unknown>): string[] {
+  return Object.keys(row).filter((key) => row[key] === null || row[key] === undefined);
 }
 
 // ---------------------------------------------------------------------------
@@ -158,11 +178,23 @@ describeDb('expireInvites (real DB)', () => {
   }
 
   afterEach(async () => {
-    while (created.length > 0) {
-      const made = created.pop();
-      if (made !== undefined) await removeFixture(made);
+    // Cleanup runs whatever the test did - an assertion failure included. Every
+    // fixture is attempted even if one removal fails, and the first failure is
+    // rethrown at the end so a leaked row is never silent.
+    const pending = created.splice(0).reverse();
+    const failures: unknown[] = [];
+
+    for (const made of pending) {
+      try {
+        await removeFixture(made);
+      } catch (error) {
+        failures.push(error);
+      }
     }
+
     await prisma.$disconnect();
+
+    if (failures.length > 0) throw failures[0];
   });
 
   it('expires an INVITED slot whose invite window has passed', async () => {
@@ -209,15 +241,26 @@ describeDb('expireInvites (real DB)', () => {
   });
 
   it('changes the status and nothing but the status (plus updatedAt)', async () => {
-    const { slotIds } = await fixture({ inviteExpiresAt: laterInSeconds(-1) });
+    const { slotIds, userIds } = await fixture({
+      inviteExpiresAt: laterInSeconds(-1),
+      withSocialAccount: true,
+    });
     const slotId = slotIds[0]!;
 
-    // Populate every column an expiry must leave alone, so the comparison is not
-    // vacuous: a rewrite that "helpfully" cleared a timestamp would be caught.
+    // Populate every nullable column an expiry must leave alone with a value that
+    // satisfies the table's CHECK constraints, so the comparison is not vacuous:
+    // a rewrite that "helpfully" cleared a timestamp, a URL or the escrow terms
+    // would be caught. Two of these are pinned by constraints:
+    //
+    //   slot_metric_known          metric is NULL or IN ('engagedViews','views')
+    //   slot_paid_within_escrow   0 <= paidToDate <= escrowAmount (500.00 here)
+    //
+    // 'VIEWS' was the value that failed this setup with SQLSTATE 23514: the
+    // constraint's vocabulary is the lowerCamel pair the migration backfilled.
     await prisma.campaignCreatorSlot.update({
       where: { id: slotId },
       data: {
-        contentUrl: 'https://example.test/video/1',
+        contentUrl: 'https://www.youtube.com/watch?v=fixture-video-1',
         submittedAt: laterInSeconds(-3_600),
         approvedAt: laterInSeconds(-3_000),
         currentTier: 'TIER_40',
@@ -225,32 +268,52 @@ describeDb('expireInvites (real DB)', () => {
         currentViewCount: 1_234,
         lastViewCheckAt: laterInSeconds(-120),
         platform: 'YOUTUBE',
-        contentId: 'video-1',
+        contentId: 'fixture-video-1',
         isShort: true,
         isShortVerifiedAt: laterInSeconds(-3_000),
         viewTarget: 100_000,
-        metric: 'VIEWS',
+        metric: 'engagedViews',
+        // Lifecycle stamps after the invite: none of them is required by the
+        // INVITED state, and every one of them must survive the expiry untouched.
+        acceptedAt: laterInSeconds(-7_200),
+        declinedAt: laterInSeconds(-7_200),
+        reviewDueAt: laterInSeconds(-3_000),
+        rejectedAt: laterInSeconds(-7_200),
+        rejectionReason: 'The submission did not match the campaign brief.',
         settlementEndsAt: laterInSeconds(86_400),
+        cancelledAt: laterInSeconds(-7_200),
+        closedAt: laterInSeconds(-7_200),
+        // Dispute record: slot_dispute_resolved_order requires disputedAt to be
+        // set and disputeResolvedAt to be at or after it.
+        disputedAt: laterInSeconds(-8_000),
+        disputeReason: 'Disputed for fixture coverage.',
+        disputeResolvedAt: laterInSeconds(-7_000),
+        disputeRaisedByUserId: userIds[0]!,
+        deletedAt: laterInSeconds(-60),
       },
     });
 
-    const before = (await prisma.campaignCreatorSlot.findUniqueOrThrow({
+    const beforeRow = (await prisma.campaignCreatorSlot.findUniqueOrThrow({
       where: { id: slotId },
     })) as unknown as Record<string, unknown>;
+
+    // Non-vacuity: every column is non-null, so "nothing else changed" is a claim
+    // about real values rather than about a row of NULLs.
+    expect(nullColumns(beforeRow)).toEqual([]);
 
     await expireInvites(context().ctx);
 
-    const after = (await prisma.campaignCreatorSlot.findUniqueOrThrow({
+    const afterRow = (await prisma.campaignCreatorSlot.findUniqueOrThrow({
       where: { id: slotId },
     })) as unknown as Record<string, unknown>;
 
-    expect(after.status).toBe(SlotStatus.EXPIRED);
-    expect(changedColumns(before, after)).toEqual([]);
-    // And explicitly: escrow and the immutable terms survive.
-    expect(after.escrowAmount).toEqual(before.escrowAmount);
-    expect(after.invitedAt).toEqual(before.invitedAt);
-    expect(after.inviteExpiresAt).toEqual(before.inviteExpiresAt);
-    expect(after.cancelledAt).toBeNull();
+    expect(afterRow.status).toBe(SlotStatus.EXPIRED);
+    expect(changedColumns(beforeRow, afterRow)).toEqual([]);
+
+    // The one column that is allowed to move did move, forwards.
+    const beforeUpdatedAt = beforeRow.updatedAt as Date;
+    const afterUpdatedAt = afterRow.updatedAt as Date;
+    expect(afterUpdatedAt.getTime()).toBeGreaterThanOrEqual(beforeUpdatedAt.getTime());
   });
 
   it('leaves accepted and in-progress slots alone even when their window has passed', async () => {
