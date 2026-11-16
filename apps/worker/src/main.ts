@@ -6,7 +6,8 @@
 //
 //   1. configuration  - exit 2 on a bad environment, before anything reads it;
 //   2. logger         - so every later failure can be reported structurally;
-//   3. database       - dynamically imported, then proven with `SELECT 1`;
+//   3. database       - dynamically imported, own client built, then proven with
+//                       `SELECT 1`;
 //   4. dependencies   - dynamically imported; Stage 2's environment preflight
 //                       happens here and fails with exit 2;
 //   5. pg-boss        - start the host, then register the queues and handlers.
@@ -84,12 +85,21 @@ async function main(): Promise<void> {
 
   installFatalHandlers(logger);
 
-  // Step 3a: create the client. The module builds its connection from
-  // DATABASE_URL as it is imported, which is why it happens only now.
+  // Step 3a: create the client.
+  //
+  // The import happens here because the package builds its default singleton from
+  // DATABASE_URL as it is imported - but the worker does not use that singleton.
+  // It builds its own client with the 'worker' profile, which turns Prisma's own
+  // logging off and sets a connect timeout (ADR-0006 D9): Prisma writes
+  // `prisma:error` blocks straight to the process output, outside this logger and
+  // its redaction, quoting the database user and host.
   let db: PrismaClient;
   try {
     const database = await import('@repo/database');
-    db = database.prisma;
+    db = database.createPrismaClient({
+      connectionString: config.databaseUrl,
+      profile: 'worker',
+    });
   } catch (error) {
     logger.error(DATABASE_INIT_FAILED, { ...describeError(error) });
     process.exit(EXIT_FATAL);
@@ -97,7 +107,8 @@ async function main(): Promise<void> {
 
   // Step 3b: prove the connection. A failure here is not retried by this
   // process - a worker that cannot reach its database should not hold a pg-boss
-  // pool open waiting for a fix it cannot make; the platform restarts it.
+  // pool open waiting for a fix it cannot make; the platform restarts it. The
+  // connect timeout above bounds how long this can take.
   try {
     await db.$queryRaw`SELECT 1`;
   } catch (error) {

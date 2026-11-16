@@ -216,8 +216,34 @@ that split, called from `buildDeps()`, and a failure becomes a `ConfigError`
 naming variables only - exit **2**, the same contract as the worker's own
 configuration.
 
-## Consequences
+### D9. The worker builds its own Prisma client with the `worker` profile
 
+`@repo/database` exports `createPrismaClient({ connectionString, profile,
+connectTimeoutMs })`, and the worker calls it with `profile: 'worker'` instead of
+using the shared singleton:
+
+- **No Prisma-side logging.** The profile resolves to `log: []`. Prisma writes
+  `prisma:error` blocks - and, with the `query` level, SQL and its parameters -
+  straight to the process output, bypassing the worker's logger and its
+  key-based redaction; a rejected login was printing the database user and
+  host:port. With the profile in place a failure surfaces only as a thrown
+  error, which the worker logs by name and code (`describeError`).
+- **An explicit connect timeout.** The worker's adapter gets
+  `connectionTimeoutMillis` (10 s), so an unreachable database fails startup in
+  about ten seconds instead of waiting out the OS default - measured at 23 s
+  before this change.
+
+The `default` profile keeps the web app exactly as it was: the same log arrays
+for the same `NODE_ENV` values, the same adapter options, the same caching
+condition on `globalThis`, built at import. Nothing on the worker's runtime path
+imports the singleton - everything receives the client through `JobContext` -
+and importing the package only *constructs* it: pg opens a connection on first
+use, so a process that never queries it holds no socket. `db-client.test.ts`
+pins both halves: Prisma's output is silent under the `worker` profile, the
+`default` profile still prints it (the control), and construction alone prints
+nothing.
+
+## Consequences
 - Stage 1 registers one queue and one schedule. The other names in
   `jobs/queues.ts` are declared but unused until Stages 2 and 3, so the runbook
   and the ADR describe the target state while the code describes today's.
@@ -255,3 +281,7 @@ configuration.
   slot stays `IN_PROGRESS` past its window with no state that ends it. Does it
   close with unreleased escrow (ADR-0004 D2), go to dispute, or need an operator
   decision?
+- **OQ-7.** Is a 10 s connect timeout right against a Supabase session pooler?
+  A pooler cold start after a long idle period can take longer than a direct
+  connection, and a timeout that is too tight turns a slow wake-up into a
+  restart loop. Revisit once a cold start has been measured where it runs.

@@ -141,6 +141,23 @@ Anything else exits **1** and is logged as a JSON line. The usual causes:
 - `NODE_ENV=production` and a library raised an error whose stack was stripped
   from the log line, so check the message and the pg-boss `error` event above it.
 
+## Database startup and Prisma output
+
+The worker builds its own Prisma client instead of using the shared singleton
+(ADR-0006 D9). Two things follow:
+
+- **Startup fails in about ten seconds, not twenty-three.** An unreachable or
+  rejecting database now hits the client's 10 s connect timeout, exits **1**,
+  and logs one JSON line whose fields are the error name and the Prisma code -
+  never the message, host, user or connection string.
+- **Prisma prints nothing of its own.** `prisma:error` blocks (which quote the
+  database user and host:port) and `query` logs (SQL with parameters) are off,
+  so nothing bypasses the worker's logger and its redaction.
+
+If you need the reason a connection failed, use the error name and code from
+the log line, and check the host and port in the platform's configuration -
+they are deliberately not in the log.
+
 ## Privileges and secrets
 
 From ADR-0005 D6:
