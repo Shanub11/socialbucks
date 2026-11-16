@@ -73,7 +73,7 @@ jobs:
 
       - name: Assert every test ran and passed
         if: ${{ !cancelled() }}
-        run: node scripts/ci-assert-tests.mjs .vitest-results.json --min-tests=1154
+        run: node scripts/ci-assert-tests.mjs .vitest-results.json --min-tests=1198
 
       - name: Typecheck worker
         run: pnpm --filter worker exec tsc --noEmit

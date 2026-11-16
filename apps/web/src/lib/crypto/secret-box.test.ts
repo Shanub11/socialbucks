@@ -13,7 +13,27 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('@repo/database', () => ({ SocialPlatform: h.platform }));
-vi.mock('@/lib/env', () => ({ env: h.env }));
+vi.mock('@/lib/env-parts', () => ({
+  tokenKeys: {
+    get instagram() {
+      return h.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY;
+    },
+    get youtube() {
+      return h.env.YOUTUBE_TOKEN_ENCRYPTION_KEY;
+    },
+  },
+  youtubeOAuth: {
+    get clientId() {
+      return undefined;
+    },
+    get clientSecret() {
+      return undefined;
+    },
+    get redirectUri() {
+      return undefined;
+    },
+  },
+}));
 
 const IG = h.platform.INSTAGRAM;
 const YT = h.platform.YOUTUBE;
