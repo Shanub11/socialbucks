@@ -25,8 +25,9 @@ import {
 } from 'node:crypto';
 
 import { SocialPlatform } from '@repo/database';
+import { z } from 'zod';
 
-import { env } from '@/lib/env';
+import { tokenKeys } from '@/lib/env-parts';
 
 const ALGORITHM = 'aes-256-gcm';
 /** 96-bit nonce: the size GCM is specified for, and the only one that skips
@@ -56,17 +57,47 @@ const keyCache = new Map<SocialPlatform, Buffer>();
  * Returns the AES-256 key for the given platform.
  *
  * Each platform has an independent key so that rotating (or leaking) one
- * does not affect the other. env.ts validates that both are well-formed
- * base64 strings decoding to exactly 32 bytes at boot time.
+ * does not affect the other. env-parts.ts holds the rule for both (well-formed
+ * base64 decoding to exactly 32 bytes) and validates them when they are read.
+ */
+function readPlatformKey(platform: SocialPlatform): string | undefined {
+  try {
+    return platform === SocialPlatform.INSTAGRAM ? tokenKeys.instagram : tokenKeys.youtube;
+  } catch (error) {
+    // A present but malformed key fails exactly like a missing one, so callers
+    // keep seeing one failure mode. The ZodError is deliberately dropped - not
+    // attached as a cause - so a configured value cannot ride along with it.
+    if (error instanceof z.ZodError) {
+      throw new SecretBoxError('Invalid encryption key configuration');
+    }
+    throw error;
+  }
+}
+
+/**
+ * The other platform's key, for the separation guard.
+ *
+ * A malformed other key is treated as absent: it cannot equal a valid 32-byte
+ * key, and before the env split a value that failed validation never reached
+ * this comparison for the platform being used.
+ */
+function readOtherPlatformKey(platform: SocialPlatform): string | undefined {
+  try {
+    return platform === SocialPlatform.INSTAGRAM ? tokenKeys.youtube : tokenKeys.instagram;
+  } catch (error) {
+    if (error instanceof z.ZodError) return undefined;
+    throw error;
+  }
+}
+
+/**
+ * Returns the AES-256 key for the given platform.
  */
 function getPlatformKey(platform: SocialPlatform): Buffer {
   const cached = keyCache.get(platform);
   if (cached) return cached;
 
-  const raw =
-    platform === SocialPlatform.INSTAGRAM
-      ? env.INSTAGRAM_TOKEN_ENCRYPTION_KEY
-      : env.YOUTUBE_TOKEN_ENCRYPTION_KEY;
+  const raw = readPlatformKey(platform);
 
   // Fail closed with our own error type: a missing or wrong-length key must never
   // reach node:crypto (whose native errors are not SecretBoxErrors). The message
@@ -80,10 +111,7 @@ function getPlatformKey(platform: SocialPlatform): Buffer {
   }
   // Separation guard: both platforms sharing one key would make a leak or rotation on one
   // silently affect the other. Fail closed instead of running in that configuration.
-  const otherRaw =
-    platform === SocialPlatform.INSTAGRAM
-      ? env.YOUTUBE_TOKEN_ENCRYPTION_KEY
-      : env.INSTAGRAM_TOKEN_ENCRYPTION_KEY;
+  const otherRaw = readOtherPlatformKey(platform);
   if (typeof otherRaw === 'string' && otherRaw.length > 0) {
     if (Buffer.from(otherRaw, 'base64').equals(key)) {
       throw new SecretBoxError('Platform encryption keys must be different');
