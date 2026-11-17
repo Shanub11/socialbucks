@@ -14,6 +14,12 @@
 //   null, status DISPUTED, and disputedAt set to the exact value that was read.
 //   A dispute re-raised between the read and the write therefore cannot be
 //   resolved by a stale plan.
+// - The audit line ('[slots] dispute resolved') is emitted immediately after the
+//   compare-and-swap succeeds, before the post-write re-read, and exactly once.
+//   A resolution that reached the database is never reported as a refusal; if
+//   the re-read disagrees, the resolution is still reported as applied from the
+//   computed values and a warning is logged instead. Ids and the operator only:
+//   the dispute reason never reaches a log argument or a result.
 // - The resolution timestamp must be at or after the dispute timestamp. The
 //   slot_dispute_resolved_order CHECK enforces this in the database too; we
 //   fail clearly before any write instead of surfacing a constraint error.
@@ -288,7 +294,18 @@ export async function resolveDispute(
 
   if (result.count === 0) return refused('slot_changed');
 
-  // 10. Report what is actually stored, not what was computed.
+  // 10. Audit line. The write committed, so this is emitted immediately - before
+  // the post-write re-read - and exactly once per resolution. Emitting it later
+  // would let a failed or disagreeing read report a committed resolution as a
+  // refusal that never happened.
+  console.info('[slots] dispute resolved', {
+    slotId: slot.id,
+    outcome: validated.outcome,
+    operator: validated.operator,
+    resolvedAt: resolvedAt.toISOString(),
+  });
+
+  // 11. Report what is actually stored, not what was computed.
   const stored = await prisma.campaignCreatorSlot.findFirst({
     where: { id: slot.id, deletedAt: null },
     select: {
@@ -301,12 +318,18 @@ export async function resolveDispute(
       paidToDate: true,
     },
   });
-  if (stored === null || stored.disputedAt === null) return refused('slot_changed');
   if (
-    stored.status !== SlotStatus.IN_PROGRESS &&
-    stored.status !== SlotStatus.CLOSED
+    stored === null ||
+    stored.disputedAt === null ||
+    (stored.status !== SlotStatus.IN_PROGRESS &&
+      stored.status !== SlotStatus.CLOSED)
   ) {
-    return refused('slot_changed');
+    // The write succeeded; only the read-back is untrustworthy. Report the
+    // resolution from the values computed above rather than denying it happened.
+    console.warn('[slots] dispute resolved but the post-write re-read disagreed', {
+      slotId: slot.id,
+    });
+    return { ...planned, kind: 'applied' };
   }
 
   const appliedSettlementEndsAt =
@@ -339,14 +362,6 @@ export async function resolveDispute(
     paidToDate: stored.paidToDate.toFixed(2),
     unreleasedAmount: stored.escrowAmount.minus(stored.paidToDate).toFixed(2),
   };
-
-  // Ids and the operator only. The dispute reason is never logged.
-  console.info('[slots] dispute resolved', {
-    slotId: applied.slotId,
-    outcome: applied.outcome,
-    operator: applied.operator,
-    resolvedAt: applied.resolvedAt,
-  });
 
   return applied;
 }
