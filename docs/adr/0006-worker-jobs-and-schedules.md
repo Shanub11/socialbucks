@@ -7,19 +7,19 @@
 ## Context
 
 ADR-0003 D5 put settlement in a separate `apps/worker` on pg-boss. ADR-0005
-settled the host, the connection mode and the code-sharing rule. Stage 1 of the
-worker implemented that host and nothing else: configuration, logging, one ping
-queue, graceful shutdown.
+settled the host, the connection mode and the code-sharing rule. The host came
+first and did nothing but host: configuration, logging, one ping queue, graceful
+shutdown. Invite expiry followed, and then settlement.
 
-This ADR covers the first business jobs, delivered in three stages:
+This ADR covers the worker's business jobs as they land:
 
-- **Stage 1** - invite expiry.
-- **Stage 2** - the settlement sweep and one settle-slot job per slot.
-- **Stage 3** - the window-close sweep and one close-slot job per slot.
+- invite expiry (D1);
+- the settlement sweep and one settle-slot job per slot (D3, D5);
+- the window-close sweep and one close-slot job per slot, not implemented yet.
 
-Stages 2 and 3 are recorded here because the decisions they depend on are cheap
-while no job exists and expensive once real money has moved on them. Only Stage 1
-is implemented; the rest of this document is the contract those stages must meet.
+The parts that are not implemented yet are recorded here because the decisions
+they depend on are cheap while no job exists and expensive once real money has
+moved on them: the rest of this document is the contract those jobs must meet.
 
 Constraints that hold for every job, and that the tests enforce:
 
@@ -105,6 +105,70 @@ every boot and needs no migration of its own.
 Names and schedules live in one module (`jobs/queues.ts`) so registration, the
 runbook and the tests cannot drift apart.
 
+#### D3a. `createQueue` does not change a queue that already exists
+
+That `ON CONFLICT DO NOTHING` has a consequence worth stating: an option added to
+a queue that already exists is silently **not applied**. The row keeps the policy,
+retry limits and expiry it was first created with. Changing any of them on a
+deployed queue therefore needs an explicit `updateQueue(name, options)` - pg-boss
+12.38.0 exposes `updateQueue`, `getQueue` and `deleteQueue` - not a new
+deployment. Reading the policy back with `getQueue` is the only way to prove a
+live queue really is what the code says; `register.settlement.test.ts` pins the
+options we pass and `pg-boss-settlement-queue.test.ts` reads the policy back.
+
+#### D3b. One settle job per slot, and what the sweep selects
+
+`settlement.settle-slot` is created with `policy: 'short'`, and every send carries
+`singletonKey: 'settle:<slotId>'` with `singletonSeconds: 900`.
+
+- **`policy: 'short'`** allows at most one *queued* job per singleton key, with no
+  limit on active ones. That bound does not depend on a time window, so two
+  sweeps that run before a worker picks the job up cannot leave two settle jobs
+  for one slot.
+- **`singletonSeconds: 900`** puts the send in an epoch-aligned 15-minute bucket
+  and allows at most one job per key per bucket in any state except cancelled, so
+  a slot is settled at most once per bucket even if the sweep runs more often.
+- **A suppressed send is a no-op, not an error.** pg-boss inserts nothing and
+  resolves `null`; the sweep counts those as `suppressed` and only inserted ids
+  as `enqueued`. Without that split a throttled sweep would report work it never
+  handed off.
+
+The settle job runs with `localConcurrency: 2`: every settle spends YouTube
+Analytics quota, so the ceiling that matters is the day's quota, not CPU.
+
+`settlement.sweep` selects slots that are `IN_PROGRESS`, not soft-deleted, with
+`settlementEndsAt > now`. A NULL window never matches - the comparison excludes
+NULL, and the sweep would have no way to tell a missing window from a broken one
+- and a window ending exactly at `now` counts as ended: the close sweep owns that
+slot, not this one. `settleSlot` keeps no "next run" field: it writes
+`currentTier`, `paidToDate`, `currentViewCount` and `lastViewCheckAt`, and at
+`TIER_100` it writes `status = COMPLETED`.
+
+A sweep keeps no progress either - no stored cursor, and enqueueing changes no
+row. What makes a second run reach the slots the first one's budget cut off is
+the **order**:
+
+```
+lastViewCheckAt ASC NULLS FIRST, id ASC
+```
+
+`lastViewCheckAt` records that a read happened, not when the next one is due, but
+that is exactly what is needed here: a slot read by `ADVANCED` or `NO_CHANGE`
+carries a timestamp and sorts behind every slot that has not been read since,
+including every slot that was never read at all. Ties break by id, so the order is
+total and the paging is stable. The sweep pages that order with `skip`/`take`
+(100 ids per statement, 20 pages, 2,000 slots per run) rather than a keyset,
+because a keyset over a nullable first column would need raw SQL to express
+NULLS FIRST (R5).
+
+A run that stops at its budget logs at `warn` with counts and the cap, and sets
+`truncated` by asking for one row past the cap - not by counting.
+
+**The limitation.** `SKIPPED_NOT_ELIGIBLE` and `HELD_NO_DATA` write nothing, so
+such a slot keeps a NULL `lastViewCheckAt` and holds its place at the front. More
+than one run's budget of them, and the slots behind them are never reached, no
+matter how many runs pass. That is OQ-9, and this stage does not fix it.
+
 ### D4. Five attempts, then the dead-letter queue
 
 Every business queue is created with `retryLimit: 4` and `retryBackoff: true`
@@ -144,31 +208,61 @@ Two of its outcomes are return values, not errors:
 A skipped or held outcome is logged by reason code and the job completes: it is
 an answer, and retrying it would ask the same question again. Only an outcome
 that actually read metrics counts as the final read; `HELD_NO_DATA` never does.
-A thrown error is rethrown so pg-boss retries, except `SettlementError` for a slot
-that no longer exists, which completes with a `warn`.
+
+The job (`jobs/settle-slot.ts`) re-loads the slot first and decides what it can
+without spending quota:
+
+- a slot that no longer exists is a `warn` and a completed job - there is nothing
+  left to retry;
+- a slot that is no longer `IN_PROGRESS`, is soft-deleted, is disputed or whose
+  window has ended is a skip with a reason code, and the provider is never called;
+- every outcome the engine returns is handled by an exhaustive switch whose
+  default asserts `never`, so a new outcome in `apps/web` stops the worker
+  compiling instead of being ignored at runtime.
+
+Every error thrown by `settleSlot` is rethrown, with no `instanceof` branch. In
+particular `SettlementError` is **not** read as "the slot is gone": the escrow
+invariant - `paidToDate` exceeding `escrowAmount` - is thrown as a
+`SettlementError` from inside the settlement transaction, so swallowing it would
+log a money failure as a settled slot and never retry it. It retries per D4 and
+ends in the `jobs.dead-letter` log, which is the loudest signal this system has.
 
 ### D6. Startup order is part of the contract
 
 1. Configuration, validated with zod. Failure exits **2**, with variable names
    and reasons only.
 2. Logger.
-3. Database: `@repo/database` is **dynamically imported**, then proven with a
-   tagged `$queryRaw` `SELECT 1`. Either failure logs one fixed message
-   (`database client failed to initialise`) with the error name only and exits
-   **1**. A worker that cannot reach its database does not hold a pg-boss pool
-   open waiting for a fix.
-4. Dependencies: `jobs/deps.js` is dynamically imported and `buildDeps()` is
-   called. In Stage 2 this is where the settlement preflight runs, and a missing
-   variable exits **2** with variable names only.
-5. pg-boss: start, then `registerJobs`.
+3. Settlement environment: `jobs/deps.js` is **dynamically imported** and
+   `loadSettlementEnv(process.env)` runs *before* any database client exists. A
+   `ConfigError` is written as `worker: <message>` and exits **2**, the same
+   contract as step 1; any other failure is the fixed
+   `job dependencies failed to initialise` line and exit **1**. See D8.
+4. Database: `@repo/database` is **dynamically imported**, the worker's own
+   client is built (D9), then it is proven with a tagged `$queryRaw` `SELECT 1`.
+   Either failure logs one fixed message (`database client failed to initialise`)
+   with the error name only and exits **1**. A worker that cannot reach its
+   database does not hold a pg-boss pool open waiting for a fix.
+5. Dependencies: `buildDeps()` binds the web app's settlement code. A missing
+   `settleSlot` binding is a startup failure, exit **1**: a worker that accepts
+   settlement work and drops it is worse than one that refuses to start, which is
+   why registration is never gated on it.
+6. pg-boss: start, then `registerJobs`.
+
+The settlement preflight sits before the database on purpose. A missing YouTube
+variable is a configuration problem, and reporting it after a connection failure
+would send an operator to the connection string to look for a missing key.
+`startup-preflight.test.ts` spawns the real entry point to pin the order: with a
+refused database and no settlement variables the process exits **2** and never
+touches the database.
 
 The dynamic imports are not style. The Prisma singleton and the web app's
 modules read `process.env` as they are imported, so a static import in `main.ts`
-would make the process fail on an environment it has not validated yet (Stage 2
-would report a missing settlement variable before the configuration check ever
-ran). They also keep `main.ts`'s static graph free of the database and the web
-app, which `startup-graph.test.ts` asserts by walking relative imports and
-failing on the full chain to `@repo/database`, `@/...` or `jobs/deps.ts`.
+would make the process fail on an environment it has not validated yet - a
+missing settlement variable would be reported from a module-scope parse, with a
+stack, before the configuration check ever ran. They also keep `main.ts`'s static
+graph free of the database and the web app, which `startup-graph.test.ts` asserts
+by walking relative imports and failing on the full chain to `@repo/database`,
+`@/...` or `jobs/deps.ts`.
 
 Shutdown closes the same client it opened: `worker.stop()` first, then
 `prisma.$disconnect()`.
@@ -182,12 +276,17 @@ ADR-0005 D4 allows the worker to import settlement code straight from
   `JobDeps`: `@/lib/settlement/settle-slot`,
   `@/lib/settlement/adapters/youtube`, `@/lib/slots/resolve-dispute`,
   `@/lib/slots/constants`.
+- It also value-imports `@/lib/env-parts` for `loadSettlementEnv`, the narrow
+  schema D8 depends on. That module parses nothing at import time, which is what
+  makes it safe to load before the database exists.
 - Everywhere else, a web type arrives with `import type`, which the compiler
   erases - the module is never loaded.
-- `worker-imports.test.ts` enforces both halves: no module except `deps.ts` may
-  value-import from `@/`, and a type import may name only those four modules. The
-  worker's coupling to the web app is a decision, so adding to it has to be a
-  change to this ADR rather than a convenience import.
+- Test files may import a web value to build a fake: they never ship, and the
+  guard walks the production graph from `main.ts`.
+- `worker-imports.test.ts` enforces both halves: no production module except
+  `deps.ts` may value-import from `@/`, and a type import may name only those four
+  modules. The worker's coupling to the web app is a decision, so adding to it has
+  to be a change to this ADR rather than a convenience import.
 
 ### D8. The worker holds the settlement environment and nothing else
 
@@ -198,23 +297,24 @@ The worker's process environment carries exactly four settlement variables:
 - `YOUTUBE_CLIENT_SECRET`
 - `YOUTUBE_REDIRECT_URI`
 
-They are delivered by a separate `apps/web` change on branch
-`refactor/settlement-env-scope`, which splits the environment so that importing
-settlement code no longer requires the whole web schema. That change lands before
-Stage 2.
+They are parsed by `parseSettlementEnv` in `apps/web/src/lib/env-parts.ts`, which
+the `apps/web` change that split the environment introduced: importing settlement
+code no longer requires the whole web schema.
 
-Until it lands, the worker cannot import `@/lib/settlement/adapters/youtube` at
-all: `apps/web/src/lib/env.ts` parses its full schema at module scope, so the
-import throws a `ZodError` listing ten missing variables - the four above plus
+That split is what makes the four-variable claim true in code rather than in
+intent. Before it, `apps/web/src/lib/env.ts` parsed its full schema at module
+scope, so importing `@/lib/settlement/adapters/youtube` threw a `ZodError`
+listing ten missing variables - the four above plus
 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `INSTAGRAM_APP_ID`,
 `INSTAGRAM_APP_SECRET`, `INSTAGRAM_REDIRECT_URI` and
 `INSTAGRAM_TOKEN_ENCRYPTION_KEY`. The worker will never hold Clerk or Instagram
-credentials; the split is what makes that true in code and not just in intent.
+credentials.
 
-There is no `config.settlement.ts`. The preflight is `parseSettlementEnv` from
-that split, called from `buildDeps()`, and a failure becomes a `ConfigError`
-naming variables only - exit **2**, the same contract as the worker's own
-configuration.
+There is no `config.settlement.ts`. The preflight is `loadSettlementEnv(source)`
+in `jobs/deps.ts`, which `main.ts` calls before the database (D6): it turns a
+`ZodError` into a `ConfigError` naming the failing issue paths and nothing else -
+never `message` and never the parsed value, both of which can quote a secret - so
+it exits **2** with variable names only.
 
 ### D9. The worker builds its own Prisma client with the `worker` profile
 
@@ -244,9 +344,9 @@ pins both halves: Prisma's output is silent under the `worker` profile, the
 nothing.
 
 ## Consequences
-- Stage 1 registers one queue and one schedule. The other names in
-  `jobs/queues.ts` are declared but unused until Stages 2 and 3, so the runbook
-  and the ADR describe the target state while the code describes today's.
+- The worker registers four queues and two schedules. The window-close names in
+  `jobs/queues.ts` are still declared but unused, so the runbook and the ADR
+  describe the target state while the code describes today's.
 - Invite expiry is eventually consistent within ten minutes. A slot can be
   accepted in the window between its expiry instant and the next sweep; the CAS
   makes that safe, and the accept wins.
@@ -258,9 +358,19 @@ nothing.
 - The two import rules are now tests, not review conventions: a convenience
   `import { prisma }` from the web app, or a static database import in `main.ts`,
   fails the suite with the chain that caused it.
-- Stage 1 makes no schema change and adds no dependency. Everything it needs -
-  `[status, inviteExpiresAt]`, `EXPIRED`, the `FREED_ESCROW_STATUSES` list - was
-  already there.
+- No schema change and no new dependency. Everything the jobs need -
+  `[status, inviteExpiresAt]`, `EXPIRED`, the `FREED_ESCROW_STATUSES` list, the
+  settlement window column - was already there.
+- A slot is settled at most once per 15-minute bucket, and the sweep's own
+  throttle is what enforces that. If a read fails after the bucket closes, the
+  next sweep in the next bucket is already the retry: there is no per-slot wake-up
+  and no next-run column (D3b).
+- That retry depends on ordering, not on memory. Because the sweep serves
+  never-read slots first and the oldest read next, a slot that was read moves to
+  the back by itself and the slots a run could not fit are at the front of the
+  next one. It costs no state, and it fails in one direction only: a slot that
+  cannot be read never moves, so a backlog of more than 2,000 of them starves the
+  rest, loudly (`truncated: true` and a `warn` every run) but permanently (OQ-9).
 
 ## Open questions
 
@@ -285,3 +395,22 @@ nothing.
   A pooler cold start after a long idle period can take longer than a direct
   connection, and a timeout that is too tight turns a slow wake-up into a
   restart loop. Revisit once a cold start has been measured where it runs.
+- **OQ-8.** `settleSlot` prints four lines of its own as it runs - a `warn` on a
+  skipped or held read, an `info` naming the retry delay, a `log` with the slot
+  and its tier names, and a `warn` when it gives up. They bypass the worker's
+  logger and its key-based redaction, float past a job that is otherwise silent,
+  and a retry storm prints one line per attempt that nothing can rate-limit or
+  assert on. They carry only a slot id, attempt counters, a delay and tier names,
+  so nothing sensitive leaks today. Routing them through an injectable logger is
+  a later change in `apps/web`, not a worker one.
+- **OQ-9.** `settleSlot` writes `lastViewCheckAt` only when it actually reads
+  (`ADVANCED`, `NO_CHANGE`). A slot that is skipped as ineligible or held for lack
+  of data writes nothing, keeps a NULL `lastViewCheckAt`, and therefore keeps its
+  place at the front of the sweep's order (D3b). A backlog larger than one run's
+  budget - 2,000 slots - of slots that cannot be read means everything behind them
+  is never enqueued: the sweep reports `truncated: true` and a `warn` every run and
+  still never gets past them. The fix is a marker for the attempt: either
+  `settleSlot` records that it tried (an `apps/web` change to the settlement
+  module, which the worker may not make), or the worker keeps an attempt marker of
+  its own - which needs a column, and this stage may not change the schema. Not
+  done here.

@@ -6,9 +6,11 @@
 // (and without its module-scope environment parsing).
 //
 // It also pins the allow-list: the four settlement modules the worker is meant
-// to depend on (ADR-0005 D4, ADR-0006 D7). A new `import type` from anywhere else
-// under apps/web fails here, which is the point - the worker's coupling to the web
-// app is a decision, not a convenience.
+// to depend on (ADR-0005 D4, ADR-0006 D7), plus `@/lib/env-parts`, which only
+// `jobs/deps.ts` may value-import (ADR-0006 D7, D8) because the settlement
+// preflight lives there. A new `import type` from anywhere else under apps/web
+// fails here, which is the point - the worker's coupling to the web app is a
+// decision, not a convenience.
 //
 // The scanner is tested against a temporary tree so a broken pattern cannot pass
 // the real tree silently.
@@ -30,6 +32,16 @@ const ALLOWED_WEB_IMPORTS = [
   '@/lib/slots/resolve-dispute',
   '@/lib/slots/constants',
 ] as const;
+
+/**
+ * Web modules deps.ts may value-import without type-importing them anywhere
+ * else. `env-parts` is here because the settlement preflight (`loadSettlementEnv`)
+ * is a call, not a type: deps.ts has to load it, and nothing else should.
+ *
+ * Kept separate from ALLOWED_WEB_IMPORTS so that allowing the value import here
+ * does not silently allow a `import type` of it in a job file.
+ */
+const DEPS_ONLY_VALUE_IMPORTS = ['@/lib/env-parts'] as const;
 
 // ---------------------------------------------------------------------------
 // Extraction
@@ -91,6 +103,11 @@ function isAllowed(specifier: string): boolean {
   return (ALLOWED_WEB_IMPORTS as readonly string[]).includes(specifier);
 }
 
+/** Value imports deps.ts may make in addition to the four it binds. */
+function isDepsValueAllowed(specifier: string): boolean {
+  return (DEPS_ONLY_VALUE_IMPORTS as readonly string[]).includes(specifier);
+}
+
 /** Every violation of R9 among `files`, relative to `root`, with a readable reason. */
 function findViolations(root: string, files: readonly string[]): string[] {
   const violations: string[] = [];
@@ -103,8 +120,10 @@ function findViolations(root: string, files: readonly string[]): string[] {
 
     for (const { specifier, kind } of imports) {
       if (relative === DEPS_FILE) {
-        if (!isAllowed(specifier)) {
-          violations.push(`${relative}: '${specifier}' is not one of the four bound web modules`);
+        if (!isAllowed(specifier) && !isDepsValueAllowed(specifier)) {
+          violations.push(
+            `${relative}: '${specifier}' is not one of the web modules deps.ts may import`,
+          );
         }
         continue;
       }
@@ -210,5 +229,35 @@ describe('scan worker imports', () => {
     expect(violations).toHaveLength(2);
     expect(violations.some((line) => line.startsWith('jobs/sweep.ts: value import'))).toBe(true);
     expect(violations.some((line) => line.startsWith('jobs/other.ts: type import'))).toBe(true);
+  });
+
+  it('allows the settlement preflight in jobs/deps.ts as a value import, and nowhere else', () => {
+    const root = makeTempTree({
+      // The one file that may load it, because the preflight is a call.
+      'jobs/deps.ts': [
+        "import { parseSettlementEnv } from '@/lib/env-parts';",
+        'export const parse = parseSettlementEnv;',
+        '',
+      ].join('\n'),
+      // A job file may not, even as a value import.
+      'jobs/sweep.ts': [
+        "import { parseSettlementEnv } from '@/lib/env-parts';",
+        'export const parse = parseSettlementEnv;',
+        '',
+      ].join('\n'),
+      // Nor may it type-import a module that is only a deps value allowance.
+      'jobs/types.ts': [
+        "import type { SettlementEnv } from '@/lib/env-parts';",
+        'export const env = null as unknown as SettlementEnv;',
+        '',
+      ].join('\n'),
+    });
+
+    const files = listSources(root, { includeTests: false });
+    const violations = findViolations(root, files);
+
+    expect(violations).toHaveLength(2);
+    expect(violations.some((line) => line.startsWith('jobs/sweep.ts: value import'))).toBe(true);
+    expect(violations.some((line) => line.startsWith('jobs/types.ts: type import'))).toBe(true);
   });
 });

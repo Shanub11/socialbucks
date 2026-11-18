@@ -6,18 +6,26 @@
 //
 //   1. configuration  - exit 2 on a bad environment, before anything reads it;
 //   2. logger         - so every later failure can be reported structurally;
-//   3. database       - dynamically imported, own client built, then proven with
+//   3. settlement env - jobs/deps.js is dynamically imported and its preflight
+//                       (loadSettlementEnv) runs HERE, before any database
+//                       client exists: exit 2, variable names only (D8);
+//   4. database       - dynamically imported, own client built, then proven with
 //                       `SELECT 1`;
-//   4. dependencies   - dynamically imported; Stage 2's environment preflight
-//                       happens here and fails with exit 2;
-//   5. pg-boss        - start the host, then register the queues and handlers.
+//   5. dependencies   - buildDeps() binds the web app's settlement code; a
+//                       missing binding is a startup failure (exit 1);
+//   6. pg-boss        - start the host, then register the queues and handlers.
+//
+// The settlement preflight sits before the database on purpose. If it ran later,
+// a missing YouTube variable would be reported as (or after) a database failure,
+// and the operator would go looking at the connection string for a problem that
+// is a missing key. Both checks exit 2 only for configuration, and both name
+// variables rather than values.
 //
 // The database and the web modules read process.env as they are *imported*, so
-// importing either one any earlier reports the wrong error (or, in Stage 2, a
-// missing variable that is not actually missing). That is the reason the imports
-// are dynamic - and it has a second benefit: the static graph of this file stays
-// free of @repo/database, of everything under apps/web and of jobs/deps.ts, which
-// is exactly what the startup-graph test asserts.
+// importing either one any earlier reports the wrong error. That is the reason
+// the imports are dynamic - and it has a second benefit: the static graph of
+// this file stays free of @repo/database, of everything under apps/web and of
+// jobs/deps.ts, which is exactly what the startup-graph test asserts.
 //
 // There is no HTTP server and no listening port: the process consumes work, and
 // its health is observed through the platform and the logs.
@@ -62,6 +70,16 @@ function readConfig(): WorkerConfig {
 }
 
 /**
+ * The shape main.ts needs from jobs/deps.js. Declared here rather than derived
+ * from the module so the static graph of this file names nothing under
+ * jobs/deps (startup-graph.test.ts walks exactly that).
+ */
+interface DepsModule {
+  loadSettlementEnv: (source: Record<string, string | undefined>) => unknown;
+  buildDeps: () => JobDeps;
+}
+
+/**
  * Last resort for failures outside the job and shutdown paths. The platform
  * restarts the service, so the only job here is to exit non-zero with a line
  * that says what happened - and the line carries the error's name, never its
@@ -85,7 +103,29 @@ async function main(): Promise<void> {
 
   installFatalHandlers(logger);
 
-  // Step 3a: create the client.
+  // Step 3: the settlement environment, before the database (ADR-0006 D6, D8).
+  //
+  // The module is imported first and the preflight is called immediately: the
+  // import itself loads apps/web's settlement modules, which read their values
+  // lazily, so nothing below this point has to parse the environment again.
+  //
+  // A ConfigError is the only "the operator must fix the environment" outcome,
+  // so it is the only one that exits 2 - and it is printed the same way readConfig
+  // prints its own, with a `worker: ` prefix and no stack.
+  let depsModule: DepsModule;
+  try {
+    depsModule = (await import('./jobs/deps.js')) as DepsModule;
+    depsModule.loadSettlementEnv(process.env);
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      process.stderr.write(`worker: ${error.message}\n`);
+      process.exit(EXIT_CONFIG_ERROR);
+    }
+    logger.error('job dependencies failed to initialise', { ...describeError(error) });
+    process.exit(EXIT_FATAL);
+  }
+
+  // Step 4a: create the client.
   //
   // The import happens here because the package builds its default singleton from
   // DATABASE_URL as it is imported - but the worker does not use that singleton.
@@ -105,7 +145,7 @@ async function main(): Promise<void> {
     process.exit(EXIT_FATAL);
   }
 
-  // Step 3b: prove the connection. A failure here is not retried by this
+  // Step 4b: prove the connection. A failure here is not retried by this
   // process - a worker that cannot reach its database should not hold a pg-boss
   // pool open waiting for a fix it cannot make; the platform restarts it. The
   // connect timeout above bounds how long this can take.
@@ -116,12 +156,17 @@ async function main(): Promise<void> {
     process.exit(EXIT_FATAL);
   }
 
-  // Step 4: bind the web app's code (ADR-0006 D7). Stage 1 binds nothing, but
-  // the call stays here so Stage 2 only has to change deps.ts.
+  // Step 5: bind the web app's code (ADR-0006 D5, D7).
+  //
+  // A missing settleSlot is a startup failure, never a worker that accepts
+  // settlement work and silently drops it: buildDeps() always binds it, and if
+  // that ever stops being true the process must not start at all.
   let deps: JobDeps;
   try {
-    const depsModule = await import('./jobs/deps.js');
     deps = depsModule.buildDeps();
+    if (deps.settleSlot === undefined) {
+      throw new Error('job dependencies are incomplete: settleSlot is not bound');
+    }
   } catch (error) {
     logger.error('job dependencies failed to initialise', { ...describeError(error) });
     process.exit(EXIT_FATAL);
@@ -129,9 +174,9 @@ async function main(): Promise<void> {
 
   const ctx: JobContext = { db, logger, now: () => new Date() };
 
-  // Step 5: start the host and hand it the queues. register.ts value-imports the
+  // Step 6: start the host and hand it the queues. register.ts value-imports the
   // database client through expire-invites.ts, so it is imported dynamically for
-  // the same reason as step 3.
+  // the same reason as step 4.
   let worker: WorkerHandle;
   try {
     const { registerJobs } = await import('./jobs/register.js');
@@ -169,7 +214,7 @@ async function main(): Promise<void> {
 
     try {
       await worker.stop();
-      // The client started in step 3a is the one to close: nothing else created
+      // The client started in step 4a is the one to close: nothing else created
       // one, and the pool has to be released before the process exits.
       await db.$disconnect();
     } catch (error) {

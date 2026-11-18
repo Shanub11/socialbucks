@@ -59,3 +59,38 @@ export const JOB_RETRY_OPTIONS = {
   retryDelay: 60,
   retryBackoff: true,
 } as const;
+
+/**
+ * The settlement queues' policy: at most one job may be *queued* per
+ * `singletonKey`, with no limit on how many may be active.
+ *
+ * `short` is the one policy that bounds the queued state independently of any
+ * time window, so a sweep that runs twice before a worker picks the job up
+ * cannot leave two settle jobs for the same slot (ADR-0006 D3).
+ */
+export const SETTLE_SLOT_QUEUE_POLICY = 'short' as const;
+
+/**
+ * Two slots at a time per process (ADR-0006 D3).
+ *
+ * The ceiling is YouTube Analytics' daily quota, not CPU: every settle job
+ * spends quota, so the concurrency is what keeps a burst of sweeps from
+ * exhausting a day's reads in an afternoon.
+ */
+export const SETTLE_SLOT_LOCAL_CONCURRENCY = 2;
+
+/**
+ * One settle job per slot per 900 s bucket - aligned to the epoch, so the
+ * boundaries fall on :00/:15/:30/:45 UTC, the same cadence as the sweep.
+ *
+ * A send inside the bucket is suppressed by pg-boss and resolves `null`; that is
+ * the throttle, not an error (ADR-0006 D3).
+ */
+export const SETTLE_SLOT_SINGLETON_SECONDS = 900;
+
+/**
+ * Ten minutes per attempt. A settle job makes one metrics call plus one short
+ * Serializable transaction; anything approaching ten minutes is stuck, and the
+ * retry is worth more than the wait.
+ */
+export const SETTLE_SLOT_EXPIRY_SECONDS = 600;
