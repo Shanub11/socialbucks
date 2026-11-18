@@ -20,10 +20,13 @@ import { z } from 'zod';
 
 import { describeError } from '../errors';
 import type { Enqueue, EnqueueContext, JobContext, JobDeps } from './context';
+import { closeOne } from './close-slot';
+import { closeSweep } from './close-sweep';
 import { expireInvites } from './expire-invites';
 import { settleOne } from './settle-slot';
 import { sweepSettlements } from './sweep-settlements';
 import {
+  CLOSE_SLOT_QUEUE,
   DEAD_LETTER_QUEUE,
   INVITES_EXPIRE_CRON,
   INVITES_EXPIRE_QUEUE,
@@ -32,6 +35,8 @@ import {
   SETTLE_SLOT_LOCAL_CONCURRENCY,
   SETTLE_SLOT_QUEUE,
   SETTLE_SLOT_QUEUE_POLICY,
+  SETTLEMENT_CLOSE_SWEEP_CRON,
+  SETTLEMENT_CLOSE_SWEEP_QUEUE,
   SETTLEMENT_SWEEP_CRON,
   SETTLEMENT_SWEEP_QUEUE,
 } from './queues';
@@ -135,10 +140,27 @@ export async function registerJobs(boss: PgBoss, ctx: JobContext, deps: JobDeps)
     expireInSeconds: SETTLE_SLOT_EXPIRY_SECONDS,
   });
 
+  // The close sweep is the settle sweep's complement and writes nothing, so it
+  // needs no singleton options either.
+  await boss.createQueue(SETTLEMENT_CLOSE_SWEEP_QUEUE, {
+    ...JOB_RETRY_OPTIONS,
+    deadLetter: DEAD_LETTER_QUEUE,
+  });
+
+  // One slot, one final read, then a close. Same throttle and the same attempt
+  // budget as the settle job, because it makes the same provider call.
+  await boss.createQueue(CLOSE_SLOT_QUEUE, {
+    ...JOB_RETRY_OPTIONS,
+    deadLetter: DEAD_LETTER_QUEUE,
+    policy: SETTLE_SLOT_QUEUE_POLICY,
+    expireInSeconds: SETTLE_SLOT_EXPIRY_SECONDS,
+  });
+
   // schedule() is idempotent for the same (name, cron) pair: pg-boss stores the
   // schedule row and updates it rather than adding a second cron entry.
   await boss.schedule(INVITES_EXPIRE_QUEUE, INVITES_EXPIRE_CRON);
   await boss.schedule(SETTLEMENT_SWEEP_QUEUE, SETTLEMENT_SWEEP_CRON);
+  await boss.schedule(SETTLEMENT_CLOSE_SWEEP_QUEUE, SETTLEMENT_CLOSE_SWEEP_CRON);
 
   // One sweep per batch. Invite expiry is a bounded, idempotent pass over the
   // table, so ten queued cron ticks do not need ten passes; if the sweep throws,
@@ -177,6 +199,38 @@ export async function registerJobs(boss: PgBoss, ctx: JobContext, deps: JobDeps)
         }
 
         await runJob(SETTLE_SLOT_QUEUE, ctx, () => settleOne(ctx, deps, parsed.data.slotId));
+      }
+    },
+  );
+
+  // The close sweep runs after the settle sweep in every schedule tick, so a slot
+  // whose window ends between the two is settled first and closed in the next
+  // one. Ordering is a courtesy, not a correctness requirement: both jobs
+  // re-check the row they act on.
+  await boss.work(SETTLEMENT_CLOSE_SWEEP_QUEUE, async () => {
+    await runJob(SETTLEMENT_CLOSE_SWEEP_QUEUE, ctx, () => closeSweep(enqueueContext));
+  });
+
+  // Two slots at a time per process, for the same reason as the settle job: the
+  // final read spends YouTube Analytics quota.
+  await boss.work(
+    CLOSE_SLOT_QUEUE,
+    { localConcurrency: SETTLE_SLOT_LOCAL_CONCURRENCY },
+    async (jobs: Job<{ slotId?: string }>[]) => {
+      for (const job of jobs) {
+        const parsed = slotJobSchema.safeParse(job.data);
+
+        if (!parsed.success) {
+          // Not retryable: the payload will never become valid. Queue and job id
+          // only, never the payload.
+          ctx.logger.error('settlement.close-slot: invalid job data', {
+            queue: CLOSE_SLOT_QUEUE,
+            jobId: job.id,
+          });
+          continue;
+        }
+
+        await runJob(CLOSE_SLOT_QUEUE, ctx, () => closeOne(ctx, deps, parsed.data.slotId));
       }
     },
   );

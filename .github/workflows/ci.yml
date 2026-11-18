@@ -83,4 +83,4 @@ jobs:
 
       - name: Assert every worker test ran and passed
         if: ${{ !cancelled() }}
-        run: node scripts/ci-assert-tests.mjs .vitest-results-worker.json --min-tests=44
+        run: node scripts/ci-assert-tests.mjs .vitest-results-worker.json --min-tests=190

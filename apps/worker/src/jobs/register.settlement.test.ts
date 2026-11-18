@@ -17,6 +17,7 @@ import { createRecordingLogger } from '../test-support/recording-logger';
 import type { JobContext, JobDeps } from './context';
 import { registerJobs } from './register';
 import {
+  CLOSE_SLOT_QUEUE,
   DEAD_LETTER_QUEUE,
   JOB_RETRY_OPTIONS,
   SETTLE_SLOT_EXPIRY_SECONDS,
@@ -24,6 +25,7 @@ import {
   SETTLE_SLOT_QUEUE,
   SETTLE_SLOT_QUEUE_POLICY,
   SETTLE_SLOT_SINGLETON_SECONDS,
+  SETTLEMENT_CLOSE_SWEEP_QUEUE,
   SETTLEMENT_SWEEP_CRON,
   SETTLEMENT_SWEEP_QUEUE,
 } from './queues';
@@ -143,6 +145,8 @@ describe('registerJobs settlement wiring', () => {
       'invites.expire',
       SETTLEMENT_SWEEP_QUEUE,
       SETTLE_SLOT_QUEUE,
+      SETTLEMENT_CLOSE_SWEEP_QUEUE,
+      CLOSE_SLOT_QUEUE,
     ]);
   });
 

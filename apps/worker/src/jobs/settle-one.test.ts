@@ -27,6 +27,7 @@ interface SlotRow {
   status: SlotStatus;
   deletedAt: Date | null;
   disputedAt: Date | null;
+  disputeResolvedAt: Date | null;
   settlementEndsAt: Date | null;
 }
 
@@ -35,6 +36,7 @@ function openSlot(overrides: Partial<SlotRow> = {}): SlotRow {
     status: SlotStatus.IN_PROGRESS,
     deletedAt: null,
     disputedAt: null,
+    disputeResolvedAt: null,
     settlementEndsAt: new Date(NOW.getTime() + 1_000),
     ...overrides,
   };
@@ -84,7 +86,6 @@ describe('settleOne pre-checks', () => {
   it.each([
     ['slot_not_in_progress', openSlot({ status: SlotStatus.DISPUTED })],
     ['slot_deleted', openSlot({ deletedAt: new Date(NOW.getTime() - 1_000) })],
-    ['slot_disputed', openSlot({ disputedAt: new Date(NOW.getTime() - 1_000) })],
   ])('skips with %s', async (reason, row) => {
     const { ctx, recorder } = context(row);
     const { deps, settleSlot } = depsReturning({ status: 'HELD_NO_DATA', reason: 'no_analytics_data' });
@@ -98,6 +99,69 @@ describe('settleOne pre-checks', () => {
       outcome: 'SKIPPED_NOT_ELIGIBLE',
       reason,
     });
+  });
+
+  it('skips a DISPUTED slot by its status, without calling settleSlot', async () => {
+    // A live dispute is the STATUS. The dispute record rides along, but it is
+    // not what triggers the skip.
+    const { ctx, recorder } = context(
+      openSlot({
+        status: SlotStatus.DISPUTED,
+        disputedAt: new Date(NOW.getTime() - 1_000),
+      }),
+    );
+    const { deps, settleSlot } = depsReturning({
+      status: 'HELD_NO_DATA',
+      reason: 'no_analytics_data',
+    });
+
+    await expect(settleOne(ctx, deps, 'slot_1')).resolves.toEqual({
+      outcome: 'skipped',
+      reason: 'slot_not_in_progress',
+    });
+    expect(settleSlot).not.toHaveBeenCalled();
+    expect(recorder.at('info')[0]!.fields).toEqual({
+      slotId: 'slot_1',
+      outcome: 'SKIPPED_NOT_ELIGIBLE',
+      reason: 'slot_not_in_progress',
+    });
+  });
+
+  it('settles an IN_PROGRESS slot that a RESUME left with disputedAt and disputeResolvedAt set', async () => {
+    // Regression: resolve-dispute.ts RESUME writes status IN_PROGRESS, the
+    // extended window and disputeResolvedAt, and never clears disputedAt. A
+    // disputedAt test would skip this slot forever, silently.
+    const { ctx, recorder } = context(
+      openSlot({
+        disputedAt: new Date(NOW.getTime() - 60_000),
+        disputeResolvedAt: new Date(NOW.getTime() - 30_000),
+      }),
+    );
+    const { deps, settleSlot } = depsReturning({ status: 'NO_CHANGE', reason: 'no_new_tiers' });
+
+    await expect(settleOne(ctx, deps, 'slot_1')).resolves.toEqual({
+      outcome: 'no_change',
+      reason: 'no_new_tiers',
+    });
+    expect(settleSlot).toHaveBeenCalledWith('slot_1', ctx.db);
+    // The engine's answer is what is logged, so the read really happened.
+    expect(recorder.at('info')[0]!.fields).toEqual({
+      slotId: 'slot_1',
+      outcome: 'NO_CHANGE',
+      reason: 'no_new_tiers',
+    });
+  });
+
+  it('settles an IN_PROGRESS slot with disputedAt set and no resolution', async () => {
+    // The status is the source of truth: the DB trigger only allows DISPUTED out
+    // of IN_PROGRESS and the CHECK requires a dispute record, so a live dispute
+    // cannot exist without status DISPUTED. A leftover disputedAt on an
+    // IN_PROGRESS slot is history, not a reason to skip.
+    const { ctx } = context(openSlot({ disputedAt: new Date(NOW.getTime() - 60_000) }));
+    const { deps, settleSlot } = depsReturning({ status: 'ADVANCED', newTiers: [], paidToDate: '0.00' } as unknown as SettleOutcome);
+
+    await expect(settleOne(ctx, deps, 'slot_1')).resolves.toEqual({ outcome: 'advanced' });
+    expect(settleSlot).toHaveBeenCalledTimes(1);
   });
 
   it('treats a window ending exactly at now as ended', async () => {

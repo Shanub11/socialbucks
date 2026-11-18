@@ -16,11 +16,14 @@ import type { PrismaClient } from '@repo/database';
 import { createRecordingLogger } from '../test-support/recording-logger';
 import type { JobContext, JobDeps } from './context';
 import {
+  CLOSE_SLOT_QUEUE,
   DEAD_LETTER_QUEUE,
   INVITES_EXPIRE_CRON,
   INVITES_EXPIRE_QUEUE,
   JOB_RETRY_OPTIONS,
   SETTLE_SLOT_QUEUE,
+  SETTLEMENT_CLOSE_SWEEP_CRON,
+  SETTLEMENT_CLOSE_SWEEP_QUEUE,
   SETTLEMENT_SWEEP_CRON,
   SETTLEMENT_SWEEP_QUEUE,
 } from './queues';
@@ -108,6 +111,8 @@ describe('registerJobs', () => {
       INVITES_EXPIRE_QUEUE,
       SETTLEMENT_SWEEP_QUEUE,
       SETTLE_SLOT_QUEUE,
+      SETTLEMENT_CLOSE_SWEEP_QUEUE,
+      CLOSE_SLOT_QUEUE,
     ]);
     expect(queues[1]!.options).toMatchObject({
       deadLetter: DEAD_LETTER_QUEUE,
@@ -123,6 +128,7 @@ describe('registerJobs', () => {
     expect(schedules).toEqual([
       { name: INVITES_EXPIRE_QUEUE, cron: INVITES_EXPIRE_CRON },
       { name: SETTLEMENT_SWEEP_QUEUE, cron: SETTLEMENT_SWEEP_CRON },
+      { name: SETTLEMENT_CLOSE_SWEEP_QUEUE, cron: SETTLEMENT_CLOSE_SWEEP_CRON },
     ]);
     expect(INVITES_EXPIRE_CRON).toBe('*/10 * * * *');
   });
@@ -136,10 +142,13 @@ describe('registerJobs', () => {
       INVITES_EXPIRE_QUEUE,
       SETTLEMENT_SWEEP_QUEUE,
       SETTLE_SLOT_QUEUE,
+      SETTLEMENT_CLOSE_SWEEP_QUEUE,
+      CLOSE_SLOT_QUEUE,
       DEAD_LETTER_QUEUE,
     ]);
-    // Metadata is the only way the dead-letter handler can learn the original queue.
-    expect(works[3]!.options).toEqual({ includeMetadata: true });
+    // Metadata is the only way the dead-letter handler can learn the original queue,
+    // and the dead-letter handler is registered last.
+    expect(works[5]!.options).toEqual({ includeMetadata: true });
   });
 });
 
@@ -200,7 +209,7 @@ describe('job wrapper', () => {
 
     await registerJobs(boss, ctx, NO_DEPS);
 
-    await works[3]!.handler([
+    await works[5]!.handler([
       {
         id: 'job-1',
         name: DEAD_LETTER_QUEUE,

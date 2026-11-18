@@ -6,7 +6,11 @@
 //
 //   - it re-loads the slot, so a slot that was disputed, deleted, cancelled or
 //     whose window closed since the sweep enqueued it is skipped without
-//     touching the provider (and without spending YouTube quota);
+//     touching the provider (and without spending YouTube quota). "Disputed"
+//     means STATUS `DISPUTED` and nothing else: `RESUME` puts a slot back to
+//     IN_PROGRESS and deliberately leaves `disputedAt` set (it is the record of
+//     the dispute, not its state), so `disputedAt` is never used as a predicate
+//     here or anywhere else in the worker;
 //   - a slot that no longer exists is a warn and a completed job - there is
 //     nothing to retry, because the thing to retry on is gone;
 //   - every outcome `settleSlot` returns is handled by an exhaustive switch, so
@@ -36,7 +40,6 @@ import type { JobContext, JobDeps } from './context';
 export type SettlePrecheckReason =
   | 'slot_not_in_progress'
   | 'slot_deleted'
-  | 'slot_disputed'
   | 'window_ended';
 
 export interface SettleOneSummary {
@@ -60,7 +63,6 @@ export async function settleOne(
     select: {
       status: true,
       deletedAt: true,
-      disputedAt: true,
       settlementEndsAt: true,
     },
   });
@@ -77,9 +79,10 @@ export async function settleOne(
   if (slot.deletedAt !== null) {
     return skipPrecheck(ctx, slotId, 'slot_deleted');
   }
-  if (slot.disputedAt !== null) {
-    return skipPrecheck(ctx, slotId, 'slot_disputed');
-  }
+  // No `disputedAt` check: a slot that is currently disputed has status
+  // DISPUTED and was skipped above. A resumed slot is IN_PROGRESS with
+  // `disputedAt` still set (resolve-dispute.ts does not clear it), and testing
+  // that column would skip it forever, silently.
 
   const now = ctx.now();
   if (slot.settlementEndsAt === null || slot.settlementEndsAt.getTime() <= now.getTime()) {

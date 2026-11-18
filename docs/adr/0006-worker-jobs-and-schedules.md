@@ -15,11 +15,11 @@ This ADR covers the worker's business jobs as they land:
 
 - invite expiry (D1);
 - the settlement sweep and one settle-slot job per slot (D3, D5);
-- the window-close sweep and one close-slot job per slot, not implemented yet.
+- the window-close sweep and one close-slot job per slot (D10).
 
-The parts that are not implemented yet are recorded here because the decisions
-they depend on are cheap while no job exists and expensive once real money has
-moved on them: the rest of this document is the contract those jobs must meet.
+The decisions are recorded here because they are cheap while no job exists and
+expensive once real money has moved on them: the rest of this document is the
+contract those jobs must meet.
 
 Constraints that hold for every job, and that the tests enforce:
 
@@ -85,7 +85,7 @@ existing call site and test unchanged. Business registration lives in
 `jobs/register.ts`, not in `worker.ts`: the host stays testable with no database
 and no business jobs.
 
-### D3. Six queues, two schedules
+### D3. Six queues, three schedules
 
 | Queue                     | Kind      | Schedule        | Purpose                                |
 | ------------------------- | --------- | --------------- | -------------------------------------- |
@@ -214,8 +214,14 @@ without spending quota:
 
 - a slot that no longer exists is a `warn` and a completed job - there is nothing
   left to retry;
-- a slot that is no longer `IN_PROGRESS`, is soft-deleted, is disputed or whose
-  window has ended is a skip with a reason code, and the provider is never called;
+- a slot that is no longer `IN_PROGRESS`, is soft-deleted or whose window has
+  ended is a skip with a reason code, and the provider is never called. There is
+  no separate "is disputed" check: a disputed slot **is** a slot whose status is
+  `DISPUTED`, which the status test already covers. `disputedAt` is never a state
+  predicate anywhere in the worker, because `RESUME` returns a slot to
+  `IN_PROGRESS` and deliberately leaves `disputedAt` set as the dispute record
+  (`disputeResolvedAt` marks the resolution). Testing that column would skip
+  every resumed slot forever, silently;
 - every outcome the engine returns is handled by an exhaustive switch whose
   default asserts `never`, so a new outcome in `apps/web` stops the worker
   compiling instead of being ignored at runtime.
@@ -343,10 +349,75 @@ pins both halves: Prisma's output is silent under the `worker` profile, the
 `default` profile still prints it (the control), and construction alone prints
 nothing.
 
+### D10. The window close: two sweeps split at `settlementEndsAt`, and closing moves no money
+
+CLOSED means the settlement window ended with unreleased escrow (ADR-0004 D2).
+Closing is a bookkeeping state change: it writes `status = CLOSED` and
+`closedAt`, and nothing else. `escrowAmount` and `paidToDate` are never touched
+and no `PayoutEvent` is written, so the slot keeps counting its full escrow
+against the campaign's committed total until a return path exists.
+
+**The two sweeps split the table.** `settlement.sweep` selects
+`settlementEndsAt > now`; `settlement.close-sweep` selects `status IN_PROGRESS`,
+`deletedAt` null and `settlementEndsAt <= now`. A window ending exactly at `now`
+counts as ended and belongs to the close sweep, so no slot is claimed by both
+and none falls between them. A NULL window is selected by **neither**: both are
+comparisons, and a comparison never matches NULL. The close sweep therefore
+needs no `not: null` clause - the semantics of `lte` are the guarantee - and the
+pure test pins the where clause so adding one would be a visible decision.
+
+**The final-read rule.** `closeOne` re-loads the slot, skips it unless it is
+`IN_PROGRESS`, not soft-deleted and past its window (`slot_not_in_progress`,
+`slot_deleted`, `window_not_ended`; a NULL window is a `window_not_ended`), then
+makes the same final read the settle job makes: `deps.settleSlot(slotId, db)`.
+
+- `ADVANCED` and `NO_CHANGE` mean the read **succeeded**; the job continues.
+- `SKIPPED_NOT_ELIGIBLE` and `HELD_NO_DATA` mean it did **not**: the slot is not
+  closed and stays `IN_PROGRESS`, and the job logs at `warn` with the outcome and
+  reason code. That warning repeats on every close sweep for a permanently
+  unreadable slot, by design - it is how an operator finds it (OQ-10).
+- Every thrown error is rethrown unchanged: no `instanceof` branch, no message
+  matching. A `SettlementError` from the escrow invariant must retry per D4 and
+  end in the dead-letter log, never be read as "this slot cannot be closed".
+
+After a successful read the job re-loads the row and decides from what is
+stored, not from the outcome: `COMPLETED` means the read paid the last tier and
+ends the slot (`completed_by_read`, no write); any status other than
+`IN_PROGRESS`, or a soft-deleted row, is a no-op; a window that moved into the
+future (a resume) is a no-op that the next sweep re-evaluates.
+
+**Unreleased escrow is Decimal, never a float.** `unreleased = escrowAmount -
+paidToDate`.
+
+- `unreleased < 0` - impossible while `slot_paid_within_escrow` holds. Logged at
+  `error` as `negative_unreleased` and **not** closed: a broken invariant needs a
+  human. The amounts are never logged.
+- `unreleased == 0` - an `IN_PROGRESS` slot that is fully paid should have been
+  `COMPLETED` by the read. Logged at `error` as
+  `in_progress_nothing_unreleased` and not closed, for the same reason.
+- `unreleased > 0` - close it.
+
+**The write is a CAS** on `{ id, status: IN_PROGRESS, deletedAt: null,
+settlementEndsAt: <as read>, paidToDate: <as read> }`, setting
+`{ status: CLOSED, closedAt: now }`. A dispute raised during the job (status
+`DISPUTED`), a resume that extended the window, or a settle that changed
+`paidToDate` all make it match zero rows; the job logs `changed concurrently` at
+`info` and completes, and the next sweep re-evaluates. The CAS is what makes two
+replicas safe: a double close is a second no-op, not a second write.
+
+**Queue wiring.** `settlement.close-sweep` is a cron queue every fifteen minutes
+(`*/15 * * * *`), `settlement.close-slot` a consumer created with
+`policy: 'short'`, `expireInSeconds: 600` and `localConcurrency: 2` - the same
+throttle and attempt budget as the settle job, because it makes the same provider
+call. Each send carries `singletonKey: 'close:<slotId>'` and
+`singletonSeconds: 900`; the key is namespaced separately from
+`'settle:<slotId>'` so neither job can suppress the other. The sweep is bounded
+like every other: 100 ids per statement, 20 statements, a one-row truncation
+probe and a `warn` with counts and the cap.
+
 ## Consequences
-- The worker registers four queues and two schedules. The window-close names in
-  `jobs/queues.ts` are still declared but unused, so the runbook and the ADR
-  describe the target state while the code describes today's.
+- The worker registers six queues and three schedules (invite expiry, the
+  settlement sweep and the close sweep).
 - Invite expiry is eventually consistent within ten minutes. A slot can be
   accepted in the window between its expiry instant and the next sweep; the CAS
   makes that safe, and the accept wins.
@@ -414,3 +485,20 @@ nothing.
   module, which the worker may not make), or the worker keeps an attempt marker of
   its own - which needs a column, and this stage may not change the schema. Not
   done here.
+- **OQ-10.** A slot whose final read never succeeds (a revoked social account, a
+  deleted video, a provider that will not answer) stays `IN_PROGRESS` past its
+  window with its escrow still committed. The close job warns on every sweep
+  instead of closing it, and that is deliberate (D10): closing on a read that did
+  not happen would close a slot whose figures were never taken. What should
+  happen after a grace period - close it with unreleased escrow, send it to
+  dispute, or require an operator decision - is a product decision, pending. It
+  overlaps OQ-2 and OQ-6.
+- **OQ-11.** The same starvation family as OQ-9, on the close side. Such a slot
+  keeps its old `settlementEndsAt`, so it sorts first in every close sweep. Past
+  2,000 of them, the slots behind them are never reached: the sweep reports
+  `truncated: true` and a `warn` every run, which is loud but permanent until an
+  attempt marker exists (the fix OQ-9 describes, one column).
+- **OQ-12.** The brand review window (`reviewDueAt`, five days) still has no job
+  behind it. `reviewDueAt` is set and indexed with `status`, but nothing expires,
+  cancels or escalates a submission whose review window has passed - the same
+  question as OQ-1, still unanswered.

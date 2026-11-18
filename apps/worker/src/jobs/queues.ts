@@ -89,8 +89,18 @@ export const SETTLE_SLOT_LOCAL_CONCURRENCY = 2;
 export const SETTLE_SLOT_SINGLETON_SECONDS = 900;
 
 /**
+ * One close job per slot per 900 s bucket, aligned exactly like the settle
+ * bucket so the close sweep cannot queue the same slot twice in a window.
+ *
+ * The keys are namespaced (`close:<slotId>` vs `settle:<slotId>`), so a close
+ * job for a slot never suppresses or is suppressed by its settle job.
+ */
+export const CLOSE_SLOT_SINGLETON_SECONDS = 900;
+
+/**
  * Ten minutes per attempt. A settle job makes one metrics call plus one short
  * Serializable transaction; anything approaching ten minutes is stuck, and the
- * retry is worth more than the wait.
+ * retry is worth more than the wait. A close job makes the same final read, so
+ * it uses the same budget.
  */
 export const SETTLE_SLOT_EXPIRY_SECONDS = 600;
