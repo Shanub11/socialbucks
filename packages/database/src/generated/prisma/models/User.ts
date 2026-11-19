@@ -208,6 +208,7 @@ export type UserWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   memberships?: Prisma.OrganizationMemberListRelationFilter
   creator?: Prisma.XOR<Prisma.CreatorNullableScalarRelationFilter, Prisma.CreatorWhereInput> | null
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -221,6 +222,7 @@ export type UserOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   memberships?: Prisma.OrganizationMemberOrderByRelationAggregateInput
   creator?: Prisma.CreatorOrderByWithRelationInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -237,6 +239,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   memberships?: Prisma.OrganizationMemberListRelationFilter
   creator?: Prisma.XOR<Prisma.CreatorNullableScalarRelationFilter, Prisma.CreatorWhereInput> | null
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotListRelationFilter
 }, "id" | "clerkId">
 
 export type UserOrderByWithAggregationInput = {
@@ -278,6 +281,7 @@ export type UserCreateInput = {
   deletedAt?: Date | string | null
   memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
   creator?: Prisma.CreatorCreateNestedOneWithoutUserInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutDisputeRaisedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -291,6 +295,7 @@ export type UserUncheckedCreateInput = {
   deletedAt?: Date | string | null
   memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
   creator?: Prisma.CreatorUncheckedCreateNestedOneWithoutUserInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutDisputeRaisedByInput
 }
 
 export type UserUpdateInput = {
@@ -304,6 +309,7 @@ export type UserUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
   creator?: Prisma.CreatorUpdateOneWithoutUserNestedInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUpdateManyWithoutDisputeRaisedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -317,6 +323,7 @@ export type UserUncheckedUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
   creator?: Prisma.CreatorUncheckedUpdateOneWithoutUserNestedInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutDisputeRaisedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -390,6 +397,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -434,6 +446,22 @@ export type UserUpdateOneRequiredWithoutCreatorNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatorInput, Prisma.UserUpdateWithoutCreatorInput>, Prisma.UserUncheckedUpdateWithoutCreatorInput>
 }
 
+export type UserCreateNestedOneWithoutSlotDisputesRaisedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSlotDisputesRaisedInput, Prisma.UserUncheckedCreateWithoutSlotDisputesRaisedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSlotDisputesRaisedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutSlotDisputesRaisedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSlotDisputesRaisedInput, Prisma.UserUncheckedCreateWithoutSlotDisputesRaisedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSlotDisputesRaisedInput
+  upsert?: Prisma.UserUpsertWithoutSlotDisputesRaisedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSlotDisputesRaisedInput, Prisma.UserUpdateWithoutSlotDisputesRaisedInput>, Prisma.UserUncheckedUpdateWithoutSlotDisputesRaisedInput>
+}
+
 export type UserCreateWithoutMembershipsInput = {
   id?: string
   clerkId: string
@@ -444,6 +472,7 @@ export type UserCreateWithoutMembershipsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   creator?: Prisma.CreatorCreateNestedOneWithoutUserInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutDisputeRaisedByInput
 }
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -456,6 +485,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   creator?: Prisma.CreatorUncheckedCreateNestedOneWithoutUserInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutDisputeRaisedByInput
 }
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -484,6 +514,7 @@ export type UserUpdateWithoutMembershipsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creator?: Prisma.CreatorUpdateOneWithoutUserNestedInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUpdateManyWithoutDisputeRaisedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -496,6 +527,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creator?: Prisma.CreatorUncheckedUpdateOneWithoutUserNestedInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutDisputeRaisedByNestedInput
 }
 
 export type UserCreateWithoutCreatorInput = {
@@ -508,6 +540,7 @@ export type UserCreateWithoutCreatorInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotCreateNestedManyWithoutDisputeRaisedByInput
 }
 
 export type UserUncheckedCreateWithoutCreatorInput = {
@@ -520,6 +553,7 @@ export type UserUncheckedCreateWithoutCreatorInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUncheckedCreateNestedManyWithoutDisputeRaisedByInput
 }
 
 export type UserCreateOrConnectWithoutCreatorInput = {
@@ -548,6 +582,7 @@ export type UserUpdateWithoutCreatorInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUpdateManyWithoutDisputeRaisedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatorInput = {
@@ -560,6 +595,75 @@ export type UserUncheckedUpdateWithoutCreatorInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  slotDisputesRaised?: Prisma.CampaignCreatorSlotUncheckedUpdateManyWithoutDisputeRaisedByNestedInput
+}
+
+export type UserCreateWithoutSlotDisputesRaisedInput = {
+  id?: string
+  clerkId: string
+  email: string
+  firstName?: string | null
+  lastName?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  creator?: Prisma.CreatorCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSlotDisputesRaisedInput = {
+  id?: string
+  clerkId: string
+  email: string
+  firstName?: string | null
+  lastName?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  creator?: Prisma.CreatorUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSlotDisputesRaisedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSlotDisputesRaisedInput, Prisma.UserUncheckedCreateWithoutSlotDisputesRaisedInput>
+}
+
+export type UserUpsertWithoutSlotDisputesRaisedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSlotDisputesRaisedInput, Prisma.UserUncheckedUpdateWithoutSlotDisputesRaisedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSlotDisputesRaisedInput, Prisma.UserUncheckedCreateWithoutSlotDisputesRaisedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSlotDisputesRaisedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSlotDisputesRaisedInput, Prisma.UserUncheckedUpdateWithoutSlotDisputesRaisedInput>
+}
+
+export type UserUpdateWithoutSlotDisputesRaisedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  creator?: Prisma.CreatorUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSlotDisputesRaisedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  creator?: Prisma.CreatorUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -569,10 +673,12 @@ export type UserUncheckedUpdateWithoutCreatorInput = {
 
 export type UserCountOutputType = {
   memberships: number
+  slotDisputesRaised: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memberships?: boolean | UserCountOutputTypeCountMembershipsArgs
+  slotDisputesRaised?: boolean | UserCountOutputTypeCountSlotDisputesRaisedArgs
 }
 
 /**
@@ -592,6 +698,13 @@ export type UserCountOutputTypeCountMembershipsArgs<ExtArgs extends runtime.Type
   where?: Prisma.OrganizationMemberWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSlotDisputesRaisedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CampaignCreatorSlotWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -604,6 +717,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   deletedAt?: boolean
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
   creator?: boolean | Prisma.User$creatorArgs<ExtArgs>
+  slotDisputesRaised?: boolean | Prisma.User$slotDisputesRaisedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -644,6 +758,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
   creator?: boolean | Prisma.User$creatorArgs<ExtArgs>
+  slotDisputesRaised?: boolean | Prisma.User$slotDisputesRaisedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -654,6 +769,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     memberships: Prisma.$OrganizationMemberPayload<ExtArgs>[]
     creator: Prisma.$CreatorPayload<ExtArgs> | null
+    slotDisputesRaised: Prisma.$CampaignCreatorSlotPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1060,6 +1176,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   memberships<T extends Prisma.User$membershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   creator<T extends Prisma.User$creatorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$creatorArgs<ExtArgs>>): Prisma.Prisma__CreatorClient<runtime.Types.Result.GetResult<Prisma.$CreatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  slotDisputesRaised<T extends Prisma.User$slotDisputesRaisedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$slotDisputesRaisedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CampaignCreatorSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1530,6 +1647,30 @@ export type User$creatorArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    */
   include?: Prisma.CreatorInclude<ExtArgs> | null
   where?: Prisma.CreatorWhereInput
+}
+
+/**
+ * User.slotDisputesRaised
+ */
+export type User$slotDisputesRaisedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CampaignCreatorSlot
+   */
+  select?: Prisma.CampaignCreatorSlotSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CampaignCreatorSlot
+   */
+  omit?: Prisma.CampaignCreatorSlotOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CampaignCreatorSlotInclude<ExtArgs> | null
+  where?: Prisma.CampaignCreatorSlotWhereInput
+  orderBy?: Prisma.CampaignCreatorSlotOrderByWithRelationInput | Prisma.CampaignCreatorSlotOrderByWithRelationInput[]
+  cursor?: Prisma.CampaignCreatorSlotWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CampaignCreatorSlotScalarFieldEnum | Prisma.CampaignCreatorSlotScalarFieldEnum[]
 }
 
 /**

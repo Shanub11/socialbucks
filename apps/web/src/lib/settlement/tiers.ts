@@ -274,6 +274,24 @@ export function sumAllTierAmountsMinor(escrowAmount: Decimal): bigint {
 }
 
 /**
+ * The BASELINE release for a slot, derived from its escrow only.
+ *
+ * BASELINE is paid when the brand approves the content (ADR-0003 D1), so this
+ * must not depend on view counts or on any analytics call: the approval path
+ * computes it once, writes the ledger row and the slot's money cache in one
+ * transaction, and the settlement worker only advances higher tiers.
+ *
+ * D4 arithmetic is unchanged: floor(escrowMinor * 2000 / 10000), in BigInt.
+ */
+export function baselineAmount(escrowAmount: Decimal): Decimal {
+  const escrowMinor = toMinorUnits(escrowAmount);
+  if (escrowMinor <= 0n) {
+    throw new MoneyError(`escrowAmount must be > 0, got ${escrowAmount.toString()}`);
+  }
+  return fromMinorUnits(tierAmountMinor(MilestoneTier.BASELINE, escrowMinor));
+}
+
+/**
  * Returns the highest tier present in a set of paid tiers.
  * Returns null if the set is empty.
  */

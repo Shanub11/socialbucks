@@ -17,7 +17,7 @@
 
 import { z } from 'zod';
 
-import { env } from '@/lib/env';
+import { youtubeOAuth } from '@/lib/env-parts';
 import {
   parseOrThrow,
   requestJson,
@@ -172,6 +172,24 @@ export interface YouTubeVideo {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Reads one YouTube OAuth setting and fails closed.
+ *
+ * This module is part of the settlement path, which imports it holding only
+ * YouTube settings (ADR-0006 D8), so the values are read lazily and typed as
+ * possibly undefined. A function that actually calls Google cannot proceed
+ * without them. The message is fixed and contains no value, because an error
+ * raised here can end up in a log.
+ */
+const OAUTH_NOT_CONFIGURED = 'YouTube OAuth is not configured';
+
+function required(value: string | undefined): string {
+  if (value === undefined) {
+    throw new Error(OAUTH_NOT_CONFIGURED);
+  }
+  return value;
+}
+
+/**
  * Turns a non-2xx into an OAuthHttpError carrying only Google's own
  * error code and description. Google's `error_description` can echo
  * request parameters back, so it is deliberately not propagated into
@@ -229,8 +247,8 @@ export function isShortByDuration(durationSeconds: number | null): boolean {
  */
 export function buildAuthorizeUrl(state: string): string {
   const url = new URL(YOUTUBE_AUTHORIZE_URL);
-  url.searchParams.set('client_id', env.YOUTUBE_CLIENT_ID);
-  url.searchParams.set('redirect_uri', env.YOUTUBE_REDIRECT_URI);
+  url.searchParams.set('client_id', required(youtubeOAuth.clientId));
+  url.searchParams.set('redirect_uri', required(youtubeOAuth.redirectUri));
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', REQUIRED_SCOPES.join(' '));
   url.searchParams.set('state', state);
@@ -248,12 +266,12 @@ export async function exchangeCodeForToken(
   code: string,
 ): Promise<YouTubeTokens> {
   const body = new URLSearchParams({
-    client_id: env.YOUTUBE_CLIENT_ID,
-    client_secret: env.YOUTUBE_CLIENT_SECRET,
+    client_id: required(youtubeOAuth.clientId),
+    client_secret: required(youtubeOAuth.clientSecret),
     grant_type: 'authorization_code',
     // Google requires this again here, and re-compares it byte-for-byte
     // against the value used at authorize time.
-    redirect_uri: env.YOUTUBE_REDIRECT_URI,
+    redirect_uri: required(youtubeOAuth.redirectUri),
     code,
   });
 
@@ -293,8 +311,8 @@ export async function refreshAccessToken(
   refreshToken: string,
 ): Promise<YouTubeTokens> {
   const body = new URLSearchParams({
-    client_id: env.YOUTUBE_CLIENT_ID,
-    client_secret: env.YOUTUBE_CLIENT_SECRET,
+    client_id: required(youtubeOAuth.clientId),
+    client_secret: required(youtubeOAuth.clientSecret),
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
   });

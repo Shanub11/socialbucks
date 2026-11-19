@@ -42,6 +42,7 @@ export type CampaignMinAggregateOutputType = {
   status: $Enums.CampaignStatus | null
   totalBudget: runtime.Decimal | null
   currency: string | null
+  submissionDeadline: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -55,6 +56,7 @@ export type CampaignMaxAggregateOutputType = {
   status: $Enums.CampaignStatus | null
   totalBudget: runtime.Decimal | null
   currency: string | null
+  submissionDeadline: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -68,6 +70,7 @@ export type CampaignCountAggregateOutputType = {
   status: number
   totalBudget: number
   currency: number
+  submissionDeadline: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -91,6 +94,7 @@ export type CampaignMinAggregateInputType = {
   status?: true
   totalBudget?: true
   currency?: true
+  submissionDeadline?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -104,6 +108,7 @@ export type CampaignMaxAggregateInputType = {
   status?: true
   totalBudget?: true
   currency?: true
+  submissionDeadline?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -117,6 +122,7 @@ export type CampaignCountAggregateInputType = {
   status?: true
   totalBudget?: true
   currency?: true
+  submissionDeadline?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -217,6 +223,7 @@ export type CampaignGroupByOutputType = {
   status: $Enums.CampaignStatus
   totalBudget: runtime.Decimal
   currency: string
+  submissionDeadline: Date | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -253,6 +260,7 @@ export type CampaignWhereInput = {
   status?: Prisma.EnumCampaignStatusFilter<"Campaign"> | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFilter<"Campaign"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"Campaign"> | string
+  submissionDeadline?: Prisma.DateTimeNullableFilter<"Campaign"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Campaign"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Campaign"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Campaign"> | Date | string | null
@@ -268,6 +276,7 @@ export type CampaignOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   totalBudget?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  submissionDeadline?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -286,6 +295,7 @@ export type CampaignWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumCampaignStatusFilter<"Campaign"> | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFilter<"Campaign"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"Campaign"> | string
+  submissionDeadline?: Prisma.DateTimeNullableFilter<"Campaign"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Campaign"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Campaign"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Campaign"> | Date | string | null
@@ -301,6 +311,7 @@ export type CampaignOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   totalBudget?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  submissionDeadline?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -322,6 +333,7 @@ export type CampaignScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumCampaignStatusWithAggregatesFilter<"Campaign"> | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalWithAggregatesFilter<"Campaign"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringWithAggregatesFilter<"Campaign"> | string
+  submissionDeadline?: Prisma.DateTimeNullableWithAggregatesFilter<"Campaign"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Campaign"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Campaign"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Campaign"> | Date | string | null
@@ -334,6 +346,7 @@ export type CampaignCreateInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -349,6 +362,7 @@ export type CampaignUncheckedCreateInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -362,6 +376,7 @@ export type CampaignUpdateInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -377,6 +392,7 @@ export type CampaignUncheckedUpdateInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -391,6 +407,7 @@ export type CampaignCreateManyInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -403,6 +420,7 @@ export type CampaignUpdateManyMutationInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -416,6 +434,7 @@ export type CampaignUncheckedUpdateManyInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -439,6 +458,7 @@ export type CampaignCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   totalBudget?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  submissionDeadline?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -456,6 +476,7 @@ export type CampaignMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   totalBudget?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  submissionDeadline?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -469,6 +490,7 @@ export type CampaignMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   totalBudget?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  submissionDeadline?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -558,6 +580,7 @@ export type CampaignCreateWithoutOrganizationInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -571,6 +594,7 @@ export type CampaignUncheckedCreateWithoutOrganizationInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -614,6 +638,7 @@ export type CampaignScalarWhereInput = {
   status?: Prisma.EnumCampaignStatusFilter<"Campaign"> | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFilter<"Campaign"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"Campaign"> | string
+  submissionDeadline?: Prisma.DateTimeNullableFilter<"Campaign"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Campaign"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Campaign"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Campaign"> | Date | string | null
@@ -626,6 +651,7 @@ export type CampaignCreateWithoutSlotsInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -640,6 +666,7 @@ export type CampaignUncheckedCreateWithoutSlotsInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -668,6 +695,7 @@ export type CampaignUpdateWithoutSlotsInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -682,6 +710,7 @@ export type CampaignUncheckedUpdateWithoutSlotsInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -694,6 +723,7 @@ export type CampaignCreateManyOrganizationInput = {
   status?: $Enums.CampaignStatus
   totalBudget: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  submissionDeadline?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -706,6 +736,7 @@ export type CampaignUpdateWithoutOrganizationInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -719,6 +750,7 @@ export type CampaignUncheckedUpdateWithoutOrganizationInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -732,6 +764,7 @@ export type CampaignUncheckedUpdateManyWithoutOrganizationInput = {
   status?: Prisma.EnumCampaignStatusFieldUpdateOperationsInput | $Enums.CampaignStatus
   totalBudget?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  submissionDeadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -776,6 +809,7 @@ export type CampaignSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   status?: boolean
   totalBudget?: boolean
   currency?: boolean
+  submissionDeadline?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -792,6 +826,7 @@ export type CampaignSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   totalBudget?: boolean
   currency?: boolean
+  submissionDeadline?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -806,6 +841,7 @@ export type CampaignSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   totalBudget?: boolean
   currency?: boolean
+  submissionDeadline?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -820,12 +856,13 @@ export type CampaignSelectScalar = {
   status?: boolean
   totalBudget?: boolean
   currency?: boolean
+  submissionDeadline?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type CampaignOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "title" | "description" | "status" | "totalBudget" | "currency" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaign"]>
+export type CampaignOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "title" | "description" | "status" | "totalBudget" | "currency" | "submissionDeadline" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["campaign"]>
 export type CampaignInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   slots?: boolean | Prisma.Campaign$slotsArgs<ExtArgs>
@@ -852,6 +889,7 @@ export type $CampaignPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     status: $Enums.CampaignStatus
     totalBudget: runtime.Decimal
     currency: string
+    submissionDeadline: Date | null
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
@@ -1287,6 +1325,7 @@ export interface CampaignFieldRefs {
   readonly status: Prisma.FieldRef<"Campaign", 'CampaignStatus'>
   readonly totalBudget: Prisma.FieldRef<"Campaign", 'Decimal'>
   readonly currency: Prisma.FieldRef<"Campaign", 'String'>
+  readonly submissionDeadline: Prisma.FieldRef<"Campaign", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Campaign", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Campaign", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"Campaign", 'DateTime'>

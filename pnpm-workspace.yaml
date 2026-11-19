@@ -3,8 +3,11 @@ packages:
   - "packages/*"
 allowBuilds:
   '@prisma/engines': true
+  esbuild: true
   prisma: true
   unrs-resolver: true
 
 overrides:
   source-map-js: '>=1.2.2'
+
+minimumReleaseAge: 20160

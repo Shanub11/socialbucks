@@ -89,4 +89,4 @@ export function getAppOrigin(): string {
  * Where the user ends up after connecting. Kept here so the callback and
  * any future disconnect route agree.
  */
-export const CONNECT_RETURN_PATH = '/dashboard';
+export const CONNECT_RETURN_PATH = '/creator/accounts';

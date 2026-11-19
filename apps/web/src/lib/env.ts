@@ -3,104 +3,35 @@
 // Validates required env vars at boot instead of failing silently the
 // first time a request needs a missing key. Import `env` instead of
 // reading `process.env` directly anywhere auth is involved.
+//
+// The rules themselves live in env-parts.ts, one per variable, shared with the
+// settlement path - which has to import its modules holding only YouTube
+// settings (ADR-0006 D8). This file composes all of them and parses once, at
+// import, so a web process still refuses to boot on any missing or malformed
+// value, with the same errors and the same same-key check as before the split.
 
 import { z } from 'zod';
 
+import { envParts } from './env-parts';
+
 /**
- * `Buffer.from(value, 'base64')` silently discards characters it doesn't
- * recognize, so a truncated or whitespace-mangled paste can still yield a
- * 32-byte buffer. Shape-check the string before trusting its length, or
- * we ship an encryption key nobody can reproduce from the original value.
+ * The full schema: every variable, plus the cross-platform key check.
+ *
+ * Exported so the parity test can run the same values through the composed
+ * schema it actually boots with, rather than through a copy of it.
  */
-function isBase64OfExactBytes(value: string, bytes: number): boolean {
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false;
-  return Buffer.from(value, 'base64').length === bytes;
-}
-
-const envSchema = z.object({
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
-    .string()
-    .min(1, 'Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'),
-  CLERK_SECRET_KEY: z.string().min(1, 'Missing CLERK_SECRET_KEY'),
-  // Optional until you wire the webhook in step 8 — but once you do,
-  // add .min(1, ...) here too so a missing secret fails the build.
-  CLERK_WEBHOOK_SIGNING_SECRET: z.string().optional(),
-
-  // Instagram API with Instagram Login. Note these are the *Instagram*
-  // app credentials from the Instagram product's business login settings,
-  // not the Meta app ID/secret on the top-level Basic settings page.
-  INSTAGRAM_APP_ID: z.string().min(1, 'Missing INSTAGRAM_APP_ID'),
-  INSTAGRAM_APP_SECRET: z.string().min(1, 'Missing INSTAGRAM_APP_SECRET'),
-
-  // Meta compares redirect_uri byte-for-byte against the dashboard entry,
-  // so the two most common failures — a non-HTTPS origin and a stray
-  // trailing slash — are worth failing the boot over rather than
-  // debugging through an opaque OAuth error later.
-  INSTAGRAM_REDIRECT_URI: z
-    .string()
-    .startsWith('https://', 'Meta rejects non-HTTPS redirect URIs')
-    .refine(
-      (value) => URL.canParse(value),
-      'INSTAGRAM_REDIRECT_URI must be an absolute URL',
-    )
-    .refine(
-      (value) => !value.endsWith('/'),
-      'Drop the trailing slash — Meta compares redirect_uri byte-for-byte',
-    ),
-
-  INSTAGRAM_TOKEN_ENCRYPTION_KEY: z
-    .string()
-    .refine(
-      (value) => isBase64OfExactBytes(value, 32),
-      'INSTAGRAM_TOKEN_ENCRYPTION_KEY must be base64 decoding to exactly 32 bytes (openssl rand -base64 32)',
-    ),
-
-  // Only needed if Meta signs the deauthorize / data-deletion callbacks
-  // with the top-level Meta app secret rather than the Instagram one.
-  // See signed-request.ts — we accept either, and this lets you drop the
-  // ambiguity once you've confirmed which one your app actually sends.
-  META_APP_SECRET: z.string().optional(),
-
-  // --- YouTube Data API v3 / OAuth 2.0 ---------------------------------------
-  YOUTUBE_CLIENT_ID: z.string().min(1, 'Missing YOUTUBE_CLIENT_ID'),
-  YOUTUBE_CLIENT_SECRET: z.string().min(1, 'Missing YOUTUBE_CLIENT_SECRET'),
-
-  // Google compares redirect_uri byte-for-byte against the Cloud Console entry,
-  // same failure modes as Instagram: non-HTTPS and trailing slashes.
-  YOUTUBE_REDIRECT_URI: z
-    .string()
-    .startsWith('https://', 'Google rejects non-HTTPS redirect URIs')
-    .refine(
-      (value) => URL.canParse(value),
-      'YOUTUBE_REDIRECT_URI must be an absolute URL',
-    )
-    .refine(
-      (value) => !value.endsWith('/'),
-      'Drop the trailing slash — Google compares redirect_uri byte-for-byte',
-    ),
-
-  // Separate AES-256-GCM key for youtubeTokenCiphertext. Keeping it distinct
-  // from INSTAGRAM_TOKEN_ENCRYPTION_KEY means a ciphertext leak on one platform
-  // does not compromise the other.
-  YOUTUBE_TOKEN_ENCRYPTION_KEY: z
-    .string()
-    .refine(
-      (value) => isBase64OfExactBytes(value, 32),
-      'YOUTUBE_TOKEN_ENCRYPTION_KEY must be base64 decoding to exactly 32 bytes (openssl rand -base64 32)',
-    ),
-})
-  .superRefine((value, ctx) => {
-    // Both platforms on one key would let a leak or a rotation on one silently affect the other.
-    const instagramKey = Buffer.from(value.INSTAGRAM_TOKEN_ENCRYPTION_KEY, 'base64');
-    const youtubeKey = Buffer.from(value.YOUTUBE_TOKEN_ENCRYPTION_KEY, 'base64');
-    if (instagramKey.equals(youtubeKey)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['YOUTUBE_TOKEN_ENCRYPTION_KEY'],
-        message: 'YOUTUBE_TOKEN_ENCRYPTION_KEY must differ from INSTAGRAM_TOKEN_ENCRYPTION_KEY (one key per platform)',
-      });
-    }
-  });
+export const envSchema = z.object(envParts).superRefine((value, ctx) => {
+  // Both platforms on one key would let a leak or a rotation on one silently affect the other.
+  const instagramKey = Buffer.from(value.INSTAGRAM_TOKEN_ENCRYPTION_KEY, 'base64');
+  const youtubeKey = Buffer.from(value.YOUTUBE_TOKEN_ENCRYPTION_KEY, 'base64');
+  if (instagramKey.equals(youtubeKey)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['YOUTUBE_TOKEN_ENCRYPTION_KEY'],
+      message: 'YOUTUBE_TOKEN_ENCRYPTION_KEY must differ from INSTAGRAM_TOKEN_ENCRYPTION_KEY (one key per platform)',
+    });
+  }
+});
 
 export const env = envSchema.parse({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,

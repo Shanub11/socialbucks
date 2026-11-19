@@ -54,7 +54,10 @@ export const SlotStatus = {
   IN_PROGRESS: 'IN_PROGRESS',
   COMPLETED: 'COMPLETED',
   DISPUTED: 'DISPUTED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  DECLINED: 'DECLINED',
+  EXPIRED: 'EXPIRED',
+  CLOSED: 'CLOSED'
 } as const
 
 export type SlotStatus = (typeof SlotStatus)[keyof typeof SlotStatus]

@@ -19,6 +19,11 @@ import type * as Prisma from "../internal/prismaNamespace.ts"
  * its own (no payment rail in this pass). Append-only: no delete path exists
  * anywhere in the codebase. The @@unique([slotId, tier]) constraint is the
  * database-level idempotency guarantee.
+ * 
+ * billableViews, billableMetric and thresholdViews are nullable only for
+ * the BASELINE release written at approval, which has no analytics behind it
+ * (ADR-0003 D1). A CHECK constraint enforces that every non-BASELINE row
+ * carries all three. See migration `20261029100000_slot_lifecycle_and_db_guards`.
  */
 export type PayoutEventModel = runtime.Types.Result.DefaultSelection<Prisma.$PayoutEventPayload>
 
@@ -241,9 +246,9 @@ export type PayoutEventGroupByOutputType = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal
   currency: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews: number | null
+  billableMetric: string | null
+  thresholdViews: number | null
   settlementJson: runtime.JsonValue
   disbursementStatus: $Enums.DisbursementStatus
   disbursedAt: Date | null
@@ -280,9 +285,9 @@ export type PayoutEventWhereInput = {
   tier?: Prisma.EnumMilestoneTierFilter<"PayoutEvent"> | $Enums.MilestoneTier
   amount?: Prisma.DecimalFilter<"PayoutEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"PayoutEvent"> | string
-  billableViews?: Prisma.IntFilter<"PayoutEvent"> | number
-  billableMetric?: Prisma.StringFilter<"PayoutEvent"> | string
-  thresholdViews?: Prisma.IntFilter<"PayoutEvent"> | number
+  billableViews?: Prisma.IntNullableFilter<"PayoutEvent"> | number | null
+  billableMetric?: Prisma.StringNullableFilter<"PayoutEvent"> | string | null
+  thresholdViews?: Prisma.IntNullableFilter<"PayoutEvent"> | number | null
   settlementJson?: Prisma.JsonFilter<"PayoutEvent">
   disbursementStatus?: Prisma.EnumDisbursementStatusFilter<"PayoutEvent"> | $Enums.DisbursementStatus
   disbursedAt?: Prisma.DateTimeNullableFilter<"PayoutEvent"> | Date | string | null
@@ -297,9 +302,9 @@ export type PayoutEventOrderByWithRelationInput = {
   tier?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
-  billableViews?: Prisma.SortOrder
-  billableMetric?: Prisma.SortOrder
-  thresholdViews?: Prisma.SortOrder
+  billableViews?: Prisma.SortOrderInput | Prisma.SortOrder
+  billableMetric?: Prisma.SortOrderInput | Prisma.SortOrder
+  thresholdViews?: Prisma.SortOrderInput | Prisma.SortOrder
   settlementJson?: Prisma.SortOrder
   disbursementStatus?: Prisma.SortOrder
   disbursedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -318,9 +323,9 @@ export type PayoutEventWhereUniqueInput = Prisma.AtLeast<{
   tier?: Prisma.EnumMilestoneTierFilter<"PayoutEvent"> | $Enums.MilestoneTier
   amount?: Prisma.DecimalFilter<"PayoutEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"PayoutEvent"> | string
-  billableViews?: Prisma.IntFilter<"PayoutEvent"> | number
-  billableMetric?: Prisma.StringFilter<"PayoutEvent"> | string
-  thresholdViews?: Prisma.IntFilter<"PayoutEvent"> | number
+  billableViews?: Prisma.IntNullableFilter<"PayoutEvent"> | number | null
+  billableMetric?: Prisma.StringNullableFilter<"PayoutEvent"> | string | null
+  thresholdViews?: Prisma.IntNullableFilter<"PayoutEvent"> | number | null
   settlementJson?: Prisma.JsonFilter<"PayoutEvent">
   disbursementStatus?: Prisma.EnumDisbursementStatusFilter<"PayoutEvent"> | $Enums.DisbursementStatus
   disbursedAt?: Prisma.DateTimeNullableFilter<"PayoutEvent"> | Date | string | null
@@ -335,9 +340,9 @@ export type PayoutEventOrderByWithAggregationInput = {
   tier?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
-  billableViews?: Prisma.SortOrder
-  billableMetric?: Prisma.SortOrder
-  thresholdViews?: Prisma.SortOrder
+  billableViews?: Prisma.SortOrderInput | Prisma.SortOrder
+  billableMetric?: Prisma.SortOrderInput | Prisma.SortOrder
+  thresholdViews?: Prisma.SortOrderInput | Prisma.SortOrder
   settlementJson?: Prisma.SortOrder
   disbursementStatus?: Prisma.SortOrder
   disbursedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -359,9 +364,9 @@ export type PayoutEventScalarWhereWithAggregatesInput = {
   tier?: Prisma.EnumMilestoneTierWithAggregatesFilter<"PayoutEvent"> | $Enums.MilestoneTier
   amount?: Prisma.DecimalWithAggregatesFilter<"PayoutEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringWithAggregatesFilter<"PayoutEvent"> | string
-  billableViews?: Prisma.IntWithAggregatesFilter<"PayoutEvent"> | number
-  billableMetric?: Prisma.StringWithAggregatesFilter<"PayoutEvent"> | string
-  thresholdViews?: Prisma.IntWithAggregatesFilter<"PayoutEvent"> | number
+  billableViews?: Prisma.IntNullableWithAggregatesFilter<"PayoutEvent"> | number | null
+  billableMetric?: Prisma.StringNullableWithAggregatesFilter<"PayoutEvent"> | string | null
+  thresholdViews?: Prisma.IntNullableWithAggregatesFilter<"PayoutEvent"> | number | null
   settlementJson?: Prisma.JsonWithAggregatesFilter<"PayoutEvent">
   disbursementStatus?: Prisma.EnumDisbursementStatusWithAggregatesFilter<"PayoutEvent"> | $Enums.DisbursementStatus
   disbursedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PayoutEvent"> | Date | string | null
@@ -374,9 +379,9 @@ export type PayoutEventCreateInput = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews?: number | null
+  billableMetric?: string | null
+  thresholdViews?: number | null
   settlementJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: $Enums.DisbursementStatus
   disbursedAt?: Date | string | null
@@ -391,9 +396,9 @@ export type PayoutEventUncheckedCreateInput = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews?: number | null
+  billableMetric?: string | null
+  thresholdViews?: number | null
   settlementJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: $Enums.DisbursementStatus
   disbursedAt?: Date | string | null
@@ -406,9 +411,9 @@ export type PayoutEventUpdateInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -423,9 +428,9 @@ export type PayoutEventUncheckedUpdateInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -439,9 +444,9 @@ export type PayoutEventCreateManyInput = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews?: number | null
+  billableMetric?: string | null
+  thresholdViews?: number | null
   settlementJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: $Enums.DisbursementStatus
   disbursedAt?: Date | string | null
@@ -454,9 +459,9 @@ export type PayoutEventUpdateManyMutationInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -470,9 +475,9 @@ export type PayoutEventUncheckedUpdateManyInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -608,9 +613,9 @@ export type PayoutEventCreateWithoutSlotInput = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews?: number | null
+  billableMetric?: string | null
+  thresholdViews?: number | null
   settlementJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: $Enums.DisbursementStatus
   disbursedAt?: Date | string | null
@@ -623,9 +628,9 @@ export type PayoutEventUncheckedCreateWithoutSlotInput = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews?: number | null
+  billableMetric?: string | null
+  thresholdViews?: number | null
   settlementJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: $Enums.DisbursementStatus
   disbursedAt?: Date | string | null
@@ -668,9 +673,9 @@ export type PayoutEventScalarWhereInput = {
   tier?: Prisma.EnumMilestoneTierFilter<"PayoutEvent"> | $Enums.MilestoneTier
   amount?: Prisma.DecimalFilter<"PayoutEvent"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"PayoutEvent"> | string
-  billableViews?: Prisma.IntFilter<"PayoutEvent"> | number
-  billableMetric?: Prisma.StringFilter<"PayoutEvent"> | string
-  thresholdViews?: Prisma.IntFilter<"PayoutEvent"> | number
+  billableViews?: Prisma.IntNullableFilter<"PayoutEvent"> | number | null
+  billableMetric?: Prisma.StringNullableFilter<"PayoutEvent"> | string | null
+  thresholdViews?: Prisma.IntNullableFilter<"PayoutEvent"> | number | null
   settlementJson?: Prisma.JsonFilter<"PayoutEvent">
   disbursementStatus?: Prisma.EnumDisbursementStatusFilter<"PayoutEvent"> | $Enums.DisbursementStatus
   disbursedAt?: Prisma.DateTimeNullableFilter<"PayoutEvent"> | Date | string | null
@@ -683,9 +688,9 @@ export type PayoutEventCreateManySlotInput = {
   tier: $Enums.MilestoneTier
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
-  billableViews: number
-  billableMetric: string
-  thresholdViews: number
+  billableViews?: number | null
+  billableMetric?: string | null
+  thresholdViews?: number | null
   settlementJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: $Enums.DisbursementStatus
   disbursedAt?: Date | string | null
@@ -698,9 +703,9 @@ export type PayoutEventUpdateWithoutSlotInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -713,9 +718,9 @@ export type PayoutEventUncheckedUpdateWithoutSlotInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -728,9 +733,9 @@ export type PayoutEventUncheckedUpdateManyWithoutSlotInput = {
   tier?: Prisma.EnumMilestoneTierFieldUpdateOperationsInput | $Enums.MilestoneTier
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
-  billableViews?: Prisma.IntFieldUpdateOperationsInput | number
-  billableMetric?: Prisma.StringFieldUpdateOperationsInput | string
-  thresholdViews?: Prisma.IntFieldUpdateOperationsInput | number
+  billableViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billableMetric?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thresholdViews?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   settlementJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   disbursementStatus?: Prisma.EnumDisbursementStatusFieldUpdateOperationsInput | $Enums.DisbursementStatus
   disbursedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -829,9 +834,9 @@ export type $PayoutEventPayload<ExtArgs extends runtime.Types.Extensions.Interna
     tier: $Enums.MilestoneTier
     amount: runtime.Decimal
     currency: string
-    billableViews: number
-    billableMetric: string
-    thresholdViews: number
+    billableViews: number | null
+    billableMetric: string | null
+    thresholdViews: number | null
     /**
      * Raw VideoSettlement snapshot at trigger time (D8: raw JSON).
      */
