@@ -49,7 +49,7 @@ export const APP_ORIGIN = new URL(env.INSTAGRAM_REDIRECT_URI).origin;
  * Where the user ends up after connecting. Kept here so the callback and
  * any future disconnect route agree.
  */
-export const CONNECT_RETURN_PATH = '/dashboard';
+export const CONNECT_RETURN_PATH = '/creator/accounts';
 
 /** Long-lived tokens last 60 days; refresh well before the edge. */
 export const TOKEN_REFRESH_THRESHOLD_DAYS = 10;
