@@ -353,7 +353,7 @@ export async function refreshAccessToken(
 export async function fetchChannel(
   accessToken: string,
 ): Promise<YouTubeChannel | null> {
-  const url = new URL('/channels', YOUTUBE_DATA_API_BASE);
+  const url = new URL(`${YOUTUBE_DATA_API_BASE}/channels`);
   url.searchParams.set(
     'part',
     ['snippet', 'contentDetails', 'statistics'].join(','),
@@ -394,7 +394,7 @@ export async function fetchVideoContentDetails(
   videoId: string,
   accessToken: string,
 ): Promise<YouTubeVideo | null> {
-  const url = new URL('/videos', YOUTUBE_DATA_API_BASE);
+  const url = new URL(`${YOUTUBE_DATA_API_BASE}/videos`);
   url.searchParams.set('part', 'snippet,contentDetails');
   url.searchParams.set('id', videoId);
 
