@@ -62,6 +62,15 @@ const tokenResponseSchema = z.object({
 });
 
 /**
+ * Data API v3 serializes statistics counters (subscriberCount, videoCount,
+ * viewCount) as decimal strings — e.g. "1234" — even though they are
+ * integers. Accept either representation and normalize to a number.
+ */
+const statisticsCountSchema = z
+  .union([z.number(), z.string().regex(/^\d+$/).transform(Number)])
+  .pipe(z.number().int().nonnegative());
+
+/**
  * Google channel response. `items` is an array; we take the first.
  */
 const channelSchema = z.object({
@@ -80,9 +89,9 @@ const channelSchema = z.object({
     videoCategoryId: z.string().optional(),
   }).optional(),
   statistics: z.object({
-    subscriberCount: z.number().int().nonnegative().optional(),
-    videoCount: z.number().int().nonnegative().optional(),
-    viewCount: z.number().int().nonnegative().optional(),
+    subscriberCount: statisticsCountSchema.optional(),
+    videoCount: statisticsCountSchema.optional(),
+    viewCount: statisticsCountSchema.optional(),
   }).optional(),
 });
 

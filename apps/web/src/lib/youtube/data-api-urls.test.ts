@@ -67,6 +67,28 @@ describe('YouTube Data API v3 URLs', () => {
     expect(init.headers).toEqual({ Authorization: `Bearer ${ACCESS_TOKEN}` });
   });
 
+  it('fetchChannel parses statistics counters returned as strings', async () => {
+    // The Data API v3 serializes these counters as decimal strings.
+    mockRequest.mockResolvedValueOnce({
+      items: [
+        {
+          id: 'UC_x5XG1OV2P6uZZ5FSM9Ttw',
+          snippet: { title: 'Example Channel' },
+          statistics: {
+            subscriberCount: '1234',
+            videoCount: '56',
+            viewCount: '789012',
+          },
+        },
+      ],
+    });
+
+    await expect(fetchChannel(ACCESS_TOKEN)).resolves.toMatchObject({
+      subscriberCount: 1234,
+      videoCount: 56,
+    });
+  });
+
   it('fetchChannel maps a minimal channel item', async () => {
     mockRequest.mockResolvedValueOnce({
       items: [
