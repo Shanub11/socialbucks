@@ -1,3 +1,209 @@
-import Link from "next/link";
-const steps=[{n:"01",title:"Connect your channel",body:"Link the social account you publish from. Your connection stays under your control."},{n:"02",title:"Collaborate with brands",body:"Review campaign terms, deliverables, escrow and view targets before you accept."},{n:"03",title:"Earn as content performs",body:"Follow milestone progress and a transparent ledger as eligible performance is verified."}];
-export default function Home(){return <main className="min-h-screen overflow-hidden"><header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10"><Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight"><span className="grid size-9 place-items-center rounded-xl bg-emerald-400 font-black text-slate-950">S</span>socialbucks<span className="text-emerald-400">.</span></Link><nav className="flex items-center gap-3 text-sm"><Link href="/sign-in" className="rounded-lg px-4 py-2 text-slate-300 hover:text-white">Sign in</Link><Link href="/sign-up" className="rounded-lg bg-emerald-400 px-4 py-2.5 font-semibold text-slate-950 hover:bg-emerald-300">Join as a creator ↗</Link></nav></header><section className="mx-auto grid max-w-7xl items-center gap-14 px-6 pb-24 pt-16 lg:grid-cols-[1.1fr_.9fr] lg:px-10 lg:pb-32 lg:pt-24"><div><div className="mb-7 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5 text-xs font-medium tracking-wide text-emerald-300"><span className="size-1.5 rounded-full bg-emerald-400"/>THE CREATOR-LED CAMPAIGN PLATFORM</div><h1 className="max-w-3xl text-5xl font-semibold leading-[1.06] tracking-[-.055em] text-white sm:text-6xl lg:text-7xl">Your content.<br/>Your audience.<br/><span className="text-emerald-400">Your upside.</span></h1><p className="mt-7 max-w-xl text-base leading-8 text-slate-400 sm:text-lg">Work with brands on clear campaign terms and performance-based payouts. Know what you’re agreeing to, track what your content earns.</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/sign-up" className="rounded-xl bg-emerald-400 px-6 py-3.5 text-sm font-semibold text-slate-950 hover:-translate-y-0.5 hover:bg-emerald-300">Get started ↗</Link><Link href="/sign-in" className="rounded-xl border border-slate-700 bg-slate-900/60 px-6 py-3.5 text-sm font-semibold text-slate-200 hover:border-slate-500">I already have an account</Link></div><div className="mt-12 flex flex-wrap gap-5 text-xs text-slate-500"><span>✓ Clear terms before accepting</span><span>✓ Performance-led milestones</span></div></div><div className="relative"><div className="absolute -inset-8 rounded-full bg-emerald-400/10 blur-3xl"/><div className="relative rounded-3xl border border-slate-700/80 bg-[#0e171e] p-5 shadow-2xl shadow-black/40 sm:p-7"><div className="flex items-center justify-between border-b border-slate-800 pb-5"><div><p className="text-xs text-slate-500">CREATOR WORKSPACE</p><p className="mt-1 font-semibold text-white">Performance overview</p></div><span className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">Preview</span></div><div className="mt-6 grid grid-cols-2 gap-3">{[{label:"Active campaigns",value:"—",note:"Your collaborations"},{label:"Earned to date",value:"—",note:"Verified ledger total"}].map(x=><div key={x.label} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><p className="text-xs text-slate-500">{x.label}</p><p className="mt-3 text-3xl font-semibold text-white">{x.value}</p><p className="mt-1 text-xs text-slate-500">{x.note}</p></div>)}</div><div className="mt-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4"><div className="flex justify-between"><p className="text-sm font-medium text-white">Milestone tracking</p><span className="text-xs text-slate-500">Illustrative</span></div><div className="mt-5 flex h-28 items-end gap-2">{[25,42,34,60,48,76,66,92,70,100,82,96].map((h,i)=><div key={i} className="flex-1 rounded-t-sm bg-emerald-400/70" style={{height:h+"%"}}/>)}</div><div className="mt-3 flex justify-between text-[10px] uppercase tracking-wider text-slate-600"><span>Campaign start</span><span>Target</span></div></div><p className="mt-4 text-center text-[11px] text-slate-600">Illustrative preview · No performance data shown</p></div></div></section><section className="border-y border-slate-800/80 bg-slate-950/40"><div className="mx-auto grid max-w-7xl gap-8 px-6 py-14 md:grid-cols-3 lg:px-10">{steps.map(s=><div key={s.n}><p className="text-xs font-semibold tracking-[.2em] text-emerald-400">{s.n}</p><h2 className="mt-4 text-lg font-semibold text-white">{s.title}</h2><p className="mt-2 text-sm leading-7 text-slate-400">{s.body}</p></div>)}</div></section><footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 px-6 py-8 text-xs text-slate-600 lg:px-10"><span>© {new Date().getFullYear()} SocialBucks</span><span>Built for creators and the brands they move.</span></footer></main>}
+import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+
+const steps = [
+  {
+    n: '01',
+    title: 'Connect your channel',
+    body: 'Link the social account you publish from. Your connection stays under your control.',
+  },
+  {
+    n: '02',
+    title: 'Collaborate with brands',
+    body: 'Review campaign terms, deliverables, escrow and view targets before you accept.',
+  },
+  {
+    n: '03',
+    title: 'Earn as content performs',
+    body: 'Follow milestone progress and a transparent ledger as eligible performance is verified.',
+  },
+];
+
+export default async function Home() {
+  const { userId } = await auth();
+
+  return (
+    <main className="min-h-screen overflow-hidden">
+      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
+        <Link
+          href="/"
+          className="flex items-center gap-3 text-lg font-semibold tracking-tight"
+        >
+          <span className="grid size-9 place-items-center rounded-xl bg-emerald-400 font-black text-slate-950">
+            S
+          </span>
+          socialbucks<span className="text-emerald-400">.</span>
+        </Link>
+        <nav className="flex items-center gap-3 text-sm">
+          {userId ? (
+            <Link
+              href="/creator/dashboard"
+              className="rounded-lg bg-emerald-400 px-4 py-2.5 font-semibold text-slate-950 hover:bg-emerald-300"
+            >
+              Open your workspace
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className="rounded-lg px-4 py-2 text-slate-300 hover:text-white"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-lg bg-emerald-400 px-4 py-2.5 font-semibold text-slate-950 hover:bg-emerald-300"
+              >
+                Join as a creator ↗
+              </Link>
+            </>
+          )}
+        </nav>
+      </header>
+
+      <section className="mx-auto grid max-w-7xl items-center gap-14 px-6 pb-24 pt-16 lg:grid-cols-[1.1fr_.9fr] lg:px-10 lg:pb-32 lg:pt-24">
+        <div>
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5 text-xs font-medium tracking-wide text-emerald-300">
+            <span className="size-1.5 rounded-full bg-emerald-400" />
+            THE CREATOR-LED CAMPAIGN PLATFORM
+          </div>
+          <h1 className="max-w-3xl text-5xl font-semibold leading-[1.06] tracking-[-.055em] text-white sm:text-6xl lg:text-7xl">
+            Your content.
+            <br />
+            Your audience.
+            <br />
+            <span className="text-emerald-400">Your upside.</span>
+          </h1>
+          <p className="mt-7 max-w-xl text-base leading-8 text-slate-400 sm:text-lg">
+            Work with brands on clear campaign terms and performance-based
+            payouts. Know what you’re agreeing to, track what your content
+            earns.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            {userId ? (
+              <Link
+                href="/creator/dashboard"
+                className="rounded-xl bg-emerald-400 px-6 py-3.5 text-sm font-semibold text-slate-950 hover:-translate-y-0.5 hover:bg-emerald-300"
+              >
+                Open your workspace
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/sign-up"
+                  className="rounded-xl bg-emerald-400 px-6 py-3.5 text-sm font-semibold text-slate-950 hover:-translate-y-0.5 hover:bg-emerald-300"
+                >
+                  Get started ↗
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className="rounded-xl border border-slate-700 bg-slate-900/60 px-6 py-3.5 text-sm font-semibold text-slate-200 hover:border-slate-500"
+                >
+                  I already have an account
+                </Link>
+              </>
+            )}
+          </div>
+          <div className="mt-12 flex flex-wrap gap-5 text-xs text-slate-500">
+            <span>✓ Clear terms before accepting</span>
+            <span>✓ Performance-led milestones</span>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="absolute -inset-8 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="relative rounded-3xl border border-slate-700/80 bg-[#0e171e] p-5 shadow-2xl shadow-black/40 sm:p-7">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-5">
+              <div>
+                <p className="text-xs text-slate-500">CREATOR WORKSPACE</p>
+                <p className="mt-1 font-semibold text-white">
+                  Performance overview
+                </p>
+              </div>
+              <span className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">
+                Preview
+              </span>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {[
+                {
+                  label: 'Active campaigns',
+                  value: '—',
+                  note: 'Your collaborations',
+                },
+                {
+                  label: 'Earned to date',
+                  value: '—',
+                  note: 'Verified ledger total',
+                },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"
+                >
+                  <p className="text-xs text-slate-500">{stat.label}</p>
+                  <p className="mt-3 text-3xl font-semibold text-white">
+                    {stat.value}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{stat.note}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+              <div className="flex justify-between">
+                <p className="text-sm font-medium text-white">
+                  Milestone tracking
+                </p>
+                <span className="text-xs text-slate-500">Illustrative</span>
+              </div>
+              <div className="mt-5 flex h-28 items-end gap-2">
+                {[25, 42, 34, 60, 48, 76, 66, 92, 70, 100, 82, 96].map(
+                  (height, index) => (
+                    <div
+                      key={index}
+                      className="flex-1 rounded-t-sm bg-emerald-400/70"
+                      style={{ height: `${height}%` }}
+                    />
+                  ),
+                )}
+              </div>
+              <div className="mt-3 flex justify-between text-[10px] uppercase tracking-wider text-slate-600">
+                <span>Campaign start</span>
+                <span>Target</span>
+              </div>
+            </div>
+
+            <p className="mt-4 text-center text-[11px] text-slate-600">
+              Illustrative preview · No performance data shown
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-slate-800/80 bg-slate-950/40">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-14 md:grid-cols-3 lg:px-10">
+          {steps.map((step) => (
+            <div key={step.n}>
+              <p className="text-xs font-semibold tracking-[.2em] text-emerald-400">
+                {step.n}
+              </p>
+              <h2 className="mt-4 text-lg font-semibold text-white">
+                {step.title}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-slate-400">
+                {step.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 px-6 py-8 text-xs text-slate-600 lg:px-10">
+        <span>© {new Date().getFullYear()} SocialBucks</span>
+        <span>Built for creators and the brands they move.</span>
+      </footer>
+    </main>
+  );
+}

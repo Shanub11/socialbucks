@@ -9,9 +9,10 @@
 
 ## Route map
 - `/`: public marketing landing page.
-- `/sign-in`, `/sign-up`: existing Clerk hosted components.
+- `/sign-in`, `/sign-up`: existing Clerk hosted components; signing in or up lands on `/creator/dashboard`, and the landing page shows "Open your workspace" to signed-in visitors.
 - `/creator/dashboard`: authenticated creator overview backed by Prisma.
-- `/creator/accounts`: authenticated social account connection management.
+- `/creator/accounts`: authenticated social account connection management, and the return path for both provider OAuth callbacks.
+- `/dashboard`: pre-existing Instagram connection screen; the creator workspace manages connections at `/creator/accounts`.
 - Future creator routes: `/creator/campaigns`, `/creator/invitations`, `/creator/earnings`.
 
 ## Data and security rules
@@ -22,9 +23,9 @@
 - Tokens never reach the client. Only public account metadata is rendered.
 - Payout amounts shown in the creator overview are ledger values from `paidToDate`; they are not proof of successful external disbursement.
 - YouTube is currently the only settlement-supported platform. Instagram may be connected, but must not be represented as payout-enabled.
-- Campaign discovery and invitation actions are not implemented in the current API. Show honest empty/coming-soon states rather than fake controls.
+- Campaign discovery and invitation controls are not part of the creator workspace yet. Show honest empty/coming-soon states rather than fake controls.
 
 ## Current limitations
-- No organization/campaign discovery, invitation, accept/decline or creator payout-history APIs are present in the inspected route tree.
-- The existing `/dashboard` route remains in place for compatibility while the new creator workspace is introduced.
+- The creator workspace surfaces no campaign discovery, invitation management or payout history yet; those routes are labelled "Soon" in the navigation.
+- The legacy `/dashboard` page is still routed, but it is no longer linked from the creator workspace and is not an OAuth return path; both callbacks return to `/creator/accounts`.
 - Brand workspace and public-site expansion are separate phases.
