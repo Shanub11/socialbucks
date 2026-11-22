@@ -12,7 +12,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-import { APP_ORIGIN } from '@/lib/instagram/constants';
+import { APP_ORIGIN, CONNECT_RETURN_PATH } from '@/lib/instagram/constants';
+import { connectStartFailureResponse } from '@/lib/oauth/connect-start-failure';
 import {
   OAUTH_COOKIE_PATH,
   OAUTH_NONCE_COOKIE,
@@ -28,31 +29,42 @@ const STATE_TTL_SECONDS = 10 * 60;
 export async function GET() {
   const { userId } = await auth();
 
-  if (!userId) {
-    const signIn = new URL('/sign-in', APP_ORIGIN);
-    signIn.searchParams.set('redirect_url', '/api/auth/instagram/start');
-    return NextResponse.redirect(signIn);
+  try {
+    if (!userId) {
+      const signIn = new URL('/sign-in', APP_ORIGIN);
+      signIn.searchParams.set('redirect_url', '/api/auth/instagram/start');
+      return NextResponse.redirect(signIn);
+    }
+
+    const { state, nonce } = createOAuthState(userId);
+    const response = NextResponse.redirect(buildAuthorizeUrl(state));
+
+    response.cookies.set({
+      name: OAUTH_NONCE_COOKIE,
+      value: nonce,
+      httpOnly: true,
+      // Always on: Meta refuses non-HTTPS redirect URIs, so the whole flow is
+      // HTTPS by definition. If this cookie ever goes missing in dev, the
+      // cause is browsing the app over http://localhost instead of the ngrok
+      // origin — not this flag.
+      secure: true,
+      // Must be 'lax', not 'strict'. The callback arrives as a top-level
+      // cross-site GET navigation from instagram.com; 'strict' would withhold
+      // the cookie and every connection attempt would fail state validation.
+      sameSite: 'lax',
+      path: OAUTH_COOKIE_PATH,
+      maxAge: STATE_TTL_SECONDS,
+    });
+
+    return response;
+  } catch (error) {
+    console.error('[instagram] connect start failed', {
+      clerkUserId: userId ?? null,
+      name: error instanceof Error ? error.name : 'unknown',
+    });
+    return connectStartFailureResponse({
+      platform: 'instagram',
+      returnPath: CONNECT_RETURN_PATH,
+    });
   }
-
-  const { state, nonce } = createOAuthState(userId);
-  const response = NextResponse.redirect(buildAuthorizeUrl(state));
-
-  response.cookies.set({
-    name: OAUTH_NONCE_COOKIE,
-    value: nonce,
-    httpOnly: true,
-    // Always on: Meta refuses non-HTTPS redirect URIs, so the whole flow is
-    // HTTPS by definition. If this cookie ever goes missing in dev, the
-    // cause is browsing the app over http://localhost instead of the ngrok
-    // origin — not this flag.
-    secure: true,
-    // Must be 'lax', not 'strict'. The callback arrives as a top-level
-    // cross-site GET navigation from instagram.com; 'strict' would withhold
-    // the cookie and every connection attempt would fail state validation.
-    sameSite: 'lax',
-    path: OAUTH_COOKIE_PATH,
-    maxAge: STATE_TTL_SECONDS,
-  });
-
-  return response;
 }

@@ -21,25 +21,15 @@ import { youtubeOAuth } from '@/lib/env-parts';
 import {
   parseOrThrow,
   requestJson,
-  throwForStatus,
+  requestJsonWithHeaders,
 } from '@/lib/oauth/request';
+import { assertGoogleTokenResponseOk } from '@/lib/youtube/token-endpoint-error';
 import {
   YOUTUBE_AUTHORIZE_URL,
   YOUTUBE_DATA_API_BASE,
   YOUTUBE_TOKEN_URL,
   REQUIRED_SCOPES,
 } from '@/lib/youtube/constants';
-
-/**
- * Google's error envelope for OAuth-level errors (token exchange,
- * refresh). The `error` field is a machine-readable string like
- * `invalid_grant`, `invalid_request`, `consent_required`.
- */
-const googleErrorSchema = z.object({
-  error: z.string().optional(),
-  error_description: z.string().optional(),
-  error_codes: z.array(z.number()).optional(),
-});
 
 /* -------------------------------------------------------------------------- */
 /* Response schemas                                                            */
@@ -123,25 +113,6 @@ const videoListSchema = z.object({
 });
 
 /* -------------------------------------------------------------------------- */
-/* Error class                                                               */
-/* -------------------------------------------------------------------------- */
-
-export class YouTubeOAuthError extends Error {
-  readonly status: number | undefined;
-  readonly providerCode: string | undefined;
-
-  constructor(
-    message: string,
-    options: { status?: number; providerCode?: string } = {},
-  ) {
-    super(message);
-    this.name = 'YouTubeOAuthError';
-    this.status = options.status;
-    this.providerCode = options.providerCode;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
 /* Types                                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -196,19 +167,6 @@ function required(value: string | undefined): string {
     throw new Error(OAUTH_NOT_CONFIGURED);
   }
   return value;
-}
-
-/**
- * Turns a non-2xx into an OAuthHttpError carrying only Google's own
- * error code and description. Google's `error_description` can echo
- * request parameters back, so it is deliberately not propagated into
- * the thrown message.
- */
-function throwGoogleStatus(
-  response: Response,
-  body: unknown,
-): never {
-  throwForStatus(response, body, googleErrorSchema, 'YouTube');
 }
 
 /**
@@ -284,23 +242,19 @@ export async function exchangeCodeForToken(
     code,
   });
 
-  const json = await requestJson(YOUTUBE_TOKEN_URL, {
+  const response = await requestJsonWithHeaders(YOUTUBE_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
   });
 
-  // Google's token error envelope is different from the OAuth error
-  // envelope — it has `error` at the top level, not inside an `error`
-  // object. Check for it before zod parsing.
-  if (typeof json === 'object' && json !== null && 'error' in json) {
-    throwGoogleStatus(
-      { ok: false, status: 400 } as Response,
-      json,
-    );
-  }
+  assertGoogleTokenResponseOk(response, 'YouTube token exchange');
 
-  const parsed = parseOrThrow(tokenResponseSchema, json, 'token exchange');
+  const parsed = parseOrThrow(
+    tokenResponseSchema,
+    response.body,
+    'token exchange',
+  );
 
   return {
     accessToken: parsed.access_token,
@@ -326,22 +280,19 @@ export async function refreshAccessToken(
     refresh_token: refreshToken,
   });
 
-  const json = await requestJson(YOUTUBE_TOKEN_URL, {
+  const response = await requestJsonWithHeaders(YOUTUBE_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
   });
 
-  if (typeof json === 'object' && json !== null && 'error' in json) {
-    // If the refresh token was revoked, throw a specific error so
-    // the caller can force re-auth rather than retrying.
-    throwGoogleStatus(
-      { ok: false, status: 400 } as Response,
-      json,
-    );
-  }
+  assertGoogleTokenResponseOk(response, 'YouTube token refresh');
 
-  const parsed = parseOrThrow(tokenResponseSchema, json, 'token refresh');
+  const parsed = parseOrThrow(
+    tokenResponseSchema,
+    response.body,
+    'token refresh',
+  );
 
   return {
     accessToken: parsed.access_token,

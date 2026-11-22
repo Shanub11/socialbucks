@@ -8,14 +8,19 @@
 // Mirrors lib/instagram/creator-link.ts for Instagram.
 
 import { SocialPlatform } from '@repo/database';
-import { encryptToken } from '@/lib/crypto/secret-box';
+import { decryptToken, encryptToken } from '@/lib/crypto/secret-box';
 import {
+  findActiveTokenCiphertexts,
   linkSocialAccount,
   unlinkSocialAccount,
   disconnectSocialPlatformForUser,
   purgeSocialData,
   type LinkResult,
 } from '@/lib/social/creator-link';
+import {
+  revokeGoogleToken,
+  type RevokeOutcome,
+} from '@/lib/youtube/revoke-token';
 import {
   REQUIRED_SCOPES,
 } from './constants';
@@ -64,9 +69,66 @@ export async function unlinkYouTubeAccount(
   );
 }
 
+/**
+ * Decrypts a stored refresh token and best-effort revokes it at Google. The
+ * plaintext exists only inside this function's scope. A decrypt failure is its
+ * own outcome: the token cannot be revoked, but the row is still cleared.
+ */
+async function revokeStoredToken(
+  ciphertext: string,
+): Promise<RevokeOutcome | 'undecryptable'> {
+  let token: string;
+  try {
+    token = decryptToken(ciphertext, SocialPlatform.YOUTUBE);
+  } catch {
+    return 'undecryptable';
+  }
+
+  try {
+    return await revokeGoogleToken(token);
+  } catch {
+    // revokeGoogleToken never throws by contract; this is defensive only.
+    return 'failed';
+  }
+}
+
+/**
+ * Revokes the creator's active YouTube grant at Google, then clears the local
+ * row. Ordering matters: revoke first, clear second. If the database update
+ * fails after a successful revoke the stored token is merely dead and a retry
+ * is harmless, whereas clearing first could leave a live Google grant we can
+ * no longer revoke.
+ *
+ * A revoke outcome of any kind never prevents the local disconnect, and the
+ * plaintext token is never returned or logged.
+ */
 export async function disconnectYouTubeForUser(
   clerkUserId: string,
 ): Promise<'disconnected' | 'not_connected'> {
+  // If this throws, the disconnect fails like it does today and the user can
+  // retry; we must not clear a token we could not first try to revoke.
+  const ciphertexts = await findActiveTokenCiphertexts(
+    clerkUserId,
+    SocialPlatform.YOUTUBE,
+  );
+
+  const counts = {
+    revoked: 0,
+    rejected: 0,
+    unavailable: 0,
+    failed: 0,
+    undecryptable: 0,
+  };
+
+  for (const ciphertext of ciphertexts) {
+    const outcome = await revokeStoredToken(ciphertext);
+    counts[outcome] += 1;
+  }
+
+  if (ciphertexts.length > 0) {
+    console.info('[youtube] token revoke attempted', counts);
+  }
+
   return disconnectSocialPlatformForUser(
     clerkUserId,
     SocialPlatform.YOUTUBE,
