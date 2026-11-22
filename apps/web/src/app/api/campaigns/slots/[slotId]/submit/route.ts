@@ -249,11 +249,12 @@ export async function POST(
         );
         ownershipResult = await fetchVideoChannel(contentId, accessToken);
       } catch (err) {
-        // Any error — network, revoked token, malformed response — is fail-closed.
-        // We do NOT distinguish invalid_grant here because throwForStatus sets
-        // providerCode: 'unknown' for Google's flat { error: string } OAuth
-        // envelope (the `error` field is a string, so `error.code` is undefined).
-        // Returning 502 keeps the slot untouched and retryable.
+        // Any error is fail-closed: network, revoked token or malformed
+        // response. Token-endpoint failures now carry a safe providerCode
+        // (for example invalid_grant) on OAuthHttpError, but this route
+        // deliberately does not branch on it yet. Returning 502 keeps the
+        // slot untouched and retryable; mapping invalid_grant to
+        // REAUTH_REQUIRED is a possible follow-up.
         const message = err instanceof Error ? err.message : String(err);
         console.error('[campaigns] slot submit ownership check failed', {
           slotId,

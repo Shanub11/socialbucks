@@ -23,8 +23,8 @@ import {
   REQUIRED_SCOPES,
 } from '@/lib/youtube/constants';
 import { linkYouTubeAccount } from '@/lib/youtube/creator-link';
+import { OAuthHttpError } from '@/lib/oauth/request';
 import {
-  YouTubeOAuthError,
   exchangeCodeForToken,
   fetchChannel,
   findMissingScopes,
@@ -128,7 +128,10 @@ export async function GET(request: NextRequest) {
     return fail('not_provisioned');
   }
 
+  let step: 'token_exchange' | 'channel_fetch' | 'link' = 'token_exchange';
+
   try {
+    step = 'token_exchange';
     const tokens = await exchangeCodeForToken(rawCode);
     const missing = findMissingScopes(tokens.grantedScopes);
 
@@ -144,6 +147,7 @@ export async function GET(request: NextRequest) {
       return fail('missing_scope');
     }
 
+    step = 'channel_fetch';
     const channel = await fetchChannel(tokens.accessToken);
     if (!channel) {
       console.warn('[youtube] channel lookup failed', {
@@ -152,6 +156,7 @@ export async function GET(request: NextRequest) {
       return fail('youtube_error');
     }
 
+    step = 'link';
     const result = await linkYouTubeAccount({
       clerkUserId: userId,
       channel,
@@ -179,22 +184,23 @@ export async function GET(request: NextRequest) {
 
     return redirectHome({ youtube: 'connected' });
   } catch (error) {
-    if (error instanceof YouTubeOAuthError) {
-      console.error('[youtube] OAuth exchange failed', {
+    if (error instanceof OAuthHttpError) {
+      console.error('[youtube] OAuth provider request failed', {
         clerkUserId: userId,
+        name: error.name,
+        step,
         status: error.status,
         providerCode: error.providerCode,
-        message: error.message,
       });
       return fail('youtube_error');
     }
 
-    // Never let a raw error reach the browser — stack traces from
+    // Never let a raw error reach the browser -- stack traces from
     // this handler can contain the code or token in a fetch URL.
     console.error('[youtube] unexpected callback failure', {
       clerkUserId: userId,
       name: error instanceof Error ? error.name : 'unknown',
-      message: error instanceof Error ? error.message : undefined,
+      step,
     });
     return fail('unexpected');
   }
