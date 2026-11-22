@@ -7,8 +7,10 @@
 // rejected with a 403. On success, responds with a 303 redirect to
 // CONNECT_RETURN_PATH with ?youtube=disconnected and burns the nonce cookie.
 //
-// This is a soft-delete (sets revokedAt), not a hard delete — the
-// row stays as an audit-trail entry for payout disputes.
+// This is a soft-delete (sets revokedAt), not a hard delete: the row stays as
+// an audit-trail entry for payout disputes. The stored refresh token is
+// best-effort revoked at Google first, then its ciphertext is cleared; a
+// failed or unavailable revoke never blocks the disconnect.
 
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';

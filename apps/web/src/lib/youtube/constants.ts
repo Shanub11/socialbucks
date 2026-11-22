@@ -26,6 +26,14 @@ export const YOUTUBE_AUTHORIZE_URL = 'https://accounts.google.com/o/oauth2/v2/au
 export const YOUTUBE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 /**
+ * OAuth 2.0 revoke endpoint.
+ *
+ * POST with the token in a form field. Used only on user-initiated YouTube
+ * disconnect; a failed revoke never blocks the local disconnect.
+ */
+export const YOUTUBE_REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
+
+/**
  * YouTube Data API v3 base.
  *
  * Used for channel metadata and content details (e.g. duration for Shorts check).

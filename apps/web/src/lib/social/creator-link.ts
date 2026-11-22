@@ -7,6 +7,19 @@ export type LinkResult =
   | { ok: false; reason: LinkFailure };
 
 /**
+ * Data for every revocation path. A revoked row is an audit record only; a
+ * credential we no longer use must not stay at rest. handle, displayName,
+ * scopes, externalId and connectedAt are deliberately kept.
+ */
+function revocationData() {
+  return {
+    revokedAt: new Date(),
+    tokenCiphertext: null,
+    tokenExpiresAt: null,
+  };
+}
+
+/**
  * Links a social account to a Creator.
  * Uses the normalized SocialAccount table.
  */
@@ -72,7 +85,8 @@ export async function linkSocialAccount(params: {
     });
 
     // For safety, let's revoke any existing active account for this creator/platform
-    // that doesn't match the new externalId.
+    // that doesn't match the new externalId. This path clears the stored token
+    // locally only; it does not call the provider's revoke endpoint.
     await tx.socialAccount.updateMany({
       where: {
         creatorId: activeCreator.id,
@@ -80,9 +94,7 @@ export async function linkSocialAccount(params: {
         revokedAt: null,
         externalId: { not: externalId },
       },
-      data: {
-        revokedAt: new Date(),
-      },
+      data: revocationData(),
     });
 
     const accountId = await ensureSocialAccount(tx, {
@@ -156,7 +168,8 @@ async function ensureSocialAccount(
 }
 
 /**
- * Deauthorize callback. Sets revokedAt to now() for the specific external account.
+ * Deauthorize callback. Revokes the specific external account and clears its
+ * stored token.
  */
 export async function unlinkSocialAccount(
   platform: SocialPlatform,
@@ -164,17 +177,15 @@ export async function unlinkSocialAccount(
 ): Promise<'unlinked' | 'not_found'> {
   const result = await prisma.socialAccount.updateMany({
     where: { platform, externalId, revokedAt: null },
-    data: {
-      revokedAt: new Date(),
-    },
+    data: revocationData(),
   });
 
   return result.count > 0 ? 'unlinked' : 'not_found';
 }
 
 /**
- * User-initiated disconnect from our own UI. Revokes active accounts for the platform
- * linked to the given Clerk user.
+ * User-initiated disconnect from our own UI. Revokes active accounts for the
+ * platform linked to the given Clerk user and clears their stored tokens.
  */
 export async function disconnectSocialPlatformForUser(
   clerkUserId: string,
@@ -186,16 +197,39 @@ export async function disconnectSocialPlatformForUser(
       platform,
       revokedAt: null,
     },
-    data: {
-      revokedAt: new Date(),
-    },
+    data: revocationData(),
   });
 
   return result.count > 0 ? 'disconnected' : 'not_connected';
 }
 
 /**
+ * Reads the active, stored ciphertexts for one user and platform. The only
+ * caller that needs a plaintext is the YouTube disconnect, which must read
+ * BEFORE the clearing update so it can best-effort revoke the grant at Google.
+ */
+export async function findActiveTokenCiphertexts(
+  clerkUserId: string,
+  platform: SocialPlatform,
+): Promise<string[]> {
+  const rows = await prisma.socialAccount.findMany({
+    where: {
+      creator: { user: { clerkId: clerkUserId } },
+      platform,
+      revokedAt: null,
+      tokenCiphertext: { not: null },
+    },
+    select: { tokenCiphertext: true },
+  });
+
+  return rows
+    .map((row) => row.tokenCiphertext)
+    .filter((value): value is string => value !== null);
+}
+
+/**
  * Data-deletion callback. Same as unlink, but also soft-deletes the Creator.
+ * The stored token is cleared.
  */
 export async function purgeSocialData(
   platform: SocialPlatform,
@@ -214,7 +248,7 @@ export async function purgeSocialData(
   await prisma.$transaction([
     prisma.socialAccount.updateMany({
       where: { platform, externalId, revokedAt: null },
-      data: { revokedAt: new Date() },
+      data: revocationData(),
     }),
     prisma.creator.update({
       where: { id: account.creatorId },
