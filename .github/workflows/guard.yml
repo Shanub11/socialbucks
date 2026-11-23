@@ -1,0 +1,61 @@
+# Guard: enforces the Claude/Freebuff working agreement on every pull request.
+#
+# A branch named fb/... (Freebuff only, Tier C) fails if it touches a protected
+# path, edits or deletes an existing test, adds a forbidden construct, or edits
+# a file that already contains one. See docs/engineering/agent-rules.md and
+# scripts/protected-paths.json.
+#
+# Security notes:
+# - The trigger is pull_request, never pull_request_target, so pull requests
+#   from forks run with a read-only token and no secrets.
+# - The guard script and its config run from a SECOND checkout of the base
+#   commit (path: trusted), never from the pull request's own copy, so a pull
+#   request cannot weaken the guard that judges it.
+# - The branch name reaches the script only through an environment variable.
+#   It is never interpolated into a shell command line.
+
+name: Guard
+
+on:
+  pull_request:
+
+concurrency:
+  group: guard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          path: pr
+
+      - name: Checkout trusted base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          path: trusted
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Protected paths guard
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node trusted/scripts/ci-protected-paths.mjs --repo pr --base "$BASE_SHA" --head "$HEAD_SHA" --config trusted/scripts/protected-paths.json
+
+      - name: Guard script tests
+        working-directory: pr
+        run: node --test scripts/ci-protected-paths.test.mjs scripts/review-packet.test.mjs
